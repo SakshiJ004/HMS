@@ -322,11 +322,6 @@ const RegisterBasic = () => {
       return;
     }
 
-    if (!/[0-9]/.test(formData.email)) {
-      setErrorMessage("Email must contain at least one number");
-      return;
-    }
-
     if (!formData.email.endsWith("gmail.com")) {
       setErrorMessage("Email must end with gmail.com");
       return;
@@ -381,7 +376,7 @@ const RegisterBasic = () => {
 
         // Redirect to login after 1.5 seconds
         setTimeout(() => {
-          navigate(all_routes.loginbasic);
+          navigate(all_routes.patientdashboard);
         }, 1500);
       } else {
         setErrorMessage(data.message || "Registration failed");

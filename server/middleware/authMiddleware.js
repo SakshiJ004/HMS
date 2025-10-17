@@ -51,11 +51,6 @@ const protect = async (req, res, next) => {
     }
 };
 
-/**
- * Role-based access control middleware
- * Restricts access to specific roles
- * @param  {...string} roles - Allowed roles (e.g., 'admin', 'doctor', 'patient')
- */
 const authorize = (...roles) => {
     return (req, res, next) => {
         // Check if user role is included in allowed roles

@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
             lowercase: true,
             trim: true,
             // Email validation regex
-            match: [/^[a-zA-Z0-9._%+-]+@gmail\.com$/, 'Please provide a valid Gmail address'],
+            match: [/^[a-zA-Z._%+-]+@gmail\.com$/, 'Please provide a valid Gmail address'],
 
         },
         password: {

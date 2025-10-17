@@ -43,11 +43,6 @@ const validateEmail = (email) => {
         return { isValid: false, message: 'Email must contain @ symbol' };
     }
 
-    // Must contain at least one number
-    if (!/[0-9]/.test(email)) {
-        return { isValid: false, message: 'Email must contain at least one number' };
-    }
-
     // Must end with gmail.com
     if (!email.endsWith('gmail.com')) {
         return { isValid: false, message: 'Email must end with gmail.com' };
