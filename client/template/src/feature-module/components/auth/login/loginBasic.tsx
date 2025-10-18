@@ -108,7 +108,7 @@ const LoginBasic = () => {
           default:
             navigate(all_routes.dashboard);
         }
-      }else {
+      } else {
         setErrorMessage(data.message || "Login failed");
       }
     } catch (error) {
