@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { registerUser, loginUser, getMe } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
+const { requestPasswordReset, verifyResetToken, resetPassword } = require('../controllers/passwordResetController');
 
 /**
  * Auth Routes
@@ -22,5 +23,9 @@ router.post('/login', loginUser);
 // @desc    Get current user profile
 // @access  Private (requires authentication)
 router.get('/me', protect, getMe);
+
+router.post('/forgot-password', requestPasswordReset);
+router.get('/verify-reset-token', verifyResetToken);
+router.post('/reset-password', resetPassword);
 
 module.exports = router;
