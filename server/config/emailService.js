@@ -9,8 +9,26 @@ const nodemailer = require('nodemailer');
 const createTransporter = () => {
     const provider = process.env.EMAIL_PROVIDER || 'gmail';
 
+    console.log('📧 Email Provider:', provider);
+
     switch (provider.toLowerCase()) {
+        case 'sendgrid':
+            console.log('🔧 Using SendGrid SMTP');
+            return nodemailer.createTransport({
+                host: 'smtp.sendgrid.net',
+                port: 587,
+                secure: false, // Use TLS
+                auth: {
+                    user: 'apikey', // This is literal string 'apikey'
+                    pass: process.env.SENDGRID_API_KEY,
+                },
+                tls: {
+                    rejectUnauthorized: false
+                }
+            });
+
         case 'gmail':
+            console.log('🔧 Using Gmail SMTP (not recommended for production)');
             return nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
@@ -21,6 +39,7 @@ const createTransporter = () => {
 
         case 'aws-ses':
         case 'ses':
+            console.log('🔧 Using AWS SES');
             return nodemailer.createTransport({
                 host: process.env.AWS_SES_HOST || 'email-smtp.us-east-1.amazonaws.com',
                 port: 587,
@@ -31,18 +50,8 @@ const createTransporter = () => {
                 },
             });
 
-        case 'sendgrid':
-            return nodemailer.createTransport({
-                host: 'smtp.sendgrid.net',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: 'apikey',
-                    pass: process.env.SENDGRID_API_KEY,
-                },
-            });
-
         case 'custom':
+            console.log('🔧 Using Custom SMTP');
             return nodemailer.createTransporter({
                 host: process.env.SMTP_HOST,
                 port: parseInt(process.env.SMTP_PORT) || 587,
@@ -51,6 +60,9 @@ const createTransporter = () => {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASSWORD,
                 },
+                tls: {
+                    rejectUnauthorized: false
+                }
             });
 
         default:
@@ -70,11 +82,18 @@ const sendEmail = async (mailOptions) => {
     };
 
     try {
+        console.log('📤 Sending email to:', mailOptions.to);
         const info = await transporter.sendMail(emailOptions);
         console.log('✅ Email sent successfully:', info.messageId);
+        console.log('📬 Response:', info.response);
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('❌ Email sending failed:', error);
+        console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+        });
         throw error;
     }
 };
@@ -158,78 +177,6 @@ const emailTemplates = {
         </html>
     `,
 
-    // Password Reset Link Template (if you want to use direct link instead of OTP)
-    passwordResetLink: (fullName, resetUrl) => `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Password Reset - Preclinic</title>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
-                <tr>
-                    <td align="center">
-                        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <tr>
-                                <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center;">
-                                    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🔒 Password Reset</h1>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 40px 40px 20px 40px;">
-                                    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 24px;">Hi ${fullName},</h2>
-                                    <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                                        We received a request to reset your password for your Preclinic account. 
-                                        Click the button below to create a new password.
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 0 40px 30px 40px; text-align: center;">
-                                    <a href="${resetUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
-                                        Reset Password
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 0 40px 20px 40px;">
-                                    <p style="color: #999999; font-size: 14px; line-height: 1.6; margin: 0;">
-                                        Or copy and paste this link into your browser:
-                                    </p>
-                                    <p style="color: #667eea; font-size: 14px; word-break: break-all; margin: 10px 0 0 0;">
-                                        ${resetUrl}
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 20px 40px; background-color: #fff3cd; border-left: 4px solid #ffc107;">
-                                    <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.6;">
-                                        ⚠️ <strong>Security Notice:</strong> This link will expire in <strong>1 hour</strong>. 
-                                        If you didn't request this password reset, please ignore this email or contact support if you have concerns.
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 30px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
-                                    <p style="color: #6c757d; font-size: 14px; line-height: 1.6; margin: 0 0 10px 0;">
-                                        Best regards,<br>
-                                        <strong>Preclinic Team</strong>
-                                    </p>
-                                    <p style="color: #adb5bd; font-size: 12px; margin: 0;">
-                                        © 2025 Preclinic. All rights reserved.
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>
-    `,
-
     // Password Reset Success Template
     passwordResetSuccess: (fullName) => `
         <!DOCTYPE html>
@@ -274,40 +221,6 @@ const emailTemplates = {
                                     </p>
                                     <p style="color: #adb5bd; font-size: 12px; margin: 0;">
                                         © 2025 Preclinic. All rights reserved.
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>
-    `,
-
-    // Welcome Email Template
-    welcome: (fullName) => `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Welcome to Preclinic</title>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
-                <tr>
-                    <td align="center">
-                        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
-                            <tr>
-                                <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center;">
-                                    <h1 style="color: #ffffff; margin: 0;">🎉 Welcome to Preclinic!</h1>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 40px;">
-                                    <h2 style="color: #333333;">Hi ${fullName},</h2>
-                                    <p style="color: #666666; font-size: 16px; line-height: 1.6;">
-                                        Thank you for registering with Preclinic HMS. We're excited to have you on board!
                                     </p>
                                 </td>
                             </tr>
