@@ -254,7 +254,6 @@
 //     resetPassword,
 // };
 
-
 const crypto = require('crypto');
 const User = require('../models/User');
 const PasswordReset = require('../models/PasswordReset');
@@ -290,11 +289,16 @@ const requestPasswordReset = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: 'If an account with that email exists, we have sent an OTP code.',
+                data: {
+                    email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+                    expiresIn: 600,
+                }
             });
         }
 
         // Generate 6-digit OTP
         const otp = generateOTP();
+        console.log('🔐 Generated OTP for', email, ':', otp); // For testing
 
         // Hash OTP for storage
         const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex');
@@ -317,7 +321,13 @@ const requestPasswordReset = async (req, res) => {
         };
 
         // Send email
-        await sendEmail(mailOptions);
+        try {
+            await sendEmail(mailOptions);
+            console.log('✅ OTP email sent successfully to:', email);
+        } catch (emailError) {
+            console.error('❌ Email sending failed:', emailError);
+            // Continue anyway - don't reveal email sending failure
+        }
 
         // Mask email for response
         const maskedEmail = user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
@@ -444,6 +454,8 @@ const resendOTP = async (req, res) => {
 
         // Generate new OTP
         const otp = generateOTP();
+        console.log('🔐 Resend OTP for', email, ':', otp); // For testing
+
         const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex');
 
         // Delete old OTPs
@@ -463,7 +475,12 @@ const resendOTP = async (req, res) => {
             html: emailTemplates.passwordResetOTP(user.fullName, otp),
         };
 
-        await sendEmail(mailOptions);
+        try {
+            await sendEmail(mailOptions);
+            console.log('✅ Resend OTP email sent to:', email);
+        } catch (emailError) {
+            console.error('❌ Resend email failed:', emailError);
+        }
 
         res.status(200).json({
             success: true,
@@ -475,6 +492,62 @@ const resendOTP = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to resend OTP. Please try again.',
+        });
+    }
+};
+
+/**
+ * Verify Reset Token (for reset password page)
+ * GET /api/auth/verify-reset-token
+ */
+const verifyResetToken = async (req, res) => {
+    try {
+        const { token, email } = req.query;
+
+        if (!token || !email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token and email are required',
+            });
+        }
+
+        // Find user
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid reset link',
+            });
+        }
+
+        // Hash the token
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        // Find reset token
+        const resetToken = await PasswordReset.findOne({
+            userId: user._id,
+            resetToken: hashedToken,
+            isUsed: false,
+            expiresAt: { $gt: Date.now() },
+        });
+
+        if (!resetToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or expired reset link',
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Token is valid',
+        });
+
+    } catch (error) {
+        console.error('Token verification error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to verify token',
         });
     }
 };
@@ -573,7 +646,12 @@ const resetPassword = async (req, res) => {
             html: emailTemplates.passwordResetSuccess(user.fullName),
         };
 
-        await sendEmail(mailOptions);
+        try {
+            await sendEmail(mailOptions);
+            console.log('✅ Password reset confirmation email sent');
+        } catch (emailError) {
+            console.error('❌ Confirmation email failed:', emailError);
+        }
 
         res.status(200).json({
             success: true,
@@ -593,5 +671,6 @@ module.exports = {
     requestPasswordReset,
     verifyOTP,
     resendOTP,
+    verifyResetToken,  // Export this
     resetPassword,
 };

@@ -38,7 +38,8 @@ const {
     requestPasswordReset,
     verifyOTP,
     resendOTP,
-    resetPassword
+    resetPassword,
+    verifyResetToken
 } = require('../controllers/passwordResetController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -79,6 +80,8 @@ router.post('/verify-otp', verifyOTP);
 // @desc    Resend OTP code
 // @access  Public
 router.post('/resend-otp', resendOTP);
+
+router.get('/verify-reset-token', verifyResetToken)
 
 // @route   POST /api/auth/reset-password
 // @desc    Reset password after OTP verification
