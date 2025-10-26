@@ -9,11 +9,17 @@ const nodemailer = require('nodemailer');
 const createTransporter = () => {
     const provider = process.env.EMAIL_PROVIDER || 'gmail';
 
-    console.log('📧 Email Provider:', provider);
+    console.log('===========================================');
+    console.log('📧 EMAIL CONFIGURATION:');
+    console.log('Provider:', provider);
+    console.log('EMAIL_USER:', process.env.EMAIL_USER);
+    console.log('SENDGRID_API_KEY exists:', !!process.env.SENDGRID_API_KEY);
+    console.log('SENDGRID_API_KEY length:', process.env.SENDGRID_API_KEY?.length);
+    console.log('===========================================');
 
     switch (provider.toLowerCase()) {
         case 'sendgrid':
-            console.log('🔧 Using SendGrid SMTP');
+            console.log('✅ Using SendGrid configuration');
             return nodemailer.createTransport({
                 host: 'smtp.sendgrid.net',
                 port: 587,
@@ -24,12 +30,15 @@ const createTransporter = () => {
                 },
                 tls: {
                     rejectUnauthorized: false
-                }
+                },
+                connectionTimeout: 10000, // 10 seconds
+                greetingTimeout: 10000,
+                socketTimeout: 10000,
             });
 
         case 'gmail':
-            console.log('🔧 Using Gmail SMTP (not recommended for production)');
-            return nodemailer.createTransport({
+            console.log('⚠️ Using Gmail SMTP (not recommended for production)');
+            return nodemailer.createTransporter({
                 service: 'gmail',
                 auth: {
                     user: process.env.EMAIL_USER,
@@ -39,8 +48,8 @@ const createTransporter = () => {
 
         case 'aws-ses':
         case 'ses':
-            console.log('🔧 Using AWS SES');
-            return nodemailer.createTransport({
+            console.log('✅ Using AWS SES');
+            return nodemailer.createTransporter({
                 host: process.env.AWS_SES_HOST || 'email-smtp.us-east-1.amazonaws.com',
                 port: 587,
                 secure: false,
@@ -51,7 +60,7 @@ const createTransporter = () => {
             });
 
         case 'custom':
-            console.log('🔧 Using Custom SMTP');
+            console.log('✅ Using Custom SMTP');
             return nodemailer.createTransporter({
                 host: process.env.SMTP_HOST,
                 port: parseInt(process.env.SMTP_PORT) || 587,
@@ -66,6 +75,7 @@ const createTransporter = () => {
             });
 
         default:
+            console.error('❌ Unsupported email provider:', provider);
             throw new Error(`Unsupported email provider: ${provider}`);
     }
 };
@@ -74,6 +84,8 @@ const createTransporter = () => {
  * Send email with automatic retry
  */
 const sendEmail = async (mailOptions) => {
+    console.log('📤 Preparing to send email...');
+
     const transporter = createTransporter();
 
     const emailOptions = {
@@ -81,19 +93,25 @@ const sendEmail = async (mailOptions) => {
         ...mailOptions,
     };
 
+    console.log('Email details:', {
+        from: emailOptions.from,
+        to: emailOptions.to,
+        subject: emailOptions.subject,
+    });
+
     try {
-        console.log('📤 Sending email to:', mailOptions.to);
+        console.log('🔄 Sending email via', process.env.EMAIL_PROVIDER);
         const info = await transporter.sendMail(emailOptions);
-        console.log('✅ Email sent successfully:', info.messageId);
-        console.log('📬 Response:', info.response);
+        console.log('✅ Email sent successfully!');
+        console.log('Message ID:', info.messageId);
+        console.log('Response:', info.response);
         return { success: true, messageId: info.messageId };
     } catch (error) {
-        console.error('❌ Email sending failed:', error);
-        console.error('Error details:', {
-            message: error.message,
-            code: error.code,
-            command: error.command,
-        });
+        console.error('❌ Email sending failed!');
+        console.error('Error message:', error.message);
+        console.error('Error code:', error.code);
+        console.error('Error command:', error.command);
+        console.error('Full error:', error);
         throw error;
     }
 };
