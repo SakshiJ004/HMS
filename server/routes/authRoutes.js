@@ -186,39 +186,39 @@ router.get(
 /**
  * Facebook OAuth Routes
  */
-router.get(
-    '/facebook',
-    passport.authenticate('facebook', {
-        scope: ['email'],
-    })
-);
+// router.get(
+//     '/facebook',
+//     passport.authenticate('facebook', {
+//         scope: ['email'],
+//     })
+// );
 
-router.get(
-    '/facebook/callback',
-    passport.authenticate('facebook', {
-        failureRedirect: `${process.env.FRONTEND_URL}/login?error=authentication_failed`,
-        session: false,
-    }),
-    handleSocialAuthCallback
-);
+// router.get(
+//     '/facebook/callback',
+//     passport.authenticate('facebook', {
+//         failureRedirect: `${process.env.FRONTEND_URL}/login?error=authentication_failed`,
+//         session: false,
+//     }),
+//     handleSocialAuthCallback
+// );
 
 /**
  * Apple OAuth Routes
  */
-router.get(
-    '/apple',
-    passport.authenticate('apple', {
-        scope: ['name', 'email'],
-    })
-);
+// router.get(
+//     '/apple',
+//     passport.authenticate('apple', {
+//         scope: ['name', 'email'],
+//     })
+// );
 
-router.post(
-    '/apple/callback',
-    passport.authenticate('apple', {
-        failureRedirect: `${process.env.FRONTEND_URL}/login?error=authentication_failed`,
-        session: false,
-    }),
-    handleSocialAuthCallback
-);
+// router.post(
+//     '/apple/callback',
+//     passport.authenticate('apple', {
+//         failureRedirect: `${process.env.FRONTEND_URL}/login?error=authentication_failed`,
+//         session: false,
+//     }),
+//     handleSocialAuthCallback
+// );
 
 module.exports = router;

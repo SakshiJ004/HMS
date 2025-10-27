@@ -82,113 +82,113 @@ passport.use(
 /**
  * Facebook OAuth Strategy
  */
-passport.use(
-    new FacebookStrategy(
-        {
-            clientID: process.env.FACEBOOK_APP_ID,
-            clientSecret: process.env.FACEBOOK_APP_SECRET,
-            callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-            profileFields: ['id', 'displayName', 'emails', 'photos'],
-        },
-        async (accessToken, refreshToken, profile, done) => {
-            try {
-                let user = await User.findOne({
-                    provider: 'facebook',
-                    providerId: profile.id
-                });
+// passport.use(
+//     new FacebookStrategy(
+//         {
+//             clientID: process.env.FACEBOOK_APP_ID,
+//             clientSecret: process.env.FACEBOOK_APP_SECRET,
+//             callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+//             profileFields: ['id', 'displayName', 'emails', 'photos'],
+//         },
+//         async (accessToken, refreshToken, profile, done) => {
+//             try {
+//                 let user = await User.findOne({
+//                     provider: 'facebook',
+//                     providerId: profile.id
+//                 });
 
-                if (user) {
-                    return done(null, user);
-                }
+//                 if (user) {
+//                     return done(null, user);
+//                 }
 
-                const existingUser = await User.findOne({
-                    email: profile.emails[0].value
-                });
+//                 const existingUser = await User.findOne({
+//                     email: profile.emails[0].value
+//                 });
 
-                if (existingUser) {
-                    existingUser.provider = 'facebook';
-                    existingUser.providerId = profile.id;
-                    existingUser.profileImage = profile.photos[0]?.value;
-                    existingUser.isEmailVerified = true;
-                    await existingUser.save();
-                    return done(null, existingUser);
-                }
+//                 if (existingUser) {
+//                     existingUser.provider = 'facebook';
+//                     existingUser.providerId = profile.id;
+//                     existingUser.profileImage = profile.photos[0]?.value;
+//                     existingUser.isEmailVerified = true;
+//                     await existingUser.save();
+//                     return done(null, existingUser);
+//                 }
 
-                user = await User.create({
-                    fullName: profile.displayName,
-                    email: profile.emails[0].value,
-                    provider: 'facebook',
-                    providerId: profile.id,
-                    profileImage: profile.photos[0]?.value,
-                    isEmailVerified: true,
-                    role: 'patient',
-                });
+//                 user = await User.create({
+//                     fullName: profile.displayName,
+//                     email: profile.emails[0].value,
+//                     provider: 'facebook',
+//                     providerId: profile.id,
+//                     profileImage: profile.photos[0]?.value,
+//                     isEmailVerified: true,
+//                     role: 'patient',
+//                 });
 
-                done(null, user);
-            } catch (error) {
-                console.error('Facebook OAuth error:', error);
-                done(error, null);
-            }
-        }
-    )
-);
+//                 done(null, user);
+//             } catch (error) {
+//                 console.error('Facebook OAuth error:', error);
+//                 done(error, null);
+//             }
+//         }
+//     )
+// );
 
 /**
  * Apple OAuth Strategy
  */
-if (process.env.APPLE_CLIENT_ID && fs.existsSync(process.env.APPLE_PRIVATE_KEY_PATH)) {
-    passport.use(
-        new AppleStrategy(
-            {
-                clientID: process.env.APPLE_CLIENT_ID,
-                teamID: process.env.APPLE_TEAM_ID,
-                keyID: process.env.APPLE_KEY_ID,
-                privateKeyLocation: process.env.APPLE_PRIVATE_KEY_PATH,
-                callbackURL: process.env.APPLE_CALLBACK_URL,
-                passReqToCallback: true,
-            },
-            async (req, accessToken, refreshToken, idToken, profile, done) => {
-                try {
-                    const email = profile.email || idToken.email;
-                    const name = req.body?.user?.name || profile.name || { firstName: 'User', lastName: '' };
-                    const fullName = `${name.firstName} ${name.lastName}`.trim();
+// if (process.env.APPLE_CLIENT_ID && fs.existsSync(process.env.APPLE_PRIVATE_KEY_PATH)) {
+//     passport.use(
+//         new AppleStrategy(
+//             {
+//                 clientID: process.env.APPLE_CLIENT_ID,
+//                 teamID: process.env.APPLE_TEAM_ID,
+//                 keyID: process.env.APPLE_KEY_ID,
+//                 privateKeyLocation: process.env.APPLE_PRIVATE_KEY_PATH,
+//                 callbackURL: process.env.APPLE_CALLBACK_URL,
+//                 passReqToCallback: true,
+//             },
+//             async (req, accessToken, refreshToken, idToken, profile, done) => {
+//                 try {
+//                     const email = profile.email || idToken.email;
+//                     const name = req.body?.user?.name || profile.name || { firstName: 'User', lastName: '' };
+//                     const fullName = `${name.firstName} ${name.lastName}`.trim();
 
-                    let user = await User.findOne({
-                        provider: 'apple',
-                        providerId: profile.id
-                    });
+//                     let user = await User.findOne({
+//                         provider: 'apple',
+//                         providerId: profile.id
+//                     });
 
-                    if (user) {
-                        return done(null, user);
-                    }
+//                     if (user) {
+//                         return done(null, user);
+//                     }
 
-                    const existingUser = await User.findOne({ email });
+//                     const existingUser = await User.findOne({ email });
 
-                    if (existingUser) {
-                        existingUser.provider = 'apple';
-                        existingUser.providerId = profile.id;
-                        existingUser.isEmailVerified = true;
-                        await existingUser.save();
-                        return done(null, existingUser);
-                    }
+//                     if (existingUser) {
+//                         existingUser.provider = 'apple';
+//                         existingUser.providerId = profile.id;
+//                         existingUser.isEmailVerified = true;
+//                         await existingUser.save();
+//                         return done(null, existingUser);
+//                     }
 
-                    user = await User.create({
-                        fullName: fullName || 'Apple User',
-                        email,
-                        provider: 'apple',
-                        providerId: profile.id,
-                        isEmailVerified: true,
-                        role: 'patient',
-                    });
+//                     user = await User.create({
+//                         fullName: fullName || 'Apple User',
+//                         email,
+//                         provider: 'apple',
+//                         providerId: profile.id,
+//                         isEmailVerified: true,
+//                         role: 'patient',
+//                     });
 
-                    done(null, user);
-                } catch (error) {
-                    console.error('Apple OAuth error:', error);
-                    done(error, null);
-                }
-            }
-        )
-    );
-}
+//                     done(null, user);
+//                 } catch (error) {
+//                     console.error('Apple OAuth error:', error);
+//                     done(error, null);
+//                 }
+//             }
+//         )
+//     );
+// }
 
 module.exports = passport;

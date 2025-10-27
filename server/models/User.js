@@ -115,7 +115,7 @@ const userSchema = new mongoose.Schema(
         // Social login fields
         provider: {
             type: String,
-            enum: ['local', 'google', 'facebook', 'apple'],
+            enum: ['local', 'google'],
             default: 'local',
         },
         providerId: {
