@@ -1,118 +1,102 @@
 // ============================================
 // FILE: backend/config/emailService.js
 // ============================================
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 
 /**
- * Create email transporter based on provider
+ * Initialize SendGrid
  */
-const createTransporter = () => {
+const initializeSendGrid = () => {
+    if (process.env.EMAIL_PROVIDER === 'sendgrid' && process.env.SENDGRID_API_KEY) {
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+        console.log('✅ SendGrid initialized with API key');
+    }
+};
+
+/**
+ * Send email using SendGrid's native API
+ */
+const sendEmail = async (mailOptions) => {
     const provider = process.env.EMAIL_PROVIDER || 'gmail';
 
     console.log('===========================================');
     console.log('📧 EMAIL CONFIGURATION:');
     console.log('Provider:', provider);
-    console.log('EMAIL_USER:', process.env.EMAIL_USER);
-    console.log('SENDGRID_API_KEY exists:', !!process.env.SENDGRID_API_KEY);
-    console.log('SENDGRID_API_KEY length:', process.env.SENDGRID_API_KEY?.length);
+    console.log('From:', process.env.EMAIL_USER);
+    console.log('To:', mailOptions.to);
+    console.log('Subject:', mailOptions.subject);
     console.log('===========================================');
 
-    switch (provider.toLowerCase()) {
-        case 'sendgrid':
-            console.log('✅ Using SendGrid configuration');
-            return nodemailer.createTransport({
-                host: 'smtp.sendgrid.net',
-                port: 587,
-                secure: false, // Use TLS
-                auth: {
-                    user: 'apikey', // This is literal string 'apikey'
-                    pass: process.env.SENDGRID_API_KEY,
-                },
-                tls: {
-                    rejectUnauthorized: false
-                },
-                connectionTimeout: 10000, // 10 seconds
-                greetingTimeout: 10000,
-                socketTimeout: 10000,
-            });
+    if (provider === 'sendgrid') {
+        // Use SendGrid's native API (bypasses SMTP)
+        try {
+            initializeSendGrid();
 
-        case 'gmail':
-            console.log('⚠️ Using Gmail SMTP (not recommended for production)');
-            return nodemailer.createTransporter({
+            const msg = {
+                to: mailOptions.to,
+                from: {
+                    email: process.env.EMAIL_USER,
+                    name: process.env.EMAIL_FROM_NAME || 'Preclinic HMS'
+                },
+                subject: mailOptions.subject,
+                html: mailOptions.html,
+            };
+
+            console.log('🔄 Sending email via SendGrid API...');
+            const response = await sgMail.send(msg);
+
+            console.log('✅ Email sent successfully!');
+            console.log('Response status:', response[0].statusCode);
+            console.log('Message ID:', response[0].headers['x-message-id']);
+
+            return {
+                success: true,
+                messageId: response[0].headers['x-message-id']
+            };
+
+        } catch (error) {
+            console.error('❌ SendGrid email failed!');
+            console.error('Error:', error);
+
+            if (error.response) {
+                console.error('Error body:', error.response.body);
+                console.error('Error details:', error.response.body.errors);
+            }
+
+            throw error;
+        }
+    } else {
+        // Fallback to nodemailer for other providers (won't work on Render free tier)
+        console.warn('⚠️ Using nodemailer - this may not work on Render free tier');
+        const nodemailer = require('nodemailer');
+
+        let transporter;
+
+        if (provider === 'gmail') {
+            transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
                     user: process.env.EMAIL_USER,
                     pass: process.env.EMAIL_PASSWORD,
                 },
             });
-
-        case 'aws-ses':
-        case 'ses':
-            console.log('✅ Using AWS SES');
-            return nodemailer.createTransporter({
-                host: process.env.AWS_SES_HOST || 'email-smtp.us-east-1.amazonaws.com',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: process.env.AWS_SES_SMTP_USERNAME,
-                    pass: process.env.AWS_SES_SMTP_PASSWORD,
-                },
-            });
-
-        case 'custom':
-            console.log('✅ Using Custom SMTP');
-            return nodemailer.createTransporter({
-                host: process.env.SMTP_HOST,
-                port: parseInt(process.env.SMTP_PORT) || 587,
-                secure: process.env.SMTP_SECURE === 'true',
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASSWORD,
-                },
-                tls: {
-                    rejectUnauthorized: false
-                }
-            });
-
-        default:
-            console.error('❌ Unsupported email provider:', provider);
+        } else {
             throw new Error(`Unsupported email provider: ${provider}`);
-    }
-};
+        }
 
-/**
- * Send email with automatic retry
- */
-const sendEmail = async (mailOptions) => {
-    console.log('📤 Preparing to send email...');
+        const emailOptions = {
+            from: `${process.env.EMAIL_FROM_NAME || 'Preclinic HMS'} <${process.env.EMAIL_USER}>`,
+            ...mailOptions,
+        };
 
-    const transporter = createTransporter();
-
-    const emailOptions = {
-        from: `${process.env.EMAIL_FROM_NAME || 'Preclinic HMS'} <${process.env.EMAIL_USER}>`,
-        ...mailOptions,
-    };
-
-    console.log('Email details:', {
-        from: emailOptions.from,
-        to: emailOptions.to,
-        subject: emailOptions.subject,
-    });
-
-    try {
-        console.log('🔄 Sending email via', process.env.EMAIL_PROVIDER);
-        const info = await transporter.sendMail(emailOptions);
-        console.log('✅ Email sent successfully!');
-        console.log('Message ID:', info.messageId);
-        console.log('Response:', info.response);
-        return { success: true, messageId: info.messageId };
-    } catch (error) {
-        console.error('❌ Email sending failed!');
-        console.error('Error message:', error.message);
-        console.error('Error code:', error.code);
-        console.error('Error command:', error.command);
-        console.error('Full error:', error);
-        throw error;
+        try {
+            const info = await transporter.sendMail(emailOptions);
+            console.log('✅ Email sent:', info.messageId);
+            return { success: true, messageId: info.messageId };
+        } catch (error) {
+            console.error('❌ Email failed:', error);
+            throw error;
+        }
     }
 };
 
