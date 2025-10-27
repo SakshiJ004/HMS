@@ -25,6 +25,7 @@ export const all_routes = {
   successCover: "/success-cover",
   successIllustration: "/success-illustration",
   successBasic: "/success-basic",
+  authCallback: "/auth/callback",
 
   //Dashboard routes
   dashboard: "/dashboard",
