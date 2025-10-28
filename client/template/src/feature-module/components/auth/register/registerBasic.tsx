@@ -741,14 +741,15 @@ const RegisterBasic = () => {
                             <button
                               type="button"
                               onClick={() => handleSocialLogin('google')}
-                              className="br-10 p-1 btn btn-outline-light text-xl border d-flex align-items-center justify-content-center w-100"
+                              className="br-10 p-1 btn btn-outline-light border d-flex align-items-center justify-content-center w-100 space-x-2"
                               title="Register with Google"
                             >
                               <ImageWithBasePath
                                 className="img-fluid m-1"
                                 src="assets/img/icons/google-logo.svg"
                                 alt="Google"
-                              /> Continue With Google
+                              /> 
+                              <span className="text-xl ml-2">Continue With Google</span>
                             </button>
                           </div>
                           
