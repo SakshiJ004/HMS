@@ -736,20 +736,7 @@ const RegisterBasic = () => {
                       </div>
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                          <div className="text-center flex-fill">
-                            <button
-                              type="button"
-                              onClick={() => handleSocialLogin('facebook')}
-                              className="br-10 p-1 btn btn-outline-light border d-flex align-items-center justify-content-center w-100"
-                              title="Register with Facebook"
-                            >
-                              <ImageWithBasePath
-                                className="img-fluid m-1"
-                                src="assets/img/icons/facebook-logo.svg"
-                                alt="Facebook"
-                              />
-                            </button>
-                          </div>
+                          
                           <div className="text-center flex-fill">
                             <button
                               type="button"
@@ -764,20 +751,7 @@ const RegisterBasic = () => {
                               />
                             </button>
                           </div>
-                          <div className="text-center flex-fill">
-                            <button
-                              type="button"
-                              onClick={() => handleSocialLogin('apple')}
-                              className="br-10 p-1 btn btn-outline-light border d-flex align-items-center justify-content-center w-100"
-                              title="Register with Apple"
-                            >
-                              <ImageWithBasePath
-                                className="img-fluid m-1"
-                                src="assets/img/icons/apple-logo.svg"
-                                alt="Apple"
-                              />
-                            </button>
-                          </div>
+                          
                         </div>
                       </div>
                       <div className="text-center">
