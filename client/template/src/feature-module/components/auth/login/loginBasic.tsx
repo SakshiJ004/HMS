@@ -85,6 +85,8 @@ const LoginBasic = () => {
       if (response.ok && data.success) {
         setSuccessMessage(data.message);
 
+        localStorage.clear();
+
         // Store user data
         localStorage.setItem("userData", JSON.stringify(data.data));
         localStorage.setItem("token", data.data.token);

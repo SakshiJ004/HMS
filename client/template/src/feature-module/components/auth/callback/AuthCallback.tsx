@@ -87,7 +87,10 @@ const AuthCallback = () => {
 
                 console.log('✅ Received user data from backend:', userData);
 
-                // Store user data in localStorage
+                // IMPORTANT: Clear old data first
+                localStorage.clear();
+
+                // Store NEW user data in localStorage
                 localStorage.setItem('userData', JSON.stringify(userData));
                 localStorage.setItem('token', userData.token);
 

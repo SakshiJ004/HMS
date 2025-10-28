@@ -519,6 +519,8 @@ const RegisterBasic = () => {
       if (response.ok && data.success) {
         setSuccessMessage(data.message);
 
+        localStorage.clear();
+
         localStorage.setItem("userData", JSON.stringify(data.data));
         localStorage.setItem("token", data.data.token);
 
