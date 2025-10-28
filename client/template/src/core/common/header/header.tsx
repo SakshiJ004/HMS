@@ -32,22 +32,69 @@ const Header = () => {
   }, [themeSettings]);
 
   // Get user data from localStorage
+  // useEffect(() => {
+  //   const storedUserData = localStorage.getItem("userData");
+  //   if (storedUserData) {
+  //     const parsedData = JSON.parse(storedUserData);
+  //     const firstName = parsedData.firstName || "";
+  //     const lastName = parsedData.lastName || "";
+  //     const fullName = `${firstName} ${lastName}`.trim() || parsedData.fullName || "User";
+
+  //     setUserData({
+  //       fullName: fullName,
+  //       firstName: firstName,
+  //       lastName: lastName,
+  //       role: parsedData.role || "user",
+  //       email: parsedData.email || "",
+  //       profileImage: parsedData.profileImage || "",
+  //     });
+  //   }
+  // }, []);
+
+  // Add this useEffect to properly load user data in Header component
+  // Replace your existing useEffect that loads userData
+
   useEffect(() => {
     const storedUserData = localStorage.getItem("userData");
-    if (storedUserData) {
-      const parsedData = JSON.parse(storedUserData);
-      const firstName = parsedData.firstName || "";
-      const lastName = parsedData.lastName || "";
-      const fullName = `${firstName} ${lastName}`.trim() || parsedData.fullName || "User";
 
-      setUserData({
-        fullName: fullName,
-        firstName: firstName,
-        lastName: lastName,
-        role: parsedData.role || "user",
-        email: parsedData.email || "",
-        profileImage: parsedData.profileImage || "",
-      });
+    if (storedUserData) {
+      try {
+        const parsedData = JSON.parse(storedUserData);
+
+        console.log('📋 Loading user data in header:', parsedData);
+
+        // Get firstName and lastName
+        let firstName = parsedData.firstName || '';
+        let lastName = parsedData.lastName || '';
+
+        // If firstName/lastName not available, split fullName
+        if (!firstName && parsedData.fullName) {
+          const nameParts = parsedData.fullName.trim().split(' ');
+          firstName = nameParts[0] || '';
+          lastName = nameParts.slice(1).join(' ') || '';
+        }
+
+        const fullName = parsedData.fullName || `${firstName} ${lastName}`.trim() || 'User';
+
+        setUserData({
+          fullName: fullName,
+          firstName: firstName,
+          lastName: lastName,
+          role: parsedData.role || 'patient',
+          email: parsedData.email || '',
+          profileImage: parsedData.profileImage || '',
+        });
+
+        console.log('✅ User data loaded in header:', {
+          fullName,
+          firstName,
+          lastName,
+          role: parsedData.role,
+          profileImage: parsedData.profileImage
+        });
+      } catch (error) {
+        console.error('❌ Error parsing userData:', error);
+      }
     }
   }, []);
 
