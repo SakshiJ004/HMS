@@ -741,7 +741,7 @@ const RegisterBasic = () => {
                             <button
                               type="button"
                               onClick={() => handleSocialLogin('google')}
-                              className="br-10 p-1 btn btn-outline-light border d-flex align-items-center justify-content-center w-100"
+                              className="br-10 p-1 btn btn-outline-light text-xl border d-flex align-items-center justify-content-center w-100"
                               title="Register with Google"
                             >
                               <ImageWithBasePath
