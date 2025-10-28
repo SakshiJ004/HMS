@@ -272,7 +272,7 @@ const LoginBasic = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
                           
-                          <div className="text-center flex-fill">
+                          <div className="text-center flex-fill fw-normal">
                             <button
                               type="button"
                               onClick={() => handleSocialLogin('google')}
@@ -283,7 +283,8 @@ const LoginBasic = () => {
                                 className="img-fluid m-1"
                                 src="assets/img/icons/google-logo.svg"
                                 alt="Google"
-                              /> Continue With Google
+                              /> 
+                              <span style={{fontSize: '18px', marginLeft: '8px'}}>Continue With Google</span>
                             </button>
                           </div>
                           
