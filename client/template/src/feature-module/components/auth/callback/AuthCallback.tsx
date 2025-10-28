@@ -1,4 +1,4 @@
-nimport { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { all_routes } from '../../../routes/all_routes';
 
