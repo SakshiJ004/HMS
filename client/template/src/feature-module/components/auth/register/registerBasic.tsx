@@ -748,7 +748,7 @@ const RegisterBasic = () => {
                                 className="img-fluid m-1"
                                 src="assets/img/icons/google-logo.svg"
                                 alt="Google"
-                              />
+                              /> Continue With Google
                             </button>
                           </div>
                           
