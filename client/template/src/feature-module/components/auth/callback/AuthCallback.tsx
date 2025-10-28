@@ -159,7 +159,7 @@ const AuthCallback = () => {
         <div className="container-fluid vh-100 d-flex justify-content-center align-items-center">
             <div className="text-center">
                 <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
-                    <span className="visually-hidden">Loading...</span>
+                    <span className="visually-hidden">Loading</span>
                 </div>
                 <h5 className="text-dark mb-2">Completing authentication...</h5>
                 <p className="text-muted">Please wait while we log you in.</p>
