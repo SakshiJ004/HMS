@@ -128,21 +128,24 @@ const AuthCallback = () => {
                 // Role-based redirect
                 console.log('🚀 Redirecting based on role:', userData.role);
 
-                switch (userData.role) {
-                    case 'admin':
-                        console.log('→ Going to Admin Dashboard');
-                        navigate(all_routes.dashboard);
-                        break;
-                    case 'doctor':
-                        console.log('→ Going to Doctor Dashboard');
-                        navigate(all_routes.doctordashboard);
-                        break;
-                    case 'patient':
-                    default:
-                        console.log('→ Going to Patient Dashboard');
-                        navigate(all_routes.patientdashboard);
-                        break;
-                }
+                // Use window.location for hard navigation to ensure clean state
+                setTimeout(() => {
+                    switch (userData.role) {
+                        case 'admin':
+                            console.log('→ Going to Admin Dashboard');
+                            window.location.href = all_routes.dashboard;
+                            break;
+                        case 'doctor':
+                            console.log('→ Going to Doctor Dashboard');
+                            window.location.href = all_routes.doctordashboard;
+                            break;
+                        case 'patient':
+                        default:
+                            console.log('→ Going to Patient Dashboard (patient role detected)');
+                            window.location.href = all_routes.patientdashboard;
+                            break;
+                    }
+                }, 100);
             } catch (error) {
                 console.error('❌ Auth callback error:', error);
                 navigate(all_routes.loginbasic + '?error=authentication_failed');
