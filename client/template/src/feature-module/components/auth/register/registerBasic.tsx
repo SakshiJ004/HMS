@@ -749,7 +749,7 @@ const RegisterBasic = () => {
                                 src="assets/img/icons/google-logo.svg"
                                 alt="Google"
                               /> 
-                              <span style={{fontSize: '18px', marginLeft: '8px'}}>Continue With Google</span>
+                              <span style={{fontSize: '18px', marginLeft: '8px'}}>Sign up With Google</span>
                             </button>
                           </div>
                           
