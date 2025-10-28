@@ -233,11 +233,7 @@ import { Navigate, Route } from "react-router";
 const routes = all_routes;
 
 export const publicRoutes = [
-  {
-    path: "*", // ✅ Catch-all route for 404s
-    element: <Navigate to={routes.dashboard} />,
-    route: Route,
-  },
+
   {
     path: routes.dashboard,
     element: <Dashboard />,
@@ -1372,7 +1368,7 @@ export const publicRoutes = [
 ];
 export const authRoutes = [
   {
-    Path: routes.authCallback,
+    path: routes.authCallback,
     element: <AuthCallback />,
     route: Route,
   },
@@ -1430,6 +1426,11 @@ export const authRoutes = [
   {
     path: routes.underMaintenance,
     element: <UnderMaintenance />,
+    route: Route,
+  },
+  {
+    path: "*", // ✅ Catch-all route for 404s
+    element: <Navigate to={routes.dashboard} />,
     route: Route,
   },
 ];
