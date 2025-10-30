@@ -1032,14 +1032,14 @@ const Appointments = () => {
       render: (text: string) => (
         <span
           className={`fs-13 badge ${text === 'Checked Out'
-              ? 'badge-soft-info text-info'
-              : text === 'Checked In'
-                ? 'badge-soft-warning text-warning'
-                : text === 'Cancelled'
-                  ? 'badge-soft-danger text-danger'
-                  : text === 'Schedule'
-                    ? 'badge-soft-primary text-primary'
-                    : 'badge-soft-success text-success'
+            ? 'badge-soft-info text-info'
+            : text === 'Checked In'
+              ? 'badge-soft-warning text-warning'
+              : text === 'Cancelled'
+                ? 'badge-soft-danger text-danger'
+                : text === 'Schedule'
+                  ? 'badge-soft-primary text-primary'
+                  : 'badge-soft-success text-success'
             } rounded fw-medium`}
         >
           {text}
@@ -1050,7 +1050,7 @@ const Appointments = () => {
     },
     {
       title: '',
-      render: (_: any, record: TransformedAppointment) => (
+      render: (_text: string, _record: TransformedAppointment) => (
         <div className="action-item">
           <Link to="#" data-bs-toggle="dropdown">
             <i className="ti ti-dots-vertical" />
