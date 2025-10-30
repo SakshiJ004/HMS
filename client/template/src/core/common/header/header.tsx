@@ -32,21 +32,21 @@ const Header = () => {
   }, [themeSettings]);
 
   const handleLogout = () => {
-      console.log('🔓 Logging out...');
+    console.log('🔓 Logging out...');
 
-      // Clear all localStorage data
-      localStorage.clear();
+    // Clear all localStorage data
+    localStorage.clear();
 
-      // Or if you want to keep some data like theme settings:
-      // const theme = localStorage.getItem('theme');
-      // localStorage.clear();
-      // if (theme) localStorage.setItem('theme', theme);
+    // Or if you want to keep some data like theme settings:
+    // const theme = localStorage.getItem('theme');
+    // localStorage.clear();
+    // if (theme) localStorage.setItem('theme', theme);
 
-      console.log('✅ Logged out successfully');
+    console.log('✅ Logged out successfully');
 
-      // Navigate to login page
-      window.location.href = all_routes.loginbasic;
-    };
+    // Navigate to login page
+    window.location.href = all_routes.loginbasic;
+  };
 
   // ✅ FIX: Load user data function
   const loadUserData = () => {
