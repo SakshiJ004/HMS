@@ -232,7 +232,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { DatePicker, TimePicker, message } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import CommonSelect from '../../../../../core/common/common-select/commonSelect';
-import { appointmentService } from '../api/appoinmentService';
+import { appointmentService } from '../../../../../api/appoinmentService';
 import { all_routes } from '../../../../routes/all_routes';
 import type { TimePickerProps } from 'antd';
 

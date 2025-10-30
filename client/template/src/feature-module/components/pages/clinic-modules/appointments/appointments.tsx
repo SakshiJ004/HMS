@@ -891,7 +891,6 @@
 // export default Appointments;
 
 
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { message } from 'antd';
@@ -899,14 +898,30 @@ import ImageWithBasePath from '../../../../../core/imageWithBasePath';
 import { all_routes } from '../../../../routes/all_routes';
 import SearchInput from '../../../../../core/common/dataTable/dataTableSearch';
 import Datatable from '../../../../../core/common/dataTable';
-// import PredefinedDatePicker from '../../../../../core/common/datePicker';
 import Modals from './modals/modals';
-import { appointmentService } from '../api/appoinmentService';
+import { appointmentService } from '../../../../../api/appoinmentService';
+
+// Add type definitions
+interface TransformedAppointment {
+  key: string;
+  Date_Time: string;
+  Patient: string;
+  Patient_Email: string;
+  Patient_Image: string;
+  Doctor: string;
+  Doctor_Email: string;
+  Doctor_Image: string;
+  role: string;
+  Mode: string;
+  Status: string;
+  appointmentId: string;
+  _id: string;
+}
 
 const Appointments = () => {
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchText, setSearchText] = useState('');
+  const [appointments, setAppointments] = useState<TransformedAppointment[]>([]); // ✅ TYPED
+  const [loading, setLoading] = useState<boolean>(true);
+  const [searchText, setSearchText] = useState<string>('');
 
   useEffect(() => {
     fetchAppointments();
@@ -918,15 +933,15 @@ const Appointments = () => {
       const response = await appointmentService.getAllAppointments();
 
       // Transform data for table
-      const transformedData = response.data.map((appointment) => ({
+      const transformedData: TransformedAppointment[] = response.data.map((appointment) => ({
         key: appointment._id,
         Date_Time: `${new Date(appointment.appointmentDate).toLocaleDateString()} - ${appointment.appointmentTime}`,
         Patient: appointment.patient?.fullName || 'N/A',
         Patient_Email: appointment.patient?.email || '',
-        Patient_Image: 'user-01.jpg', // Default image
+        Patient_Image: 'user-01.jpg',
         Doctor: appointment.doctor?.fullName || 'N/A',
         Doctor_Email: appointment.doctor?.email || '',
-        Doctor_Image: 'doctor-01.jpg', // Default image
+        Doctor_Image: 'doctor-01.jpg',
         role: appointment.department,
         Mode: appointment.appointmentType,
         Status: appointment.status,
@@ -948,17 +963,19 @@ const Appointments = () => {
     {
       title: 'Appointment ID',
       dataIndex: 'appointmentId',
-      sorter: (a, b) => a.appointmentId.localeCompare(b.appointmentId),
+      sorter: (a: TransformedAppointment, b: TransformedAppointment) =>
+        a.appointmentId.localeCompare(b.appointmentId),
     },
     {
       title: 'Date & Time',
       dataIndex: 'Date_Time',
-      sorter: (a, b) => a.Date_Time.length - b.Date_Time.length,
+      sorter: (a: TransformedAppointment, b: TransformedAppointment) =>
+        a.Date_Time.length - b.Date_Time.length,
     },
     {
       title: 'Patient',
       dataIndex: 'Patient',
-      render: (text, record) => (
+      render: (text: string, record: TransformedAppointment) => (
         <div className="d-flex align-items-center">
           <Link to={all_routes.patientDetails} className="avatar avatar-md me-2">
             <ImageWithBasePath
@@ -975,12 +992,13 @@ const Appointments = () => {
           </Link>
         </div>
       ),
-      sorter: (a, b) => a.Patient.localeCompare(b.Patient),
+      sorter: (a: TransformedAppointment, b: TransformedAppointment) =>
+        a.Patient.localeCompare(b.Patient),
     },
     {
       title: 'Doctor',
       dataIndex: 'Doctor',
-      render: (text, record) => (
+      render: (text: string, record: TransformedAppointment) => (
         <div className="d-flex align-items-center">
           <Link to={all_routes.doctordetails} className="avatar me-2 flex-shrink-0">
             <ImageWithBasePath
@@ -999,17 +1017,19 @@ const Appointments = () => {
           </div>
         </div>
       ),
-      sorter: (a, b) => a.Doctor.localeCompare(b.Doctor),
+      sorter: (a: TransformedAppointment, b: TransformedAppointment) =>
+        a.Doctor.localeCompare(b.Doctor),
     },
     {
       title: 'Mode',
       dataIndex: 'Mode',
-      sorter: (a, b) => a.Mode.localeCompare(b.Mode),
+      sorter: (a: TransformedAppointment, b: TransformedAppointment) =>
+        a.Mode.localeCompare(b.Mode),
     },
     {
       title: 'Status',
       dataIndex: 'Status',
-      render: (text) => (
+      render: (text: string) => (
         <span
           className={`fs-13 badge ${text === 'Checked Out'
               ? 'badge-soft-info text-info'
@@ -1025,11 +1045,12 @@ const Appointments = () => {
           {text}
         </span>
       ),
-      sorter: (a, b) => a.Status.localeCompare(b.Status),
+      sorter: (a: TransformedAppointment, b: TransformedAppointment) =>
+        a.Status.localeCompare(b.Status),
     },
     {
       title: '',
-      render: (record) => (
+      render: (_: any, record: TransformedAppointment) => (
         <div className="action-item">
           <Link to="#" data-bs-toggle="dropdown">
             <i className="ti ti-dots-vertical" />
@@ -1066,7 +1087,7 @@ const Appointments = () => {
     },
   ];
 
-  const handleSearch = (value) => {
+  const handleSearch = (value: string) => {
     setSearchText(value);
   };
 
@@ -1139,7 +1160,7 @@ const Appointments = () => {
             </div>
           </div>
 
-          {/* Search and Filters */}
+          {/* Search */}
           <div className="d-flex align-items-center justify-content-between flex-wrap">
             <div className="d-flex align-items-center gap-2">
               <div className="search-set mb-3">

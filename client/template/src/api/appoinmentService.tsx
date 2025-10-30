@@ -1,6 +1,10 @@
 import axios, { AxiosError } from 'axios';
 
-const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api` || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_BACKEND_URL
+    ? `${import.meta.env.VITE_BACKEND_URL}/api`
+    : 'http://localhost:5000/api';
+
+console.log('🌐 API URL:', API_URL); // Debug log
 
 // Types
 interface Doctor {
@@ -79,6 +83,7 @@ apiClient.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+        console.log('📤 Request:', config.method?.toUpperCase(), config.url);
         return config;
     },
     (error) => {
@@ -86,12 +91,15 @@ apiClient.interceptors.request.use(
     }
 );
 
-// Response interceptor for better error handling
+// Response interceptor
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        console.log('✅ Response:', response.config.url, response.status);
+        return response;
+    },
     (error: AxiosError) => {
+        console.error('❌ API Error:', error.response?.status, error.message);
         if (error.response?.status === 401) {
-            // Token expired or invalid
             localStorage.removeItem('user');
             window.location.href = '/login';
         }
@@ -103,12 +111,10 @@ apiClient.interceptors.response.use(
  * Appointment API Services
  */
 export const appointmentService = {
-    /**
-     * Get doctors list for dropdown
-     */
     getDoctors: async (): Promise<ApiResponse<Doctor[]>> => {
         try {
             const response = await apiClient.get<ApiResponse<Doctor[]>>('/appointments/doctors/list');
+            console.log('👨‍⚕️ Doctors loaded:', response.data.count);
             return response.data;
         } catch (error) {
             console.error('Error fetching doctors:', error);
@@ -116,12 +122,10 @@ export const appointmentService = {
         }
     },
 
-    /**
-     * Get patients list for dropdown
-     */
     getPatients: async (): Promise<ApiResponse<Patient[]>> => {
         try {
             const response = await apiClient.get<ApiResponse<Patient[]>>('/appointments/patients/list');
+            console.log('🧑‍🤝‍🧑 Patients loaded:', response.data.count);
             return response.data;
         } catch (error) {
             console.error('Error fetching patients:', error);
@@ -129,12 +133,10 @@ export const appointmentService = {
         }
     },
 
-    /**
-     * Get departments list
-     */
     getDepartments: async (): Promise<ApiResponse<string[]>> => {
         try {
             const response = await apiClient.get<ApiResponse<string[]>>('/appointments/departments/list');
+            console.log('🏥 Departments loaded:', response.data.count);
             return response.data;
         } catch (error) {
             console.error('Error fetching departments:', error);
@@ -142,12 +144,10 @@ export const appointmentService = {
         }
     },
 
-    /**
-     * Create new appointment
-     */
     createAppointment: async (appointmentData: AppointmentFormData): Promise<ApiResponse<Appointment>> => {
         try {
             const response = await apiClient.post<ApiResponse<Appointment>>('/appointments', appointmentData);
+            console.log('✅ Appointment created:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error creating appointment:', error);
@@ -155,14 +155,12 @@ export const appointmentService = {
         }
     },
 
-    /**
-     * Get all appointments with optional filters
-     */
     getAllAppointments: async (filters?: Record<string, any>): Promise<ApiResponse<Appointment[]>> => {
         try {
             const response = await apiClient.get<ApiResponse<Appointment[]>>('/appointments', {
                 params: filters
             });
+            console.log('📋 Appointments loaded:', response.data.count);
             return response.data;
         } catch (error) {
             console.error('Error fetching appointments:', error);
@@ -170,9 +168,6 @@ export const appointmentService = {
         }
     },
 
-    /**
-     * Get single appointment by ID
-     */
     getAppointmentById: async (id: string): Promise<ApiResponse<Appointment>> => {
         try {
             const response = await apiClient.get<ApiResponse<Appointment>>(`/appointments/${id}`);
@@ -184,7 +179,6 @@ export const appointmentService = {
     },
 };
 
-// Export types for use in components
 export type {
     Doctor,
     Patient,
