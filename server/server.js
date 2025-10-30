@@ -156,7 +156,7 @@ app.use(passport.session());
  */
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-app.use('/api/appoinments', require('./routes/appoinmentRoutes'))
+app.use('/api/appointments', require('./routes/appointmentRoutes'))
 
 // Health check route
 app.get('/api/health', (req, res) => {
