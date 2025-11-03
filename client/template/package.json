@@ -12,11 +12,14 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.16",
     "axios": "^1.13.1",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "overlayscrollbars-react": "^0.5.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-phone-number-input": "^3.4.12",
-    "tailwindcss": "^4.1.16"
+    "tailwindcss": "^4.1.16",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@ant-design/icons": "^6.0.2",
