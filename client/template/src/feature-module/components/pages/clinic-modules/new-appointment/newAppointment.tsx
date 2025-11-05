@@ -1082,7 +1082,6 @@
 // export default NewAppointment;
 
 
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { all_routes } from "../../../../routes/all_routes";
@@ -1145,22 +1144,16 @@ const NewAppointment = () => {
     { value: "Cancelled", label: "Cancelled" },
   ];
 
-  // Fetch doctors and patients on component mount
   useEffect(() => {
-    console.log('🚀 Component mounted, fetching data...');
     fetchDoctorsAndPatients();
   }, []);
 
   const fetchDoctorsAndPatients = async () => {
     try {
-      console.log('📊 Fetching doctors and patients...');
       const [doctorsRes, patientsRes] = await Promise.all([
         getDoctors(),
         getPatients(),
       ]);
-
-      console.log('✅ Doctors received:', doctorsRes.data?.length);
-      console.log('✅ Patients received:', patientsRes.data?.length);
 
       setDoctors(doctorsRes.data || []);
       setPatients(patientsRes.data || []);
@@ -1172,14 +1165,12 @@ const NewAppointment = () => {
         message.warning('No patients found. Please add patients first.');
       }
     } catch (error: any) {
-      console.error("❌ Error fetching data:", error);
-      message.error(
-        error.message || "Failed to load doctors and patients"
-      );
+      console.error("Error fetching data:", error);
+      message.error(error.message || "Failed to load doctors and patients");
     }
   };
 
-  // Convert doctors and patients to select options
+  // Convert to select options
   const doctorOptions = doctors.map((doctor) => ({
     value: doctor._id,
     label: doctor.fullName,
@@ -1190,55 +1181,70 @@ const NewAppointment = () => {
     label: patient.fullName,
   }));
 
-  // ✅ FIX: Updated onChange handlers to properly extract value from option object
+  // Enhanced onChange handlers
   const handlePatientChange = (option: any) => {
-    console.log('Patient selected - full option:', option);
-    const patientId = option?.value || "";
-    console.log('Patient ID extracted:', patientId);
-    setFormData({ ...formData, patient: patientId });
+    setFormData({ ...formData, patient: option?.value || "" });
   };
 
   const handleDoctorChange = (option: any) => {
-    console.log('Doctor selected - full option:', option);
-    const doctorId = option?.value || "";
-    console.log('Doctor ID extracted:', doctorId);
-    setFormData({ ...formData, doctor: doctorId });
+    setFormData({ ...formData, doctor: option?.value || "" });
   };
 
   const handleDepartmentChange = (option: any) => {
-    console.log('Department selected - full option:', option);
-    const department = option?.value || "";
-    console.log('Department extracted:', department);
-    setFormData({ ...formData, department: department });
+    setFormData({ ...formData, department: option?.value || "" });
   };
 
   const handleAppointmentTypeChange = (option: any) => {
-    console.log('Appointment Type selected - full option:', option);
-    const type = option?.value || "";
-    console.log('Type extracted:', type);
-    setFormData({ ...formData, appointmentType: type });
+    setFormData({ ...formData, appointmentType: option?.value || "" });
   };
 
   const handleStatusChange = (option: any) => {
-    console.log('Status selected - full option:', option);
-    const status = option?.value || "";
-    console.log('Status extracted:', status);
-    setFormData({ ...formData, status: status });
+    setFormData({ ...formData, status: option?.value || "" });
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setFormData({
+      patient: "",
+      doctor: "",
+      department: "",
+      appointmentType: "",
+      appointmentDate: null,
+      appointmentTime: null,
+      reason: "",
+      status: "Schedule",
+    });
+  };
+
+  // Handle cancel - stay on page and reset form
+  const handleCancel = () => {
+    if (
+      formData.patient ||
+      formData.doctor ||
+      formData.department ||
+      formData.appointmentType ||
+      formData.appointmentDate ||
+      formData.appointmentTime ||
+      formData.reason
+    ) {
+      // If form has data, confirm before clearing
+      if (window.confirm("Are you sure you want to discard changes?")) {
+        resetForm();
+        message.info("Form cleared");
+      }
+    } else {
+      // If form is empty, just navigate back
+      navigate(all_routes.appointments);
+    }
   };
 
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log('📝 Form submitted!');
-    console.log('Current form data:', formData);
-
     setLoading(true);
 
     try {
       // Validate required fields
-      console.log('🔍 Validating form fields...');
-
       if (!formData.patient) {
         message.error("Please select a patient");
         setLoading(false);
@@ -1281,9 +1287,7 @@ const NewAppointment = () => {
         return;
       }
 
-      console.log('✅ All validations passed!');
-
-      // Format date and time
+      // Format appointment data
       const appointmentData = {
         patient: formData.patient,
         doctor: formData.doctor,
@@ -1295,26 +1299,20 @@ const NewAppointment = () => {
         status: formData.status,
       };
 
-      console.log("📤 Submitting appointment data:", appointmentData);
-
       // Create appointment
       const response = await createAppointment(appointmentData);
 
-      console.log("✅ Appointment created successfully:", response);
-
-      message.success("Appointment created successfully!");
-
-      // Navigate to appointments list after a short delay
-      setTimeout(() => {
-        console.log("🔄 Navigating to appointments list...");
-        navigate(all_routes.appointments);
-      }, 500);
-
-    } catch (error: any) {
-      console.error("❌ Error creating appointment:", error);
-      message.error(
-        error.message || "Failed to create appointment"
+      message.success(
+        `Appointment created successfully! ID: ${response.data.appointmentId}`
       );
+
+      // Navigate to appointments list
+      setTimeout(() => {
+        navigate(all_routes.appointments);
+      }, 1000);
+    } catch (error: any) {
+      console.error("Error creating appointment:", error);
+      message.error(error.message || "Failed to create appointment");
     } finally {
       setLoading(false);
     }
@@ -1324,13 +1322,6 @@ const NewAppointment = () => {
     const modalElement = document.getElementById("modal-datepicker");
     return modalElement ? modalElement : document.body;
   };
-
-  console.log('🎨 Rendering component with:', {
-    doctorsCount: doctors.length,
-    patientsCount: patients.length,
-    formData,
-    loading
-  });
 
   return (
     <>
@@ -1363,6 +1354,9 @@ const NewAppointment = () => {
                         value="Auto-generated"
                         disabled
                       />
+                      <small className="text-muted">
+                        Appointment ID will be generated automatically after creation
+                      </small>
                     </div>
 
                     <div className="row">
@@ -1451,10 +1445,9 @@ const NewAppointment = () => {
                               format="DD-MM-YYYY"
                               getPopupContainer={getModalContainer}
                               placeholder="DD-MM-YYYY"
-                              onChange={(date) => {
-                                console.log('Date selected:', date);
-                                setFormData({ ...formData, appointmentDate: date });
-                              }}
+                              onChange={(date) =>
+                                setFormData({ ...formData, appointmentDate: date })
+                              }
                               suffixIcon={null}
                             />
                             <span className="input-icon-addon">
@@ -1473,10 +1466,9 @@ const NewAppointment = () => {
                             <TimePicker
                               className="form-control"
                               format="HH:mm"
-                              onChange={(time) => {
-                                console.log('Time selected:', time);
-                                setFormData({ ...formData, appointmentTime: time });
-                              }}
+                              onChange={(time) =>
+                                setFormData({ ...formData, appointmentTime: time })
+                              }
                               defaultOpenValue={dayjs("00:00:00", "HH:mm:ss")}
                             />
                             <span className="input-icon-addon">
@@ -1496,10 +1488,9 @@ const NewAppointment = () => {
                         className="form-control"
                         rows={3}
                         value={formData.reason}
-                        onChange={(e) => {
-                          console.log('Reason changed:', e.target.value);
-                          setFormData({ ...formData, reason: e.target.value });
-                        }}
+                        onChange={(e) =>
+                          setFormData({ ...formData, reason: e.target.value })
+                        }
                         placeholder="Enter reason for appointment"
                       />
                     </div>
@@ -1518,12 +1509,14 @@ const NewAppointment = () => {
 
                     {/* Submit Buttons */}
                     <div className="d-flex align-items-center justify-content-end mt-4">
-                      <Link
-                        to={all_routes.appointments}
+                      <button
+                        type="button"
+                        onClick={handleCancel}
                         className="btn btn-light me-2"
+                        disabled={loading}
                       >
                         Cancel
-                      </Link>
+                      </button>
                       <button
                         type="submit"
                         className="btn btn-primary"
@@ -1531,7 +1524,11 @@ const NewAppointment = () => {
                       >
                         {loading ? (
                           <>
-                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span
+                              className="spinner-border spinner-border-sm me-2"
+                              role="status"
+                              aria-hidden="true"
+                            ></span>
                             Creating...
                           </>
                         ) : (
