@@ -119,11 +119,19 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
+    // origin: function (origin, callback) {
+    //     if (!origin) return callback(null, true);
+    //     if (allowedOrigins.indexOf(origin) !== -1) {
+    //         callback(null, true);
+    //     } else {
+    //         callback(new Error('CORS policy: This origin is not allowed.'));
+    //     }
+    // },
     origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            console.error('❌ Blocked by CORS:', origin);
             callback(new Error('CORS policy: This origin is not allowed.'));
         }
     },
