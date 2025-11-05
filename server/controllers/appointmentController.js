@@ -11,12 +11,12 @@ const generateAppointmentId = async () => {
         .select('appointmentId');
 
     if (!lastAppointment) {
-        return `${prefix}234354`; // Starting ID
+        return `${prefix}0001`; // Starting ID
     }
 
     const lastNumber = parseInt(lastAppointment.appointmentId.replace(prefix, ''));
     const newNumber = lastNumber + 1;
-    return `${prefix}${newNumber}`;
+    return `${prefix}${String(newNumber).padStart(4, '0')}`;
 };
 
 /**
