@@ -1828,6 +1828,699 @@
 // export default Appointments;
 
 
+// import { useState, useEffect } from "react";
+// import { Link } from "react-router";
+// import ImageWithBasePath from "../../../../../core/imageWithBasePath";
+// import { all_routes } from "../../../../routes/all_routes";
+// import SearchInput from "../../../../../core/common/dataTable/dataTableSearch";
+// import Datatable from "../../../../../core/common/dataTable";
+// import {
+//   getAppointments,
+//   deleteAppointment,
+//   updateAppointment,
+//   type AppointmentResponse
+// } from "../../../../../api/appointmentService";
+// import { message, DatePicker, Modal } from "antd";
+// import dayjs from "dayjs";
+// import CommonSelect from "../../../../../core/common/common-select/commonSelect";
+// import * as XLSX from 'xlsx';
+// import jsPDF from "jspdf";
+// import 'jspdf-autotable'
+
+// const Appointments = () => {
+//   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
+//   const [loading, setLoading] = useState(true);
+//   const [searchText, setSearchText] = useState<string>("");
+//   const [deleteId, setDeleteId] = useState<string>("");
+//   const [editModalVisible, setEditModalVisible] = useState(false);
+//   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+//   const [editFormData, setEditFormData] = useState<any>({});
+
+//   useEffect(() => {
+//     fetchAppointments();
+//   }, []);
+
+//   const fetchAppointments = async () => {
+//     try {
+//       setLoading(true);
+//       const response = await getAppointments();
+//       setAppointments(response.data || []);
+//     } catch (error: any) {
+//       console.error("Error fetching appointments:", error);
+//       message.error(error.message || "Failed to load appointments");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleDelete = async () => {
+//     if (!deleteId) return;
+
+//     try {
+//       await deleteAppointment(deleteId);
+//       message.success("Appointment deleted successfully");
+//       fetchAppointments();
+//       setDeleteId("");
+//     } catch (error: any) {
+//       console.error("Error deleting appointment:", error);
+//       message.error(error.message || "Failed to delete appointment");
+//     }
+//   };
+
+//   const handleSearch = (value: string) => {
+//     setSearchText(value);
+//   };
+
+//   // Export to PDF - FIXED
+//   const exportToPDF = () => {
+//     const doc = new jsPDF();
+
+//     doc.setFontSize(18);
+//     doc.text('Appointments Report', 14, 20);
+
+//     const tableData = filteredData.map(app => [
+//       `${dayjs(app.appointmentDate).format("DD MMM YYYY")} ${app.appointmentTime}`,
+//       app.patient?.fullName || "N/A",
+//       app.patient?.email || "N/A",
+//       app.doctor?.fullName || "N/A",
+//       app.department || "N/A",
+//       app.appointmentType || "N/A",
+//       app.status || "N/A"
+//     ]);
+
+//     (doc as any).autoTable({
+//       head: [['Date & Time', 'Patient', 'Contact', 'Doctor', 'Department', 'Mode', 'Status']],
+//       body: tableData,
+//       startY: 30,
+//       styles: { fontSize: 8 },
+//       headStyles: { fillColor: [66, 66, 245] }
+//     });
+
+//     doc.save(`appointments_${dayjs().format('YYYY-MM-DD')}.pdf`);
+//     message.success('PDF downloaded successfully');
+//   };
+
+//   // Export to Excel - FIXED
+//   const exportToExcel = () => {
+//     const excelData = filteredData.map(app => ({
+//       'Date': dayjs(app.appointmentDate).format("DD MMM YYYY"),
+//       'Time': app.appointmentTime,
+//       'Patient Name': app.patient?.fullName || "N/A",
+//       'Patient Email': app.patient?.email || "N/A",
+//       'Doctor Name': app.doctor?.fullName || "N/A",
+//       'Department': app.department || "N/A",
+//       'Appointment Type': app.appointmentType || "N/A",
+//       'Status': app.status || "N/A"
+//     }));
+
+//     const ws = XLSX.utils.json_to_sheet(excelData);
+//     const wb = XLSX.utils.book_new();
+//     XLSX.utils.book_append_sheet(wb, ws, 'Appointments');
+//     XLSX.writeFile(wb, `appointments_${dayjs().format('YYYY-MM-DD')}.xlsx`);
+//     message.success('Excel downloaded successfully');
+//   };
+
+//   // Handle View - Opens Bootstrap Offcanvas
+//   const handleView = (appointment: any) => {
+//     setSelectedAppointment(appointment);
+//     // Trigger Bootstrap offcanvas
+//     const offcanvasElement = document.getElementById('view_details');
+//     if (offcanvasElement) {
+//       const bsOffcanvas = new (window as any).bootstrap.Offcanvas(offcanvasElement);
+//       bsOffcanvas.show();
+//     }
+//   };
+
+//   // Handle Edit - Opens Modal
+//   const handleEdit = (appointment: any) => {
+//     setSelectedAppointment(appointment);
+//     setEditFormData({
+//       appointmentDate: appointment.appointmentDate,
+//       appointmentTime: appointment.appointmentTime,
+//       appointmentType: appointment.appointmentType,
+//       department: appointment.department,
+//       status: appointment.status,
+//       reason: appointment.reason || "",
+//       patient: appointment.patient?._id,
+//       doctor: appointment.doctor?._id
+//     });
+//     setEditModalVisible(true);
+//   };
+
+//   // Submit Edit - INSTANT UPDATE
+//   const handleEditSubmit = async () => {
+//     try {
+//       const updateData = {
+//         appointmentDate: editFormData.appointmentDate,
+//         appointmentTime: editFormData.appointmentTime,
+//         appointmentType: editFormData.appointmentType,
+//         department: editFormData.department,
+//         status: editFormData.status,
+//         reason: editFormData.reason
+//       };
+
+//       await updateAppointment(selectedAppointment._id, updateData);
+
+//       // Instant update in state without refetching
+//       setAppointments(prevAppointments =>
+//         prevAppointments.map(app =>
+//           app._id === selectedAppointment._id
+//             ? { ...app, ...updateData }
+//             : app
+//         )
+//       );
+
+//       message.success("Appointment updated successfully");
+//       setEditModalVisible(false);
+//     } catch (error: any) {
+//       console.error("Error updating appointment:", error);
+//       message.error(error.message || "Failed to update appointment");
+//     }
+//   };
+
+//   // Get initials or show Google profile photo
+//   const getInitials = (name: string) => {
+//     if (!name) return "?";
+//     return name.charAt(0).toUpperCase();
+//   };
+
+//   // Render avatar with Google photo support
+//   const renderAvatar = (image: string | null | undefined, name: string, bgColor: string) => {
+//     // If image exists and it's a Google profile URL or local image
+//     if (image && (image.includes('googleusercontent.com') || image.startsWith('http'))) {
+//       return (
+//         <img
+//           src={image}
+//           alt={name}
+//           className="rounded-circle"
+//           style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+//           onError={(e) => {
+//             // Fallback to initials if image fails to load
+//             e.currentTarget.style.display = 'none';
+//             e.currentTarget.nextElementSibling?.classList.remove('d-none');
+//           }}
+//         />
+//       );
+//     } else if (image) {
+//       // Local image from assets
+//       return (
+//         <ImageWithBasePath
+//           src={`assets/img/users/${image}`}
+//           alt={name}
+//           className="rounded-circle"
+//         />
+//       );
+//     } else {
+//       // Show initials
+//       return (
+//         <div className={`rounded-circle ${bgColor} text-white d-flex align-items-center justify-content-center`} style={{ width: '40px', height: '40px', fontSize: '16px' }}>
+//           {getInitials(name)}
+//         </div>
+//       );
+//     }
+//   };
+
+//   // Filter appointments based on search
+//   const filteredData = appointments.filter(app => {
+//     const searchLower = searchText.toLowerCase();
+//     return (
+//       app.patient?.fullName?.toLowerCase().includes(searchLower) ||
+//       app.doctor?.fullName?.toLowerCase().includes(searchLower) ||
+//       app.department?.toLowerCase().includes(searchLower)
+//     );
+//   });
+
+//   // Format data for table
+//   const tableData = filteredData.map((appointment) => ({
+//     key: appointment._id,
+//     Date_Time: `${dayjs(appointment.appointmentDate).format("DD MMM YYYY")} - ${appointment.appointmentTime}`,
+//     Patient: appointment.patient?.fullName || "N/A",
+//     Patient_Image: appointment.patient?.profileImage || null,
+//     Phone: appointment.patient?.email || "N/A",
+//     Doctor: appointment.doctor?.fullName || "N/A",
+//     Doctor_Image: appointment.doctor?.profileImage || null,
+//     role: appointment.department,
+//     Mode: appointment.appointmentType,
+//     Status: appointment.status,
+//     _id: appointment._id,
+//     fullData: appointment
+//   }));
+
+//   const columns = [
+//     {
+//       title: "Date & Time",
+//       dataIndex: "Date_Time",
+//       sorter: (a: any, b: any) => a.Date_Time.localeCompare(b.Date_Time),
+//     },
+//     {
+//       title: "Patient",
+//       dataIndex: "Patient",
+//       render: (text: any, record: any) => (
+//         <div className="d-flex align-items-center">
+//           <Link
+//             to={all_routes.patientDetails}
+//             className="avatar avatar-md me-2"
+//           >
+//             {renderAvatar(record.Patient_Image, text, 'bg-primary')}
+//           </Link>
+//           <Link
+//             to={all_routes.patientDetails}
+//             className="text-dark fw-semibold"
+//           >
+//             {text}
+//             <span className="text-body fs-13 fw-normal d-block">
+//               {record.Phone}
+//             </span>
+//           </Link>
+//         </div>
+//       ),
+//       sorter: (a: any, b: any) => a.Patient.localeCompare(b.Patient),
+//     },
+//     {
+//       title: "Doctor",
+//       dataIndex: "Doctor",
+//       render: (text: any, record: any) => (
+//         <div className="d-flex align-items-center">
+//           <Link
+//             to={all_routes.doctordetails}
+//             className="avatar me-2 flex-shrink-0"
+//           >
+//             {renderAvatar(record.Doctor_Image, text, 'bg-success')}
+//           </Link>
+//           <div>
+//             <h6 className="fs-14 mb-1 text-truncate">
+//               <Link to={all_routes.doctordetails} className="fw-semibold">
+//                 {text}
+//               </Link>
+//             </h6>
+//             <p className="mb-0 fs-13 text-truncate">{record.role}</p>
+//           </div>
+//         </div>
+//       ),
+//       sorter: (a: any, b: any) => a.Doctor.localeCompare(b.Doctor),
+//     },
+//     {
+//       title: "Mode",
+//       dataIndex: "Mode",
+//       sorter: (a: any, b: any) => a.Mode.localeCompare(b.Mode),
+//     },
+//     {
+//       title: "Status",
+//       dataIndex: "Status",
+//       render: (text: string) => (
+//         <span
+//           className={`fs-13 badge ${text === "Checked Out"
+//               ? "badge-soft-info text-info"
+//               : text === "Checked In"
+//                 ? "badge-soft-warning text-warning"
+//                 : text === "Cancelled"
+//                   ? "badge-soft-danger text-danger"
+//                   : text === "Scheduled"
+//                     ? "badge-soft-primary text-primary"
+//                     : text === "Confirmed"
+//                       ? "badge-soft-success text-success"
+//                       : "badge-soft-secondary text-secondary"
+//             } rounded fw-medium`}
+//         >
+//           {text}
+//         </span>
+//       ),
+//       sorter: (a: any, b: any) => a.Status.localeCompare(b.Status),
+//     },
+//     {
+//       title: "",
+//       render: (record: any) => (
+//         <div className="action-item">
+//           <Link to="#" data-bs-toggle="dropdown">
+//             <i className="ti ti-dots-vertical" />
+//           </Link>
+//           <ul className="dropdown-menu p-2">
+//             <li>
+//               <Link
+//                 to="#"
+//                 className="dropdown-item d-flex align-items-center"
+//                 onClick={() => handleEdit(record.fullData)}
+//               >
+//                 Edit
+//               </Link>
+//             </li>
+//             <li>
+//               <Link
+//                 to="#"
+//                 className="dropdown-item d-flex align-items-center"
+//                 onClick={() => handleView(record.fullData)}
+//               >
+//                 View
+//               </Link>
+//             </li>
+//             <li>
+//               <Link
+//                 to="#"
+//                 className="dropdown-item d-flex align-items-center"
+//                 data-bs-toggle="modal"
+//                 data-bs-target="#delete_modal"
+//                 onClick={() => setDeleteId(record._id)}
+//               >
+//                 Delete
+//               </Link>
+//             </li>
+//           </ul>
+//         </div>
+//       ),
+//     },
+//   ];
+
+//   const StatusOptions = [
+//     { value: "Scheduled", label: "Scheduled" },
+//     { value: "Confirmed", label: "Confirmed" },
+//     { value: "Checked In", label: "Checked In" },
+//     { value: "Checked Out", label: "Checked Out" },
+//     { value: "Cancelled", label: "Cancelled" }
+//   ];
+
+//   const AppointmentTypeOptions = [
+//     { value: "In-Person Visit", label: "In-Person Visit" },
+//     { value: "Online Consultation", label: "Online Consultation" },
+//     { value: "Emergency", label: "Emergency" }
+//   ];
+
+//   return (
+//     <>
+//       <div className="page-wrapper">
+//         <div className="content">
+//           {/* Page Header */}
+//           <div className="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-1 border-bottom">
+//             <div className="flex-grow-1">
+//               <h4 className="fw-semibold mb-0"> Appointment </h4>
+//             </div>
+//             <div className="text-end d-flex">
+//               <div className="dropdown me-1">
+//                 <Link
+//                   to="#"
+//                   className="btn btn-md fs-14 fw-normal border bg-white rounded text-dark d-inline-flex align-items-center"
+//                   data-bs-toggle="dropdown"
+//                 >
+//                   Export
+//                   <i className="ti ti-chevron-down ms-2" />
+//                 </Link>
+//                 <ul className="dropdown-menu p-2">
+//                   <li>
+//                     <Link className="dropdown-item" to="#" onClick={exportToPDF}>
+//                       Download as PDF
+//                     </Link>
+//                   </li>
+//                   <li>
+//                     <Link className="dropdown-item" to="#" onClick={exportToExcel}>
+//                       Download as Excel
+//                     </Link>
+//                   </li>
+//                 </ul>
+//               </div>
+//               <div className="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
+//                 <Link
+//                   to={all_routes.appointments}
+//                   className="bg-light rounded p-1 d-flex align-items-center justify-content-center"
+//                 >
+//                   <i className="ti ti-list fs-14 text-dark" />
+//                 </Link>
+//                 <Link
+//                   to={all_routes.appointmentCalendar}
+//                   className="bg-white rounded p-1 d-flex align-items-center justify-content-center"
+//                 >
+//                   <i className="ti ti-calendar-event fs-14 text-body" />
+//                 </Link>
+//               </div>
+//               <Link
+//                 to={all_routes.newAppointment}
+//                 className="btn btn-primary ms-2 fs-13 btn-md"
+//               >
+//                 <i className="ti ti-plus me-1" /> New Appointment
+//               </Link>
+//             </div>
+//           </div>
+
+//           {/* Filter Section */}
+//           <div className="d-flex align-items-center justify-content-between flex-wrap">
+//             <div className="d-flex align-items-center gap-2">
+//               <div className="search-set mb-3">
+//                 <div className="d-flex align-items-center flex-wrap gap-2">
+//                   <div className="table-search d-flex align-items-center mb-0">
+//                     <div className="search-input">
+//                       <SearchInput value={searchText} onChange={handleSearch} />
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Table */}
+//           <div className="table-responsive">
+//             {loading ? (
+//               <div className="text-center py-5">
+//                 <div className="spinner-border text-primary" role="status">
+//                   <span className="visually-hidden">Loading...</span>
+//                 </div>
+//               </div>
+//             ) : (
+//               <Datatable
+//                 columns={columns}
+//                 dataSource={tableData}
+//                 Selection={false}
+//                 searchText=""
+//               />
+//             )}
+//           </div>
+//         </div>
+
+//         {/* Footer */}
+//         <div className="footer text-center bg-white p-2 border-top">
+//           <p className="text-dark mb-0">
+//             2025 ©
+//             <Link to="#" className="link-primary">
+//               Preclinic
+//             </Link>
+//             , All Rights Reserved
+//           </p>
+//         </div>
+//       </div>
+
+//       {/* View Offcanvas - Bootstrap Offcanvas */}
+//       <div
+//         className="offcanvas offcanvas-offset offcanvas-end"
+//         tabIndex={-1}
+//         id="view_details"
+//       >
+//         <div className="offcanvas-header d-block pb-0 px-0">
+//           <div className="border-bottom d-flex align-items-center justify-content-between pb-3 px-3">
+//             <h5 className="offcanvas-title fs-18 fw-bold">
+//               Appointment Details
+//               <span className="badge badge-soft-primary border pt-1 px-2 border-primary fw-medium ms-2">
+//                 #{selectedAppointment?.appointmentId || 'N/A'}
+//               </span>
+//             </h5>
+//             <button
+//               type="button"
+//               className="btn-close custom-btn-close opacity-100"
+//               data-bs-dismiss="offcanvas"
+//               aria-label="Close"
+//             >
+//               <i className="ti ti-x bg-white fs-16 text-dark" />
+//             </button>
+//           </div>
+//         </div>
+//         <div className="offcanvas-body pt-0 px-0">
+//           <h6 className="bg-light py-2 px-3 fw-bold"> When &amp; Where </h6>
+//           <div className="px-3 my-4">
+//             <div className="bg-light p-3 mb-3 border rounded-3 d-flex align-items-center justify-content-between">
+//               <div className="d-flex align-items-center">
+//                 <Link to="#" className="avatar avatar-md me-2">
+//                   {selectedAppointment?.doctor?.profileImage ? (
+//                     renderAvatar(selectedAppointment.doctor.profileImage, selectedAppointment.doctor.fullName, 'bg-success')
+//                   ) : (
+//                     <div className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+//                       {getInitials(selectedAppointment?.doctor?.fullName || '')}
+//                     </div>
+//                   )}
+//                 </Link>
+//                 <Link to="#" className="text-dark fw-semibold">
+//                   {selectedAppointment?.doctor?.fullName || 'N/A'}
+//                   <span className="text-body fs-13 fw-normal d-block">
+//                     {selectedAppointment?.department || 'N/A'}
+//                   </span>
+//                 </Link>
+//               </div>
+//             </div>
+//             <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+//               Appointment On
+//               <span className="text-body fw-normal">{selectedAppointment ? dayjs(selectedAppointment.appointmentDate).format('dddd, DD MMM YYYY') : 'N/A'}</span>
+//             </p>
+//             <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+//               Time
+//               <span className="text-body fw-normal">{selectedAppointment?.appointmentTime || 'N/A'}</span>
+//             </p>
+//             <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+//               Appointment Type
+//               <span className="text-body fw-normal">{selectedAppointment?.appointmentType || 'N/A'}</span>
+//             </p>
+//             <div className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+//               Patient Details
+//               <div className="text-body fw-normal d-flex align-items-center">
+//                 <div className="avatar avatar-xs flex-shrink-0 me-2">
+//                   {selectedAppointment?.patient?.profileImage ? (
+//                     renderAvatar(selectedAppointment.patient.profileImage, selectedAppointment.patient.fullName, 'bg-primary')
+//                   ) : (
+//                     <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '30px', height: '30px', fontSize: '14px' }}>
+//                       {getInitials(selectedAppointment?.patient?.fullName || '')}
+//                     </div>
+//                   )}
+//                 </div>
+//                 {selectedAppointment?.patient?.fullName || 'N/A'}
+//               </div>
+//             </div>
+//             <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+//               Reason
+//               <span className="text-body fw-normal">{selectedAppointment?.reason || 'N/A'}</span>
+//             </p>
+//           </div>
+//           <h6 className="bg-light py-2 px-3 text-dark fw-bold">
+//             Appointment Status
+//           </h6>
+//           <div className="px-3 my-4">
+//             <div className="d-flex align-items-center justify-content-between mb-3">
+//               <p className="text-dark mb-0">Current Status</p>
+//               <span className={`badge ${selectedAppointment?.status === "Checked Out" ? "bg-info" :
+//                   selectedAppointment?.status === "Checked In" ? "bg-warning" :
+//                     selectedAppointment?.status === "Cancelled" ? "bg-danger" :
+//                       selectedAppointment?.status === "Scheduled" ? "bg-primary" :
+//                         selectedAppointment?.status === "Confirmed" ? "bg-success" : "bg-secondary"
+//                 }`}>
+//                 {selectedAppointment?.status || 'N/A'}
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Edit Modal */}
+//       <Modal
+//         title="Edit Appointment"
+//         open={editModalVisible}
+//         onCancel={() => setEditModalVisible(false)}
+//         footer={[
+//           <button key="cancel" className="btn btn-light me-2" onClick={() => setEditModalVisible(false)}>
+//             Cancel
+//           </button>,
+//           <button key="save" className="btn btn-primary" onClick={handleEditSubmit}>
+//             Save Changes
+//           </button>
+//         ]}
+//         width={600}
+//       >
+//         {selectedAppointment && (
+//           <div>
+//             <div className="mb-3">
+//               <label className="form-label">Appointment Date</label>
+//               <DatePicker
+//                 className="form-control"
+//                 value={dayjs(editFormData.appointmentDate)}
+//                 onChange={(date) => setEditFormData({ ...editFormData, appointmentDate: date?.format('YYYY-MM-DD') })}
+//                 format="DD-MM-YYYY"
+//               />
+//             </div>
+//             <div className="mb-3">
+//               <label className="form-label">Time</label>
+//               <input
+//                 type="time"
+//                 className="form-control"
+//                 value={editFormData.appointmentTime}
+//                 onChange={(e) => setEditFormData({ ...editFormData, appointmentTime: e.target.value })}
+//               />
+//             </div>
+//             <div className="mb-3">
+//               <label className="form-label">Appointment Type</label>
+//               <CommonSelect
+//                 options={AppointmentTypeOptions}
+//                 className="select"
+//                 defaultValue={AppointmentTypeOptions.find(opt => opt.value === editFormData.appointmentType)}
+//                 onChange={(option: any) => setEditFormData({ ...editFormData, appointmentType: option?.value })}
+//               />
+//             </div>
+//             <div className="mb-3">
+//               <label className="form-label">Status</label>
+//               <CommonSelect
+//                 options={StatusOptions}
+//                 className="select"
+//                 defaultValue={StatusOptions.find(opt => opt.value === editFormData.status)}
+//                 onChange={(option: any) => setEditFormData({ ...editFormData, status: option?.value })}
+//               />
+//             </div>
+//             <div className="mb-3">
+//               <label className="form-label">Reason</label>
+//               <textarea
+//                 className="form-control"
+//                 rows={3}
+//                 value={editFormData.reason}
+//                 onChange={(e) => setEditFormData({ ...editFormData, reason: e.target.value })}
+//               />
+//             </div>
+//           </div>
+//         )}
+//       </Modal>
+
+//       {/* Delete Modal */}
+//       <div className="modal fade" id="delete_modal">
+//         <div className="modal-dialog modal-dialog-centered modal-sm">
+//           <div className="modal-content">
+//             <div className="modal-body text-center position-relative">
+//               <ImageWithBasePath
+//                 src="assets/img/bg/delete-modal-bg-01.png"
+//                 alt=""
+//                 className="img-fluid position-absolute top-0 start-0 z-0"
+//               />
+//               <ImageWithBasePath
+//                 src="assets/img/bg/delete-modal-bg-02.png"
+//                 alt=""
+//                 className="img-fluid position-absolute bottom-0 end-0 z-0"
+//               />
+//               <div className="mb-3 position-relative z-1">
+//                 <span className="avatar avatar-lg bg-danger text-white">
+//                   <i className="ti ti-trash fs-24" />
+//                 </span>
+//               </div>
+//               <h5 className="fw-bold mb-1 position-relative z-1">
+//                 Delete Confirmation
+//               </h5>
+//               <p className="mb-3 position-relative z-1">
+//                 Are you sure want to delete this appointment?
+//               </p>
+//               <div className="d-flex justify-content-center">
+//                 <Link
+//                   to="#"
+//                   className="btn btn-light position-relative z-1 me-3"
+//                   data-bs-dismiss="modal"
+//                 >
+//                   Cancel
+//                 </Link>
+//                 <button
+//                   type="button"
+//                   className="btn btn-danger position-relative z-1"
+//                   data-bs-dismiss="modal"
+//                   onClick={handleDelete}
+//                 >
+//                   Yes, Delete
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </>
+//   );
+// };
+
+// export default Appointments;
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
@@ -1845,7 +2538,7 @@ import dayjs from "dayjs";
 import CommonSelect from "../../../../../core/common/common-select/commonSelect";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
@@ -1891,59 +2584,68 @@ const Appointments = () => {
     setSearchText(value);
   };
 
-  // Export to PDF - FIXED
+  // ✅ FIXED: Export to PDF with proper typing
   const exportToPDF = () => {
-    const doc = new jsPDF();
+    try {
+      const doc = new jsPDF();
 
-    doc.setFontSize(18);
-    doc.text('Appointments Report', 14, 20);
+      doc.setFontSize(18);
+      doc.text('Appointments Report', 14, 20);
 
-    const tableData = filteredData.map(app => [
-      `${dayjs(app.appointmentDate).format("DD MMM YYYY")} ${app.appointmentTime}`,
-      app.patient?.fullName || "N/A",
-      app.patient?.email || "N/A",
-      app.doctor?.fullName || "N/A",
-      app.department || "N/A",
-      app.appointmentType || "N/A",
-      app.status || "N/A"
-    ]);
+      const tableData = filteredData.map(app => [
+        `${dayjs(app.appointmentDate).format("DD MMM YYYY")} ${app.appointmentTime}`,
+        app.patient?.fullName || "N/A",
+        app.patient?.email || "N/A",
+        app.doctor?.fullName || "N/A",
+        app.department || "N/A",
+        app.appointmentType || "N/A",
+        app.status || "N/A"
+      ]);
 
-    (doc as any).autoTable({
-      head: [['Date & Time', 'Patient', 'Contact', 'Doctor', 'Department', 'Mode', 'Status']],
-      body: tableData,
-      startY: 30,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [66, 66, 245] }
-    });
+      autoTable(doc, {
+        head: [['Date & Time', 'Patient', 'Contact', 'Doctor', 'Department', 'Mode', 'Status']],
+        body: tableData,
+        startY: 30,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [66, 66, 245] }
+      });
 
-    doc.save(`appointments_${dayjs().format('YYYY-MM-DD')}.pdf`);
-    message.success('PDF downloaded successfully');
+      doc.save(`appointments_${dayjs().format('YYYY-MM-DD')}.pdf`);
+      message.success('PDF downloaded successfully');
+    } catch (error) {
+      console.error('PDF export error:', error);
+      message.error('Failed to export PDF');
+    }
   };
 
-  // Export to Excel - FIXED
+  // Export to Excel
   const exportToExcel = () => {
-    const excelData = filteredData.map(app => ({
-      'Date': dayjs(app.appointmentDate).format("DD MMM YYYY"),
-      'Time': app.appointmentTime,
-      'Patient Name': app.patient?.fullName || "N/A",
-      'Patient Email': app.patient?.email || "N/A",
-      'Doctor Name': app.doctor?.fullName || "N/A",
-      'Department': app.department || "N/A",
-      'Appointment Type': app.appointmentType || "N/A",
-      'Status': app.status || "N/A"
-    }));
+    try {
+      const excelData = filteredData.map(app => ({
+        'Date': dayjs(app.appointmentDate).format("DD MMM YYYY"),
+        'Time': app.appointmentTime,
+        'Patient Name': app.patient?.fullName || "N/A",
+        'Patient Email': app.patient?.email || "N/A",
+        'Doctor Name': app.doctor?.fullName || "N/A",
+        'Department': app.department || "N/A",
+        'Appointment Type': app.appointmentType || "N/A",
+        'Status': app.status || "N/A"
+      }));
 
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Appointments');
-    XLSX.writeFile(wb, `appointments_${dayjs().format('YYYY-MM-DD')}.xlsx`);
-    message.success('Excel downloaded successfully');
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Appointments');
+      XLSX.writeFile(wb, `appointments_${dayjs().format('YYYY-MM-DD')}.xlsx`);
+      message.success('Excel downloaded successfully');
+    } catch (error) {
+      console.error('Excel export error:', error);
+      message.error('Failed to export Excel');
+    }
   };
 
   // Handle View - Opens Bootstrap Offcanvas
   const handleView = (appointment: any) => {
     setSelectedAppointment(appointment);
-    // Trigger Bootstrap offcanvas
     const offcanvasElement = document.getElementById('view_details');
     if (offcanvasElement) {
       const bsOffcanvas = new (window as any).bootstrap.Offcanvas(offcanvasElement);
@@ -2006,7 +2708,6 @@ const Appointments = () => {
 
   // Render avatar with Google photo support
   const renderAvatar = (image: string | null | undefined, name: string, bgColor: string) => {
-    // If image exists and it's a Google profile URL or local image
     if (image && (image.includes('googleusercontent.com') || image.startsWith('http'))) {
       return (
         <img
@@ -2015,14 +2716,12 @@ const Appointments = () => {
           className="rounded-circle"
           style={{ width: '40px', height: '40px', objectFit: 'cover' }}
           onError={(e) => {
-            // Fallback to initials if image fails to load
             e.currentTarget.style.display = 'none';
             e.currentTarget.nextElementSibling?.classList.remove('d-none');
           }}
         />
       );
     } else if (image) {
-      // Local image from assets
       return (
         <ImageWithBasePath
           src={`assets/img/users/${image}`}
@@ -2031,7 +2730,6 @@ const Appointments = () => {
         />
       );
     } else {
-      // Show initials
       return (
         <div className={`rounded-circle ${bgColor} text-white d-flex align-items-center justify-content-center`} style={{ width: '40px', height: '40px', fontSize: '16px' }}>
           {getInitials(name)}
@@ -2130,16 +2828,16 @@ const Appointments = () => {
       render: (text: string) => (
         <span
           className={`fs-13 badge ${text === "Checked Out"
-              ? "badge-soft-info text-info"
-              : text === "Checked In"
-                ? "badge-soft-warning text-warning"
-                : text === "Cancelled"
-                  ? "badge-soft-danger text-danger"
-                  : text === "Scheduled"
-                    ? "badge-soft-primary text-primary"
-                    : text === "Confirmed"
-                      ? "badge-soft-success text-success"
-                      : "badge-soft-secondary text-secondary"
+            ? "badge-soft-info text-info"
+            : text === "Checked In"
+              ? "badge-soft-warning text-warning"
+              : text === "Cancelled"
+                ? "badge-soft-danger text-danger"
+                : text === "Scheduled"
+                  ? "badge-soft-primary text-primary"
+                  : text === "Confirmed"
+                    ? "badge-soft-success text-success"
+                    : "badge-soft-secondary text-secondary"
             } rounded fw-medium`}
         >
           {text}
@@ -2305,7 +3003,7 @@ const Appointments = () => {
         </div>
       </div>
 
-      {/* View Offcanvas - Bootstrap Offcanvas */}
+      {/* View Offcanvas */}
       <div
         className="offcanvas offcanvas-offset offcanvas-end"
         tabIndex={-1}
@@ -2390,10 +3088,10 @@ const Appointments = () => {
             <div className="d-flex align-items-center justify-content-between mb-3">
               <p className="text-dark mb-0">Current Status</p>
               <span className={`badge ${selectedAppointment?.status === "Checked Out" ? "bg-info" :
-                  selectedAppointment?.status === "Checked In" ? "bg-warning" :
-                    selectedAppointment?.status === "Cancelled" ? "bg-danger" :
-                      selectedAppointment?.status === "Scheduled" ? "bg-primary" :
-                        selectedAppointment?.status === "Confirmed" ? "bg-success" : "bg-secondary"
+                selectedAppointment?.status === "Checked In" ? "bg-warning" :
+                  selectedAppointment?.status === "Cancelled" ? "bg-danger" :
+                    selectedAppointment?.status === "Scheduled" ? "bg-primary" :
+                      selectedAppointment?.status === "Confirmed" ? "bg-success" : "bg-secondary"
                 }`}>
                 {selectedAppointment?.status || 'N/A'}
               </span>
