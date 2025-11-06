@@ -892,6 +892,358 @@
 
 
 
+// import { useState, useEffect } from "react";
+// import { Link } from "react-router";
+// import ImageWithBasePath from "../../../../../core/imageWithBasePath";
+// import { all_routes } from "../../../../routes/all_routes";
+// import SearchInput from "../../../../../core/common/dataTable/dataTableSearch";
+// import Datatable from "../../../../../core/common/dataTable";
+// import {
+//   getAppointments,
+//   deleteAppointment,
+//   type AppointmentResponse
+// } from "../../../../../api/appointmentService";
+// import { message } from "antd";
+// import dayjs from "dayjs";
+
+// const Appointments = () => {
+//   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
+//   const [loading, setLoading] = useState(true);
+//   const [searchText, setSearchText] = useState<string>("");
+//   const [deleteId, setDeleteId] = useState<string>("");
+
+//   useEffect(() => {
+//     fetchAppointments();
+//   }, []);
+
+//   const fetchAppointments = async () => {
+//     try {
+//       setLoading(true);
+//       const response = await getAppointments();
+//       setAppointments(response.data || []);
+//     } catch (error: any) {
+//       console.error("Error fetching appointments:", error);
+//       message.error(error.response?.data?.message || "Failed to load appointments");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleDelete = async () => {
+//     if (!deleteId) return;
+
+//     try {
+//       await deleteAppointment(deleteId);
+//       message.success("Appointment deleted successfully");
+//       fetchAppointments(); // Refresh list
+//       setDeleteId("");
+//     } catch (error: any) {
+//       console.error("Error deleting appointment:", error);
+//       message.error(error.response?.data?.message || "Failed to delete appointment");
+//     }
+//   };
+
+//   const handleSearch = (value: string) => {
+//     setSearchText(value);
+//   };
+
+//   // Format data for table
+//   const tableData = appointments.map((appointment) => ({
+//     key: appointment._id,
+//     Date_Time: `${dayjs(appointment.appointmentDate).format("DD MMM YYYY")} - ${appointment.appointmentTime}`,
+//     Patient: appointment.patient?.fullName || "N/A",
+//     Patient_Image: appointment.patient?.profileImage || "avatar-02.jpg",
+//     Phone: appointment.patient?.email || "N/A",
+//     Doctor: appointment.doctor?.fullName || "N/A",
+//     Doctor_Image: appointment.doctor?.profileImage || "doctor-01.jpg",
+//     role: appointment.department,
+//     Mode: appointment.appointmentType,
+//     Status: appointment.status,
+//     _id: appointment._id,
+//   }));
+
+//   const columns = [
+//     {
+//       title: "Date & Time",
+//       dataIndex: "Date_Time",
+//       sorter: (a: any, b: any) => a.Date_Time.localeCompare(b.Date_Time),
+//     },
+//     {
+//       title: "Patient",
+//       dataIndex: "Patient",
+//       render: (text: any, record: any) => (
+//         <div className="d-flex align-items-center">
+//           <Link
+//             to={all_routes.patientDetails}
+//             className="avatar avatar-md me-2"
+//           >
+//             <ImageWithBasePath
+//               src={`assets/img/users/${record.Patient_Image}`}
+//               alt="patient"
+//               className="rounded-circle"
+//             />
+//           </Link>
+//           <Link
+//             to={all_routes.patientDetails}
+//             className="text-dark fw-semibold"
+//           >
+//             {text}
+//             <span className="text-body fs-13 fw-normal d-block">
+//               {record.Phone}
+//             </span>
+//           </Link>
+//         </div>
+//       ),
+//       sorter: (a: any, b: any) => a.Patient.localeCompare(b.Patient),
+//     },
+//     {
+//       title: "Doctor",
+//       dataIndex: "Doctor",
+//       render: (text: any, record: any) => (
+//         <div className="d-flex align-items-center">
+//           <Link
+//             to={all_routes.doctordetails}
+//             className="avatar me-2 flex-shrink-0"
+//           >
+//             <ImageWithBasePath
+//               src={`assets/img/doctors/${record.Doctor_Image}`}
+//               alt="doctor"
+//               className="rounded-circle"
+//             />
+//           </Link>
+//           <div>
+//             <h6 className="fs-14 mb-1 text-truncate">
+//               <Link to={all_routes.doctordetails} className="fw-semibold">
+//                 {text}
+//               </Link>
+//             </h6>
+//             <p className="mb-0 fs-13 text-truncate">{record.role}</p>
+//           </div>
+//         </div>
+//       ),
+//       sorter: (a: any, b: any) => a.Doctor.localeCompare(b.Doctor),
+//     },
+//     {
+//       title: "Mode",
+//       dataIndex: "Mode",
+//       sorter: (a: any, b: any) => a.Mode.localeCompare(b.Mode),
+//     },
+//     {
+//       title: "Status",
+//       dataIndex: "Status",
+//       render: (text: string) => (
+//         <span
+//           className={`fs-13 badge ${text === "Checked Out"
+//               ? "badge-soft-info text-info"
+//               : text === "Checked In"
+//                 ? "badge-soft-warning text-warning"
+//                 : text === "Cancelled"
+//                   ? "badge-soft-danger text-danger"
+//                   : text === "Schedule"
+//                     ? "badge-soft-primary text-primary"
+//                     : "badge-soft-success text-success"
+//             } rounded fw-medium`}
+//         >
+//           {text}
+//         </span>
+//       ),
+//       sorter: (a: any, b: any) => a.Status.localeCompare(b.Status),
+//     },
+//     {
+//       title: "",
+//       render: (record: any) => (
+//         <div className="action-item">
+//           <Link to="#" data-bs-toggle="dropdown">
+//             <i className="ti ti-dots-vertical" />
+//           </Link>
+//           <ul className="dropdown-menu p-2">
+//             <li>
+//               <Link to="#" className="dropdown-item d-flex align-items-center">
+//                 Edit
+//               </Link>
+//             </li>
+//             <li>
+//               <Link
+//                 to="#"
+//                 className="dropdown-item d-flex align-items-center"
+//                 data-bs-toggle="offcanvas"
+//                 data-bs-target="#view_details"
+//               >
+//                 View
+//               </Link>
+//             </li>
+//             <li>
+//               <Link
+//                 to="#"
+//                 className="dropdown-item d-flex align-items-center"
+//                 data-bs-toggle="modal"
+//                 data-bs-target="#delete_modal"
+//                 onClick={() => setDeleteId(record._id)}
+//               >
+//                 Delete
+//               </Link>
+//             </li>
+//           </ul>
+//         </div>
+//       ),
+//     },
+//   ];
+
+//   return (
+//     <>
+//       <div className="page-wrapper">
+//         <div className="content">
+//           {/* Page Header */}
+//           <div className="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-1 border-bottom">
+//             <div className="flex-grow-1">
+//               <h4 className="fw-semibold mb-0"> Appointment </h4>
+//             </div>
+//             <div className="text-end d-flex">
+//               <div className="dropdown me-1">
+//                 <Link
+//                   to="#"
+//                   className="btn btn-md fs-14 fw-normal border bg-white rounded text-dark d-inline-flex align-items-center"
+//                   data-bs-toggle="dropdown"
+//                 >
+//                   Export
+//                   <i className="ti ti-chevron-down ms-2" />
+//                 </Link>
+//                 <ul className="dropdown-menu p-2">
+//                   <li>
+//                     <Link className="dropdown-item" to="#">
+//                       Download as PDF
+//                     </Link>
+//                   </li>
+//                   <li>
+//                     <Link className="dropdown-item" to="#">
+//                       Download as Excel
+//                     </Link>
+//                   </li>
+//                 </ul>
+//               </div>
+//               <div className="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
+//                 <Link
+//                   to={all_routes.appointments}
+//                   className="bg-light rounded p-1 d-flex align-items-center justify-content-center"
+//                 >
+//                   <i className="ti ti-list fs-14 text-dark" />
+//                 </Link>
+//                 <Link
+//                   to={all_routes.appointmentCalendar}
+//                   className="bg-white rounded p-1 d-flex align-items-center justify-content-center"
+//                 >
+//                   <i className="ti ti-calendar-event fs-14 text-body" />
+//                 </Link>
+//               </div>
+//               <Link
+//                 to={all_routes.newAppointment}
+//                 className="btn btn-primary ms-2 fs-13 btn-md"
+//               >
+//                 <i className="ti ti-plus me-1" /> New Appointment
+//               </Link>
+//             </div>
+//           </div>
+
+//           {/* Filter Section */}
+//           <div className="d-flex align-items-center justify-content-between flex-wrap">
+//             <div className="d-flex align-items-center gap-2">
+//               <div className="search-set mb-3">
+//                 <div className="d-flex align-items-center flex-wrap gap-2">
+//                   <div className="table-search d-flex align-items-center mb-0">
+//                     <div className="search-input">
+//                       <SearchInput value={searchText} onChange={handleSearch} />
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Table */}
+//           <div className="table-responsive">
+//             {loading ? (
+//               <div className="text-center py-5">
+//                 <div className="spinner-border text-primary" role="status">
+//                   <span className="visually-hidden">Loading...</span>
+//                 </div>
+//               </div>
+//             ) : (
+//               <Datatable
+//                 columns={columns}
+//                 dataSource={tableData}
+//                 Selection={false}
+//                 searchText={searchText}
+//               />
+//             )}
+//           </div>
+//         </div>
+
+//         {/* Footer */}
+//         <div className="footer text-center bg-white p-2 border-top">
+//           <p className="text-dark mb-0">
+//             2025 ©
+//             <Link to="#" className="link-primary">
+//               Preclinic
+//             </Link>
+//             , All Rights Reserved
+//           </p>
+//         </div>
+//       </div>
+
+//       {/* Delete Modal */}
+//       <div className="modal fade" id="delete_modal">
+//         <div className="modal-dialog modal-dialog-centered modal-sm">
+//           <div className="modal-content">
+//             <div className="modal-body text-center position-relative">
+//               <ImageWithBasePath
+//                 src="assets/img/bg/delete-modal-bg-01.png"
+//                 alt=""
+//                 className="img-fluid position-absolute top-0 start-0 z-0"
+//               />
+//               <ImageWithBasePath
+//                 src="assets/img/bg/delete-modal-bg-02.png"
+//                 alt=""
+//                 className="img-fluid position-absolute bottom-0 end-0 z-0"
+//               />
+//               <div className="mb-3 position-relative z-1">
+//                 <span className="avatar avatar-lg bg-danger text-white">
+//                   <i className="ti ti-trash fs-24" />
+//                 </span>
+//               </div>
+//               <h5 className="fw-bold mb-1 position-relative z-1">
+//                 Delete Confirmation
+//               </h5>
+//               <p className="mb-3 position-relative z-1">
+//                 Are you sure want to delete this appointment?
+//               </p>
+//               <div className="d-flex justify-content-center">
+//                 <Link
+//                   to="#"
+//                   className="btn btn-light position-relative z-1 me-3"
+//                   data-bs-dismiss="modal"
+//                 >
+//                   Cancel
+//                 </Link>
+//                 <button
+//                   type="button"
+//                   className="btn btn-danger position-relative z-1"
+//                   data-bs-dismiss="modal"
+//                   onClick={handleDelete}
+//                 >
+//                   Yes, Delete
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </>
+//   );
+// };
+
+// export default Appointments;
+
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
@@ -901,16 +1253,25 @@ import Datatable from "../../../../../core/common/dataTable";
 import {
   getAppointments,
   deleteAppointment,
+  updateAppointment,
   type AppointmentResponse
 } from "../../../../../api/appointmentService";
-import { message } from "antd";
+import { message, DatePicker, Modal } from "antd";
 import dayjs from "dayjs";
+import CommonSelect from "../../../../../core/common/common-select/commonSelect";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string>("");
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState<any>({});
 
   useEffect(() => {
     fetchAppointments();
@@ -923,7 +1284,7 @@ const Appointments = () => {
       setAppointments(response.data || []);
     } catch (error: any) {
       console.error("Error fetching appointments:", error);
-      message.error(error.response?.data?.message || "Failed to load appointments");
+      message.error(error.message || "Failed to load appointments");
     } finally {
       setLoading(false);
     }
@@ -935,11 +1296,11 @@ const Appointments = () => {
     try {
       await deleteAppointment(deleteId);
       message.success("Appointment deleted successfully");
-      fetchAppointments(); // Refresh list
+      fetchAppointments();
       setDeleteId("");
     } catch (error: any) {
       console.error("Error deleting appointment:", error);
-      message.error(error.response?.data?.message || "Failed to delete appointment");
+      message.error(error.message || "Failed to delete appointment");
     }
   };
 
@@ -947,19 +1308,119 @@ const Appointments = () => {
     setSearchText(value);
   };
 
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text('Appointments Report', 14, 20);
+
+    const tableData = filteredData.map(app => [
+      `${dayjs(app.appointmentDate).format("DD MMM YYYY")} - ${app.appointmentTime}`,
+      app.patient?.fullName || "N/A",
+      app.patient?.email || "N/A",
+      app.doctor?.fullName || "N/A",
+      app.department || "N/A",
+      app.appointmentType || "N/A",
+      app.status || "N/A"
+    ]);
+
+    (doc as any).autoTable({
+      head: [['Date & Time', 'Patient', 'Contact', 'Doctor', 'Department', 'Mode', 'Status']],
+      body: tableData,
+      startY: 30,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [66, 66, 245] }
+    });
+
+    doc.save('appointments.pdf');
+    message.success('PDF exported successfully');
+  };
+
+  // Export to Excel
+  const exportToExcel = () => {
+    const excelData = filteredData.map(app => ({
+      'Date': dayjs(app.appointmentDate).format("DD MMM YYYY"),
+      'Time': app.appointmentTime,
+      'Patient Name': app.patient?.fullName || "N/A",
+      'Patient Email': app.patient?.email || "N/A",
+      'Doctor Name': app.doctor?.fullName || "N/A",
+      'Department': app.department || "N/A",
+      'Appointment Type': app.appointmentType || "N/A",
+      'Status': app.status || "N/A"
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Appointments');
+    XLSX.writeFile(wb, 'appointments.xlsx');
+    message.success('Excel exported successfully');
+  };
+
+  // Handle View
+  const handleView = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setViewModalVisible(true);
+  };
+
+  // Handle Edit
+  const handleEdit = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setEditFormData({
+      appointmentDate: appointment.appointmentDate,
+      appointmentTime: appointment.appointmentTime,
+      appointmentType: appointment.appointmentType,
+      department: appointment.department,
+      status: appointment.status,
+      patient: appointment.patient?._id,
+      doctor: appointment.doctor?._id
+    });
+    setEditModalVisible(true);
+  };
+
+  // Submit Edit
+  const handleEditSubmit = async () => {
+    try {
+      await updateAppointment(selectedAppointment._id, editFormData);
+      message.success("Appointment updated successfully");
+      setEditModalVisible(false);
+      fetchAppointments();
+    } catch (error: any) {
+      console.error("Error updating appointment:", error);
+      message.error(error.message || "Failed to update appointment");
+    }
+  };
+
+  // Get initials for avatar
+  const getInitials = (name: string) => {
+    if (!name) return "?";
+    return name.charAt(0).toUpperCase();
+  };
+
+  // Filter appointments based on search
+  const filteredData = appointments.filter(app => {
+    const searchLower = searchText.toLowerCase();
+    return (
+      app.patient?.fullName?.toLowerCase().includes(searchLower) ||
+      app.doctor?.fullName?.toLowerCase().includes(searchLower) ||
+      app.department?.toLowerCase().includes(searchLower)
+    );
+  });
+
   // Format data for table
-  const tableData = appointments.map((appointment) => ({
+  const tableData = filteredData.map((appointment) => ({
     key: appointment._id,
     Date_Time: `${dayjs(appointment.appointmentDate).format("DD MMM YYYY")} - ${appointment.appointmentTime}`,
     Patient: appointment.patient?.fullName || "N/A",
-    Patient_Image: appointment.patient?.profileImage || "avatar-02.jpg",
+    Patient_Image: appointment.patient?.profileImage || null,
     Phone: appointment.patient?.email || "N/A",
     Doctor: appointment.doctor?.fullName || "N/A",
-    Doctor_Image: appointment.doctor?.profileImage || "doctor-01.jpg",
+    Doctor_Image: appointment.doctor?.profileImage || null,
     role: appointment.department,
     Mode: appointment.appointmentType,
     Status: appointment.status,
     _id: appointment._id,
+    fullData: appointment
   }));
 
   const columns = [
@@ -977,11 +1438,17 @@ const Appointments = () => {
             to={all_routes.patientDetails}
             className="avatar avatar-md me-2"
           >
-            <ImageWithBasePath
-              src={`assets/img/users/${record.Patient_Image}`}
-              alt="patient"
-              className="rounded-circle"
-            />
+            {record.Patient_Image ? (
+              <ImageWithBasePath
+                src={`assets/img/users/${record.Patient_Image}`}
+                alt="patient"
+                className="rounded-circle"
+              />
+            ) : (
+              <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', fontSize: '16px' }}>
+                {getInitials(text)}
+              </div>
+            )}
           </Link>
           <Link
             to={all_routes.patientDetails}
@@ -1005,11 +1472,17 @@ const Appointments = () => {
             to={all_routes.doctordetails}
             className="avatar me-2 flex-shrink-0"
           >
-            <ImageWithBasePath
-              src={`assets/img/doctors/${record.Doctor_Image}`}
-              alt="doctor"
-              className="rounded-circle"
-            />
+            {record.Doctor_Image ? (
+              <ImageWithBasePath
+                src={`assets/img/doctors/${record.Doctor_Image}`}
+                alt="doctor"
+                className="rounded-circle"
+              />
+            ) : (
+              <div className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', fontSize: '16px' }}>
+                {getInitials(text)}
+              </div>
+            )}
           </Link>
           <div>
             <h6 className="fs-14 mb-1 text-truncate">
@@ -1034,14 +1507,14 @@ const Appointments = () => {
       render: (text: string) => (
         <span
           className={`fs-13 badge ${text === "Checked Out"
-              ? "badge-soft-info text-info"
-              : text === "Checked In"
-                ? "badge-soft-warning text-warning"
-                : text === "Cancelled"
-                  ? "badge-soft-danger text-danger"
-                  : text === "Schedule"
-                    ? "badge-soft-primary text-primary"
-                    : "badge-soft-success text-success"
+            ? "badge-soft-info text-info"
+            : text === "Checked In"
+              ? "badge-soft-warning text-warning"
+              : text === "Cancelled"
+                ? "badge-soft-danger text-danger"
+                : text === "Schedule"
+                  ? "badge-soft-primary text-primary"
+                  : "badge-soft-success text-success"
             } rounded fw-medium`}
         >
           {text}
@@ -1058,7 +1531,11 @@ const Appointments = () => {
           </Link>
           <ul className="dropdown-menu p-2">
             <li>
-              <Link to="#" className="dropdown-item d-flex align-items-center">
+              <Link
+                to="#"
+                className="dropdown-item d-flex align-items-center"
+                onClick={() => handleEdit(record.fullData)}
+              >
                 Edit
               </Link>
             </li>
@@ -1066,8 +1543,7 @@ const Appointments = () => {
               <Link
                 to="#"
                 className="dropdown-item d-flex align-items-center"
-                data-bs-toggle="offcanvas"
-                data-bs-target="#view_details"
+                onClick={() => handleView(record.fullData)}
               >
                 View
               </Link>
@@ -1087,6 +1563,19 @@ const Appointments = () => {
         </div>
       ),
     },
+  ];
+
+  const StatusOptions = [
+    { value: "Schedule", label: "Schedule" },
+    { value: "Checked In", label: "Checked In" },
+    { value: "Checked Out", label: "Checked Out" },
+    { value: "Cancelled", label: "Cancelled" }
+  ];
+
+  const AppointmentTypeOptions = [
+    { value: "In-Person Visit", label: "In-Person Visit" },
+    { value: "Online Consultation", label: "Online Consultation" },
+    { value: "Emergency", label: "Emergency" }
   ];
 
   return (
@@ -1110,12 +1599,12 @@ const Appointments = () => {
                 </Link>
                 <ul className="dropdown-menu p-2">
                   <li>
-                    <Link className="dropdown-item" to="#">
+                    <Link className="dropdown-item" to="#" onClick={exportToPDF}>
                       Download as PDF
                     </Link>
                   </li>
                   <li>
-                    <Link className="dropdown-item" to="#">
+                    <Link className="dropdown-item" to="#" onClick={exportToExcel}>
                       Download as Excel
                     </Link>
                   </li>
@@ -1172,7 +1661,7 @@ const Appointments = () => {
                 columns={columns}
                 dataSource={tableData}
                 Selection={false}
-                searchText={searchText}
+                searchText=""
               />
             )}
           </div>
@@ -1189,6 +1678,101 @@ const Appointments = () => {
           </p>
         </div>
       </div>
+
+      {/* View Modal */}
+      <Modal
+        title="Appointment Details"
+        open={viewModalVisible}
+        onCancel={() => setViewModalVisible(false)}
+        footer={[
+          <button key="close" className="btn btn-primary" onClick={() => setViewModalVisible(false)}>
+            Close
+          </button>
+        ]}
+        width={600}
+      >
+        {selectedAppointment && (
+          <div>
+            <h6 className="bg-light py-2 px-3 fw-bold mb-3">When & Where</h6>
+            <div className="mb-3">
+              <strong>Patient:</strong> {selectedAppointment.patient?.fullName || "N/A"}
+            </div>
+            <div className="mb-3">
+              <strong>Doctor:</strong> {selectedAppointment.doctor?.fullName || "N/A"}
+            </div>
+            <div className="mb-3">
+              <strong>Department:</strong> {selectedAppointment.department || "N/A"}
+            </div>
+            <div className="mb-3">
+              <strong>Appointment Date:</strong> {dayjs(selectedAppointment.appointmentDate).format("DD MMM YYYY")}
+            </div>
+            <div className="mb-3">
+              <strong>Time:</strong> {selectedAppointment.appointmentTime}
+            </div>
+            <div className="mb-3">
+              <strong>Type:</strong> {selectedAppointment.appointmentType}
+            </div>
+            <div className="mb-3">
+              <strong>Status:</strong> <span className={`badge ${selectedAppointment.status === "Schedule" ? "bg-primary" : "bg-success"}`}>{selectedAppointment.status}</span>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        title="Edit Appointment"
+        open={editModalVisible}
+        onCancel={() => setEditModalVisible(false)}
+        footer={[
+          <button key="cancel" className="btn btn-light me-2" onClick={() => setEditModalVisible(false)}>
+            Cancel
+          </button>,
+          <button key="save" className="btn btn-primary" onClick={handleEditSubmit}>
+            Save Changes
+          </button>
+        ]}
+        width={600}
+      >
+        {selectedAppointment && (
+          <div>
+            <div className="mb-3">
+              <label className="form-label">Appointment Date</label>
+              <DatePicker
+                className="form-control"
+                value={dayjs(editFormData.appointmentDate)}
+                onChange={(date) => setEditFormData({ ...editFormData, appointmentDate: date?.toISOString() })}
+                format="DD-MM-YYYY"
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Time</label>
+              <input
+                type="time"
+                className="form-control"
+                value={editFormData.appointmentTime}
+                onChange={(e) => setEditFormData({ ...editFormData, appointmentTime: e.target.value })}
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Appointment Type</label>
+              <CommonSelect
+                options={AppointmentTypeOptions}
+                className="select"
+                defaultValue={AppointmentTypeOptions.find(opt => opt.value === editFormData.appointmentType)}
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Status</label>
+              <CommonSelect
+                options={StatusOptions}
+                className="select"
+                defaultValue={StatusOptions.find(opt => opt.value === editFormData.status)}
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Delete Modal */}
       <div className="modal fade" id="delete_modal">
