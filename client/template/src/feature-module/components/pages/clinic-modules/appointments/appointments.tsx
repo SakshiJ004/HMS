@@ -3790,7 +3790,7 @@ const Appointments = () => {
 
             <div className="mb-3">
               <div className="text-dark fw-semibold mb-2">Reason</div>
-              <div className="text-body">{selectedAppointment?.reason || 'N/A'}</div>
+              <div className="text-body break-words">{selectedAppointment?.reason || 'N/A'}</div>
             </div>
 
             <h6 className="bg-light py-2 px-3 fw-bold mb-3">Appointment Status</h6>
