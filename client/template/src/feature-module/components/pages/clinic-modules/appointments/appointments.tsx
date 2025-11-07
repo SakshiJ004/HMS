@@ -3788,7 +3788,7 @@ const Appointments = () => {
               </div>
             </div>
 
-            <div className="mb-3 break-words whitespace-normal">
+            <div className="mb-3">
               <div className="text-dark fw-semibold mb-2">Reason</div>
               <div className="text-body">{selectedAppointment?.reason || 'N/A'}</div>
             </div>
