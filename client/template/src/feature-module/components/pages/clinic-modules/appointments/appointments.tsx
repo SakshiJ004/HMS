@@ -3723,7 +3723,7 @@ const Appointments = () => {
           </div>
         }
         placement="right"
-        width={500}
+        width={400}
         onClose={() => setViewDrawerVisible(false)}
         open={viewDrawerVisible}
       >
