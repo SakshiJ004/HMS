@@ -8,12 +8,15 @@ const {
     getAppointment,
     updateAppointment,
     deleteAppointment,
+    createPatient,
 } = require('../controllers/appointmentController');
 const { protect } = require('../middleware/authMiddleware');
 
 // Get doctors and patients for dropdowns
 router.get('/doctors', protect, getDoctors);
 router.get('/patients', protect, getPatients);
+
+router.post('/patients', protect, createPatient)
 
 // Appointment CRUD routes
 router.post('/', protect, createAppointment);
