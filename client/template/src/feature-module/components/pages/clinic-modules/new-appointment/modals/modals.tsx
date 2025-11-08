@@ -1712,6 +1712,7 @@ import type { Dayjs } from 'dayjs';
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { Country, State, City } from "country-state-city";
+import { getDoctors, type Doctor } from "../../../../../../api/appointmentService";
 
 // Enhanced Blood Group with AB+ and AB-
 const BLOOD_GROUPS = [
