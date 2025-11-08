@@ -1712,7 +1712,6 @@ import type { Dayjs } from 'dayjs';
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { Country, State, City } from "country-state-city";
-import { getDoctors, type Doctor } from "../../../../../../api/appointmentService";
 
 // Enhanced Blood Group with AB+ and AB-
 const BLOOD_GROUPS = [
@@ -1748,15 +1747,16 @@ interface ModalsProps {
 const Modals = ({ onPatientAdded }: ModalsProps) => {
   const [phone, setPhone] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [_imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // Country, State, City states
   const [countries, setCountries] = useState<SelectOption[]>([]);
   const [states, setStates] = useState<SelectOption[]>([]);
   const [cities, setCities] = useState<SelectOption[]>([]);
   const [selectedCountry, setSelectedCountry] = useState("IN");
+  const [selectedState, setSelectedState] = useState("");
 
   // Form data
   const [formData, setFormData] = useState({
@@ -1798,21 +1798,6 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
     loadCountries();
   }, []);
 
-  // ✅ Fetch doctors from API
-  const fetchDoctors = async () => {
-    try {
-      const response = await getDoctors();
-      setDoctors(response.data || []);
-
-      if (response.data?.length === 0) {
-        message.warning('No doctors found. Please add doctors first.');
-      }
-    } catch (error: any) {
-      console.error("Error fetching doctors:", error);
-      message.error(error.message || "Failed to load doctors");
-    }
-  };
-
   // Load countries on mount
   const loadCountries = () => {
     const allCountries = Country.getAllCountries();
@@ -1845,10 +1830,21 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
     setCities(cityOptions);
   };
 
-  // ✅ Convert doctors to select options
-  const doctorOptions: SelectOption[] = doctors.map((doctor) => ({
+  const fetchDoctors = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/doctors");
+      const data = await response.json();
+      console.log("Doctors fetched:", data);
+      setDoctors(data.data || []);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+      message.error("Failed to load doctors");
+    }
+  };
+
+  const doctorOptions = doctors.map((doctor: any) => ({
     value: doctor._id,
-    label: doctor.fullName,
+    label: `${doctor.fullName} - ${doctor.specialization}`,
   }));
 
   // Handle image upload
@@ -1872,6 +1868,7 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
     const countryCode = option?.value || "IN";
     const countryName = option?.label || "India";
     setSelectedCountry(countryCode);
+    setSelectedState("");
     setFormData({ ...formData, country: countryName, state: "", city: "" });
     setErrors({ ...errors, country: "" });
     loadStates(countryCode);
@@ -1880,6 +1877,7 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
   const handleStateChange = (option: any) => {
     const stateCode = option?.value || "";
     const stateName = option?.label || "";
+    setSelectedState(stateCode);
     setFormData({ ...formData, state: stateName, city: "" });
     setErrors({ ...errors, state: "" });
     loadCities(selectedCountry, stateCode);
@@ -1929,6 +1927,15 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
     if (!phone || phone.trim() === "") {
       newErrors.phone = "Please enter phone number";
       isValid = false;
+    } else {
+      // Remove all non-digit characters to check length
+      const digitsOnly = phone.replace(/\D/g, '');
+      // Check if the number has at least 10 digits (excluding country code)
+      const phoneWithoutCountryCode = digitsOnly.length > 10 ? digitsOnly.slice(-10) : digitsOnly;
+      if (phoneWithoutCountryCode.length !== 10) {
+        newErrors.phone = "Please enter a valid 10-digit phone number";
+        isValid = false;
+      }
     }
 
     if (!formData.email.trim()) {
@@ -1994,51 +2001,38 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
     setLoading(true);
 
     try {
-      // ✅ Create patient using proper API structure
-      const patientData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        fullName: `${formData.firstName} ${formData.lastName}`,
-        phone: phone!,
-        email: formData.email,
-        role: "patient",
-        primaryDoctor: formData.primaryDoctor,
-        dob: formData.dob!.format("YYYY-MM-DD"),
-        gender: formData.gender,
-        bloodGroup: formData.bloodGroup,
-        status: formData.status,
-        address: {
-          address1: formData.address1,
-          address2: formData.address2,
-          country: formData.country,
-          state: formData.state,
-          city: formData.city,
-          pincode: formData.pincode,
-        }
-      };
+      const submitData = new FormData();
+      submitData.append("firstName", formData.firstName);
+      submitData.append("lastName", formData.lastName);
+      submitData.append("fullName", `${formData.firstName} ${formData.lastName}`);
+      submitData.append("phone", phone!);
+      submitData.append("email", formData.email);
+      submitData.append("primaryDoctor", formData.primaryDoctor);
+      submitData.append("dob", formData.dob!.format("YYYY-MM-DD"));
+      submitData.append("gender", formData.gender);
+      submitData.append("bloodGroup", formData.bloodGroup);
+      submitData.append("status", formData.status);
+      submitData.append("address1", formData.address1);
+      submitData.append("address2", formData.address2);
+      submitData.append("country", formData.country);
+      submitData.append("state", formData.state);
+      submitData.append("city", formData.city);
+      submitData.append("pincode", formData.pincode);
 
-      console.log('Submitting patient data:', patientData);
+      if (imageFile) {
+        submitData.append("profileImage", imageFile);
+      }
 
-      const token = localStorage.getItem('token');
-      const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+      const response = await fetch("http://localhost:5000/api/patients", {
         method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(patientData),
+        body: submitData,
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create patient");
+        throw new Error("Failed to create patient");
       }
 
       const result = await response.json();
-      console.log('Patient created successfully:', result);
-
       message.success("Patient added successfully!");
 
       // Reset form
