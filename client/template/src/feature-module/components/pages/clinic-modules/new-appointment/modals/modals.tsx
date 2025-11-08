@@ -1709,6 +1709,8 @@ import {
 import CommonSelect from "../../../../../../core/common/common-select/commonSelect";
 import { DatePicker, message } from "antd";
 import type { Dayjs } from 'dayjs';
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { Country, State, City } from "country-state-city";
 import { getDoctors, type Doctor } from "../../../../../../api/appointmentService";
 
@@ -1744,7 +1746,7 @@ interface ModalsProps {
 }
 
 const Modals = ({ onPatientAdded }: ModalsProps) => {
-  const [phone, setPhone] = useState<string>("");
+  const [phone, setPhone] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -1866,15 +1868,6 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
     }
   };
 
-  // ✅ Handle phone number input (10 digits only)
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-    if (value.length <= 10) {
-      setPhone(value);
-      clearError('phone');
-    }
-  };
-
   const handleCountryChange = (option: any) => {
     const countryCode = option?.value || "IN";
     const countryName = option?.label || "India";
@@ -1935,9 +1928,6 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
 
     if (!phone || phone.trim() === "") {
       newErrors.phone = "Please enter phone number";
-      isValid = false;
-    } else if (phone.length !== 10) {
-      newErrors.phone = "Phone number must be exactly 10 digits";
       isValid = false;
     }
 
@@ -2004,42 +1994,51 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
     setLoading(true);
 
     try {
-      const submitData = new FormData();
-      submitData.append("firstName", formData.firstName);
-      submitData.append("lastName", formData.lastName);
-      submitData.append("fullName", `${formData.firstName} ${formData.lastName}`);
-      submitData.append("phone", phone);
-      submitData.append("email", formData.email);
-      submitData.append("primaryDoctor", formData.primaryDoctor);
-      submitData.append("dob", formData.dob!.format("YYYY-MM-DD"));
-      submitData.append("gender", formData.gender);
-      submitData.append("bloodGroup", formData.bloodGroup);
-      submitData.append("status", formData.status);
-      submitData.append("address1", formData.address1);
-      submitData.append("address2", formData.address2);
-      submitData.append("country", formData.country);
-      submitData.append("state", formData.state);
-      submitData.append("city", formData.city);
-      submitData.append("pincode", formData.pincode);
+      // ✅ Create patient using proper API structure
+      const patientData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        fullName: `${formData.firstName} ${formData.lastName}`,
+        phone: phone!,
+        email: formData.email,
+        role: "patient",
+        primaryDoctor: formData.primaryDoctor,
+        dob: formData.dob!.format("YYYY-MM-DD"),
+        gender: formData.gender,
+        bloodGroup: formData.bloodGroup,
+        status: formData.status,
+        address: {
+          address1: formData.address1,
+          address2: formData.address2,
+          country: formData.country,
+          state: formData.state,
+          city: formData.city,
+          pincode: formData.pincode,
+        }
+      };
 
-      if (imageFile) {
-        submitData.append("profileImage", imageFile);
-      }
+      console.log('Submitting patient data:', patientData);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/patients`, {
+      const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: submitData,
+        body: JSON.stringify(patientData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create patient");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create patient");
       }
 
       const result = await response.json();
+      console.log('Patient created successfully:', result);
+
       message.success("Patient added successfully!");
 
       // Reset form
@@ -2059,7 +2058,7 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
         city: "",
         pincode: "",
       });
-      setPhone("");
+      setPhone(undefined);
       setImagePreview(null);
       setImageFile(null);
       setErrors({
@@ -2200,19 +2199,21 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
                   </div>
                   <div className="col-md-6">
                     <div className="mb-3">
-                      <label className="form-label mb-1 fw-medium">
+                      <label className="form-label mb-1 fw-medium custom-phoneinput">
                         Phone Number<span className="text-danger ms-1">*</span>
                       </label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.phone ? 'is-invalid' : ''}`}
+                      <PhoneInput
+                        defaultCountry="IN"
                         value={phone}
-                        onChange={handlePhoneChange}
-                        placeholder="Enter 10-digit phone number"
-                        maxLength={10}
+                        onChange={(value) => {
+                          setPhone(value);
+                          clearError('phone');
+                        }}
                       />
                       {errors.phone && (
-                        <div className="invalid-feedback d-block">{errors.phone}</div>
+                        <div className="text-danger" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                          {errors.phone}
+                        </div>
                       )}
                     </div>
                   </div>
