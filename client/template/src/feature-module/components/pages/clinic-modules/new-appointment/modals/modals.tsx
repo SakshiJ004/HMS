@@ -1756,7 +1756,7 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
   const [states, setStates] = useState<SelectOption[]>([]);
   const [cities, setCities] = useState<SelectOption[]>([]);
   const [selectedCountry, setSelectedCountry] = useState("IN");
-  const [selectedState, setSelectedState] = useState("");
+  const [_selectedState, setSelectedState] = useState("");
 
   // Form data
   const [formData, setFormData] = useState({
