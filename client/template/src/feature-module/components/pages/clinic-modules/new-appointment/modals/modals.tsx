@@ -1750,7 +1750,7 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [_imageFile, setImageFile] = useState<File | null>(null);
 
   // Country, State, City states
   const [countries, setCountries] = useState<SelectOption[]>([]);
@@ -2006,91 +2006,115 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
     setLoading(true);
 
     try {
-      const submitData = new FormData();
-      submitData.append("firstName", formData.firstName);
-      submitData.append("lastName", formData.lastName);
-      submitData.append("fullName", `${formData.firstName} ${formData.lastName}`);
-      submitData.append("phone", phone!);
-      submitData.append("email", formData.email);
-      submitData.append("primaryDoctor", formData.primaryDoctor);
-      submitData.append("dob", formData.dob!.format("YYYY-MM-DD"));
-      submitData.append("gender", formData.gender);
-      submitData.append("bloodGroup", formData.bloodGroup);
-      submitData.append("status", formData.status);
-      submitData.append("address1", formData.address1);
-      submitData.append("address2", formData.address2);
-      submitData.append("country", formData.country);
-      submitData.append("state", formData.state);
-      submitData.append("city", formData.city);
-      submitData.append("pincode", formData.pincode);
+      // ✅ Create patient using proper API structure
+      const patientData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        fullName: `${formData.firstName} ${formData.lastName}`,
+        phone: phone!,
+        email: formData.email,
+        role: "patient",
+        primaryDoctor: formData.primaryDoctor,
+        dob: formData.dob!.format("YYYY-MM-DD"),
+        gender: formData.gender,
+        bloodGroup: formData.bloodGroup,
+        status: formData.status,
+        address: {
+          address1: formData.address1,
+          address2: formData.address2,
+          country: formData.country,
+          state: formData.state,
+          city: formData.city,
+          pincode: formData.pincode,
+        }
+      };
 
-      if (imageFile) {
-        submitData.append("profileImage", imageFile);
-      }
+      console.log('Submitting patient data:', patientData);
 
-      const response = await fetch("http://localhost:5000/api/patients", {
+      const token = localStorage.getItem('token');
+      const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
-        body: submitData,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify(patientData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create patient");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create patient");
       }
 
       const result = await response.json();
+      console.log('Patient created successfully:', result);
+
       message.success("Patient added successfully!");
 
-      // Reset form
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        primaryDoctor: "",
-        dob: null,
-        gender: "",
-        bloodGroup: "",
-        status: "Available",
-        address1: "",
-        address2: "",
-        country: "India",
-        state: "",
-        city: "",
-        pincode: "",
-      });
-      setPhone(undefined);
-      setImagePreview(null);
-      setImageFile(null);
-      setErrors({
-        firstName: "",
-        lastName: "",
-        phone: "",
-        email: "",
-        primaryDoctor: "",
-        dob: "",
-        gender: "",
-        bloodGroup: "",
-        address1: "",
-        country: "",
-        state: "",
-        city: "",
-        pincode: "",
-      });
-
-      if (onPatientAdded) {
+      // Notify parent component FIRST (before closing modal)
+      if (onPatientAdded && result.data) {
         onPatientAdded(result.data);
       }
 
-      // Close modal
-      const modal = document.getElementById("add_modal");
-      const backdrop = document.querySelector(".modal-backdrop");
-      if (modal) {
-        modal.classList.remove("show");
-        modal.style.display = "none";
-        document.body.classList.remove("modal-open");
-        if (backdrop) {
-          backdrop.remove();
+      // Close modal using Bootstrap's native method
+      const modalElement = document.getElementById("add_modal");
+      if (modalElement) {
+        // Use Bootstrap 5 modal hide method
+        const bootstrapModal = (window as any).bootstrap?.Modal?.getInstance(modalElement);
+        if (bootstrapModal) {
+          bootstrapModal.hide();
+        } else {
+          // Fallback if bootstrap instance not found
+          modalElement.classList.remove("show");
+          modalElement.style.display = "none";
+          document.body.classList.remove("modal-open");
+          const backdrop = document.querySelector(".modal-backdrop");
+          if (backdrop) {
+            backdrop.remove();
+          }
         }
       }
+
+      // Reset form AFTER closing modal (slight delay to ensure smooth close)
+      setTimeout(() => {
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          primaryDoctor: "",
+          dob: null,
+          gender: "",
+          bloodGroup: "",
+          status: "Available",
+          address1: "",
+          address2: "",
+          country: "India",
+          state: "",
+          city: "",
+          pincode: "",
+        });
+        setPhone(undefined);
+        setImagePreview(null);
+        setImageFile(null);
+        setErrors({
+          firstName: "",
+          lastName: "",
+          phone: "",
+          email: "",
+          primaryDoctor: "",
+          dob: "",
+          gender: "",
+          bloodGroup: "",
+          address1: "",
+          country: "",
+          state: "",
+          city: "",
+          pincode: "",
+        });
+      }, 300);
+
     } catch (error: any) {
       console.error("Error creating patient:", error);
       message.error(error.message || "Failed to create patient");
