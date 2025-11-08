@@ -1750,7 +1750,7 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [_imageFile, setImageFile] = useState<File | null>(null);
 
   // Country, State, City states
   const [countries, setCountries] = useState<SelectOption[]>([]);
