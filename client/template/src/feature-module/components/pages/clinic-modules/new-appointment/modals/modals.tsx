@@ -2856,7 +2856,7 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
       console.log('Submitting patient data:', patientData);
 
       const token = localStorage.getItem('token');
-      const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_BACKEND_URL;
 
       // ✅ Use the new dedicated patient creation endpoint
       const response = await fetch(`${API_URL}/api/appointments/patients`, {

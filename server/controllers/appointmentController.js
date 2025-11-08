@@ -370,6 +370,8 @@ const createPatient = async (req, res) => {
             address,
         } = req.body;
 
+        console.log('📝 Creating patient with data:', { firstName, lastName, email, phone });
+
         // Validate required fields
         if (!firstName || !lastName || !email || !phone || !primaryDoctor ||
             !dob || !gender || !bloodGroup || !address?.address1 ||
@@ -414,7 +416,7 @@ const createPatient = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(tempPassword, salt);
 
-        // Create patient
+        // Create patient with provider fields for local authentication
         const patient = await User.create({
             firstName,
             lastName,
@@ -429,6 +431,8 @@ const createPatient = async (req, res) => {
             bloodGroup,
             status: status || 'Available',
             address,
+            provider: 'local',
+            providerId: email, // Use email as unique providerId for local users
         });
 
         // Remove password from response
@@ -444,6 +448,16 @@ const createPatient = async (req, res) => {
         });
     } catch (error) {
         console.error('Create patient error:', error);
+
+        // Handle MongoDB duplicate key errors
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern)[0];
+            return res.status(400).json({
+                success: false,
+                message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`,
+            });
+        }
+
         res.status(500).json({
             success: false,
             message: 'Error creating patient',
