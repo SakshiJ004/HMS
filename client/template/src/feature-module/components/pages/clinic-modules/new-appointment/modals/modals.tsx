@@ -1748,7 +1748,7 @@ interface ModalsProps {
 const Modals = ({ onPatientAdded }: ModalsProps) => {
   const [phone, setPhone] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
-  const [doctors, setDoctors] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -1831,21 +1831,25 @@ const Modals = ({ onPatientAdded }: ModalsProps) => {
     setCities(cityOptions);
   };
 
+  // ✅ Fetch doctors from API
   const fetchDoctors = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/doctors");
-      const data = await response.json();
-      console.log("Doctors fetched:", data);
-      setDoctors(data.data || []);
-    } catch (error) {
+      const response = await getDoctors();
+      setDoctors(response.data || []);
+
+      if (response.data?.length === 0) {
+        message.warning('No doctors found. Please add doctors first.');
+      }
+    } catch (error: any) {
       console.error("Error fetching doctors:", error);
-      message.error("Failed to load doctors");
+      message.error(error.message || "Failed to load doctors");
     }
   };
 
-  const doctorOptions = doctors.map((doctor: any) => ({
+  // ✅ Convert doctors to select options
+  const doctorOptions: SelectOption[] = doctors.map((doctor) => ({
     value: doctor._id,
-    label: `${doctor.fullName} - ${doctor.specialization}`,
+    label: doctor.fullName,
   }));
 
   // Handle image upload
