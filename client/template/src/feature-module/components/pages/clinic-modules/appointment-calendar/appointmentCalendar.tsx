@@ -757,6 +757,7 @@ import autoTable from 'jspdf-autotable';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import './calender-custom.css'
 
 const AppointmentCalendar = () => {
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
