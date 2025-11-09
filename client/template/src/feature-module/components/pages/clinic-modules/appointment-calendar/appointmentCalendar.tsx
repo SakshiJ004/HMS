@@ -745,7 +745,6 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import PredefinedDatePicker from "../../../../../core/common/datePicker";
 import { all_routes } from "../../../../routes/all_routes";
 import { getAppointments, getDoctors, getPatients, type AppointmentResponse } from "../../../../../api/appointmentService";
@@ -760,10 +759,7 @@ const AppointmentCalendar = () => {
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
-  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
-    dayjs().startOf('month'),
-    dayjs().endOf('month')
-  ]);
+
 
   // Filter states
   const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
