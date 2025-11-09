@@ -757,11 +757,12 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 // import './calendar-custom.css';
+import '../../../../../style/css/calender-custom.css'
 
 const AppointmentCalendar = () => {
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
-
+  
   // Filter states
   const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
   const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
@@ -769,7 +770,7 @@ const AppointmentCalendar = () => {
   const [selectedModes, setSelectedModes] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
-
+  
   // Available options for filters
   const [patients, setPatients] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -779,7 +780,7 @@ const AppointmentCalendar = () => {
     "Psychiatry", "Neurosurgery", "Oncology", "Pulmonology",
     "Urology", "Dermatology"
   ];
-
+  
   const modes = ["In-Person Visit", "Online Consultation"];
   const statuses = ["Checked Out", "Checked In", "Cancelled", "Scheduled", "Confirmed"];
 
@@ -795,7 +796,7 @@ const AppointmentCalendar = () => {
         getPatients(),
         getDoctors()
       ]);
-
+      
       setAppointments(appointmentsRes.data || []);
       setPatients(patientsRes.data || []);
       setDoctors(doctorsRes.data || []);
@@ -842,30 +843,40 @@ const AppointmentCalendar = () => {
 
   const filteredAppointments = getFilteredAppointments();
 
-  // Convert appointments to FullCalendar events
-  const calendarEvents = filteredAppointments.map(app => ({
-    id: app._id,
-    title: `${app.patient?.fullName} - ${app.appointmentTime}`,
-    start: app.appointmentDate,
-    backgroundColor:
-      app.status === 'Confirmed' ? '#28a745' :
-        app.status === 'Scheduled' ? '#007bff' :
-          app.status === 'Checked In' ? '#ffc107' :
-            app.status === 'Checked Out' ? '#17a2b8' : '#dc3545',
-    borderColor:
-      app.status === 'Confirmed' ? '#28a745' :
-        app.status === 'Scheduled' ? '#007bff' :
-          app.status === 'Checked In' ? '#ffc107' :
-            app.status === 'Checked Out' ? '#17a2b8' : '#dc3545',
-    extendedProps: {
-      patient: app.patient?.fullName,
-      doctor: app.doctor?.fullName,
-      time: app.appointmentTime,
-      status: app.status,
-      department: app.department,
-      type: app.appointmentType
+  // Get status badge color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Confirmed': return { bg: '#28a745', border: '#28a745' };
+      case 'Scheduled': return { bg: '#007bff', border: '#007bff' };
+      case 'Checked In': return { bg: '#ffc107', border: '#ffc107' };
+      case 'Checked Out': return { bg: '#17a2b8', border: '#17a2b8' };
+      case 'Cancelled': return { bg: '#dc3545', border: '#dc3545' };
+      default: return { bg: '#6c757d', border: '#6c757d' };
     }
-  }));
+  };
+
+  // Convert appointments to FullCalendar events with better formatting
+  const calendarEvents = filteredAppointments.map(app => {
+    const color = getStatusColor(app.status);
+    return {
+      id: app._id,
+      title: `${app.appointmentTime} • ${app.patient?.fullName}`,
+      start: app.appointmentDate,
+      backgroundColor: color.bg,
+      borderColor: color.border,
+      textColor: '#ffffff',
+      extendedProps: {
+        patient: app.patient?.fullName,
+        doctor: app.doctor?.fullName,
+        time: app.appointmentTime,
+        status: app.status,
+        department: app.department,
+        type: app.appointmentType,
+        reason: app.reason,
+        appointmentId: app.appointmentId
+      }
+    };
+  });
 
   // Handle checkbox toggle
   const toggleSelection = (array: string[], setArray: Function, value: string) => {
@@ -877,7 +888,9 @@ const AppointmentCalendar = () => {
   };
 
   // Clear all filters
-  const clearAllFilters = () => {
+  const clearAllFilters = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setSelectedPatients([]);
     setSelectedDoctors([]);
     setSelectedDesignations([]);
@@ -886,26 +899,39 @@ const AppointmentCalendar = () => {
     message.success('All filters cleared');
   };
 
-  // Apply filters
-  const applyFilters = () => {
-    // Close the dropdown
-    const filterDropdown = document.getElementById('filter-dropdown');
-    if (filterDropdown) {
-      const bsDropdown = (window as any).bootstrap?.Dropdown?.getInstance(filterDropdown.closest('.dropdown'));
-      if (bsDropdown) {
-        bsDropdown.hide();
+  // Apply filters and close dropdown
+  const applyFilters = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Close the dropdown manually
+    const dropdownElement = document.querySelector('.filter-dropdown');
+    if (dropdownElement) {
+      const dropdown = dropdownElement.closest('.dropdown');
+      if (dropdown) {
+        const bsDropdown = (window as any).bootstrap?.Dropdown?.getInstance(dropdown);
+        if (bsDropdown) {
+          bsDropdown.hide();
+        }
       }
     }
+    
     message.success('Filters applied successfully');
   };
 
   // Close filter dropdown
-  const closeFilterDropdown = () => {
-    const filterDropdown = document.getElementById('filter-dropdown');
-    if (filterDropdown) {
-      const bsDropdown = (window as any).bootstrap?.Dropdown?.getInstance(filterDropdown.closest('.dropdown'));
-      if (bsDropdown) {
-        bsDropdown.hide();
+  const closeFilterDropdown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const dropdownElement = document.querySelector('.filter-dropdown');
+    if (dropdownElement) {
+      const dropdown = dropdownElement.closest('.dropdown');
+      if (dropdown) {
+        const bsDropdown = (window as any).bootstrap?.Dropdown?.getInstance(dropdown);
+        if (bsDropdown) {
+          bsDropdown.hide();
+        }
       }
     }
   };
@@ -966,6 +992,22 @@ const AppointmentCalendar = () => {
       console.error('Excel export error:', error);
       message.error('Failed to export Excel');
     }
+  };
+
+  // Render event content with better formatting
+  const renderEventContent = (eventInfo: any) => {
+    return (
+      <div className="fc-event-main-frame" style={{ padding: '2px 4px' }}>
+        <div className="fc-event-time" style={{ fontWeight: 'bold', fontSize: '11px' }}>
+          {eventInfo.event.extendedProps.time}
+        </div>
+        <div className="fc-event-title-container">
+          <div className="fc-event-title fc-sticky" style={{ fontSize: '10px' }}>
+            {eventInfo.event.extendedProps.patient}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -1062,10 +1104,7 @@ const AppointmentCalendar = () => {
                       <Link
                         to="#"
                         className="link-danger text-decoration-underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          clearAllFilters();
-                        }}
+                        onClick={clearAllFilters}
                       >
                         Clear All
                       </Link>
@@ -1077,8 +1116,8 @@ const AppointmentCalendar = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Patient</label>
-                          <Link
-                            to="#"
+                          <Link 
+                            to="#" 
                             className="link-primary mb-1"
                             onClick={(e) => {
                               e.preventDefault();
@@ -1121,8 +1160,8 @@ const AppointmentCalendar = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Doctor</label>
-                          <Link
-                            to="#"
+                          <Link 
+                            to="#" 
                             className="link-primary mb-1"
                             onClick={(e) => {
                               e.preventDefault();
@@ -1165,8 +1204,8 @@ const AppointmentCalendar = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Designation</label>
-                          <Link
-                            to="#"
+                          <Link 
+                            to="#" 
                             className="link-primary mb-1"
                             onClick={(e) => {
                               e.preventDefault();
@@ -1209,8 +1248,8 @@ const AppointmentCalendar = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Mode</label>
-                          <Link
-                            to="#"
+                          <Link 
+                            to="#" 
                             className="link-primary mb-1"
                             onClick={(e) => {
                               e.preventDefault();
@@ -1253,8 +1292,8 @@ const AppointmentCalendar = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Status</label>
-                          <Link
-                            to="#"
+                          <Link 
+                            to="#" 
                             className="link-primary mb-1"
                             onClick={(e) => {
                               e.preventDefault();
@@ -1297,20 +1336,14 @@ const AppointmentCalendar = () => {
                       <button
                         type="button"
                         className="btn btn-light btn-md me-2 fw-medium"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          closeFilterDropdown();
-                        }}
+                        onClick={closeFilterDropdown}
                       >
                         Close
                       </button>
                       <button
                         type="button"
                         className="btn btn-primary btn-md fw-medium"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          applyFilters();
-                        }}
+                        onClick={applyFilters}
                       >
                         Filter
                       </button>
@@ -1318,7 +1351,7 @@ const AppointmentCalendar = () => {
                   </form>
                 </div>
               </div>
-
+              
               {/* Sort Dropdown */}
               <div className="dropdown">
                 <Link
@@ -1326,13 +1359,13 @@ const AppointmentCalendar = () => {
                   className="dropdown-toggle btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14"
                   data-bs-toggle="dropdown"
                 >
-                  <span className="me-1"> Sort By : </span>
+                  <span className="me-1"> Sort By : </span> 
                   {sortOrder === 'recent' ? 'Recent' : 'Oldest'}
                 </Link>
                 <ul className="dropdown-menu dropdown-menu-end p-2">
                   <li>
-                    <Link
-                      to="#"
+                    <Link 
+                      to="#" 
                       className="dropdown-item rounded-1"
                       onClick={(e) => {
                         e.preventDefault();
@@ -1343,8 +1376,8 @@ const AppointmentCalendar = () => {
                     </Link>
                   </li>
                   <li>
-                    <Link
-                      to="#"
+                    <Link 
+                      to="#" 
                       className="dropdown-item rounded-1"
                       onClick={(e) => {
                         e.preventDefault();
@@ -1380,16 +1413,32 @@ const AppointmentCalendar = () => {
                       right: 'dayGridMonth,dayGridWeek,dayGridDay'
                     }}
                     height="auto"
+                    eventContent={renderEventContent}
                     eventClick={(info) => {
                       const props = info.event.extendedProps;
-                      alert(`
-Patient: ${props.patient}
-Doctor: ${props.doctor}
-Time: ${props.time}
-Status: ${props.status}
-Department: ${props.department}
-Type: ${props.type}
-                      `);
+                      const statusColor = getStatusColor(props.status);
+                      
+                      // Create a better modal/alert
+                      const content = `
+📋 Appointment Details
+━━━━━━━━━━━━━━━━━━━━
+
+🆔 ID: ${props.appointmentId}
+👤 Patient: ${props.patient}
+👨‍⚕️ Doctor: ${props.doctor}
+🏥 Department: ${props.department}
+⏰ Time: ${props.time}
+📅 Date: ${dayjs(info.event.start).format('DD MMM YYYY')}
+📋 Type: ${props.type}
+📝 Status: ${props.status}
+💬 Reason: ${props.reason || 'N/A'}
+                      `;
+                      
+                      alert(content);
+                    }}
+                    eventDidMount={(info) => {
+                      // Add tooltip on hover
+                      info.el.title = `${info.event.extendedProps.patient} - ${info.event.extendedProps.time}\nStatus: ${info.event.extendedProps.status}`;
                     }}
                   />
                 </div>
