@@ -58,10 +58,7 @@ const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { getDashboardStats, getAppointmentStats } = require('../controllers/dashboardController');
 
-/**
- * Dashboard Routes
- * Role-based protected routes for different user types
- */
+
 
 // @route   GET /api/dashboard/admin
 // @desc    Access admin dashboard
