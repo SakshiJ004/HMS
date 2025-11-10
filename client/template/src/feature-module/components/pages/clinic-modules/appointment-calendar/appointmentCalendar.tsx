@@ -1334,7 +1334,7 @@ const AppointmentCalendar = () => {
                     </div>
                     <div className="filter-footer d-flex align-items-center justify-content-end border-top">
                       <Link
-                        to="/appointment-calender"
+                        to="#"
                         className="btn btn-light btn-md me-2 fw-medium"
                         id="close-filter"
                         data-bs-dismiss="dropdown"
