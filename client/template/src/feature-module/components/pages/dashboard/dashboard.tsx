@@ -2866,7 +2866,7 @@ const Dashboard = () => {
   }, [selectedAppointmentType, appointments]);
 
   // Calculate growth percentage
-  const calculateGrowth = (current: number, type: 'doctors' | 'patients' | 'appointments') => {
+  const calculateGrowth = (type: 'doctors' | 'patients' | 'appointments') => {
     // Using current data to show realistic growth
     // In a real scenario, you would compare with previous period data
     const growthRates = {
@@ -2922,9 +2922,9 @@ const Dashboard = () => {
     console.log(value.format("YYYY-MM-DD"), mode);
   };
 
-  const doctorGrowth = calculateGrowth(dashboardStats.doctors, 'doctors');
-  const patientGrowth = calculateGrowth(dashboardStats.patients, 'patients');
-  const appointmentGrowth = calculateGrowth(dashboardStats.appointments, 'appointments');
+  const doctorGrowth = calculateGrowth('doctors');
+  const patientGrowth = calculateGrowth('patients');
+  const appointmentGrowth = calculateGrowth('appointments');
 
   return (
     <>
