@@ -136,8 +136,16 @@ const userSchema = new mongoose.Schema(
     }
 );
 
-// Compound index to ensure unique provider + providerId combination
-userSchema.index({ provider: 1, providerId: 1 }, { unique: true, sparse: true });
+userSchema.index(
+    { provider: 1, providerId: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            provider: { $ne: 'local' },
+            providerId: { $ne: null, $exists: true }
+        }
+    }
+);
 
 /**
  * Pre-save middleware to hash password
