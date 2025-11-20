@@ -2905,15 +2905,38 @@ const Dashboard = () => {
   }, [selectedPeriod]);
 
   // Filter appointments by type
+  // useEffect(() => {
+  //   if (selectedAppointmentType === 'All Type') {
+  //     setFilteredAppointments(appointments);
+  //   } else {
+  //     const filtered = appointments.filter(
+  //       (apt) => apt.appointmentType === selectedAppointmentType
+  //     );
+  //     setFilteredAppointments(filtered);
+  //   }
+  // }, [selectedAppointmentType, appointments]);
+
+
+  // Filter appointments by type and show only today's appointments
   useEffect(() => {
-    if (selectedAppointmentType === 'All Type') {
-      setFilteredAppointments(appointments);
-    } else {
-      const filtered = appointments.filter(
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    let filtered = appointments.filter((apt) => {
+      const aptDate = new Date(apt.appointmentDate);
+      aptDate.setHours(0, 0, 0, 0);
+      return aptDate.getTime() === today.getTime();
+    });
+
+    if (selectedAppointmentType !== 'All Type') {
+      filtered = filtered.filter(
         (apt) => apt.appointmentType === selectedAppointmentType
       );
-      setFilteredAppointments(filtered);
     }
+
+    setFilteredAppointments(filtered);
   }, [selectedAppointmentType, appointments]);
 
   // Calculate growth percentage
@@ -3461,18 +3484,27 @@ const Dashboard = () => {
                         </div>
                         <div className="avatar-list-stacked avatar-group-sm event flex-shrink-0">
                           <span className="avatar avatar-lg rounded-circle border-0">
+                            <img src={`${API_URL}${appointment.patient.profilePicture}`} className="img-fluid rounded-circle border border-white" alt="patient" />
                             <ImageWithBasePath
-                              src={appointment.patient.profilePicture || "assets/img/profiles/avatar-26.jpg"}
+                              src="assets/img/profiles/avatar-26.jpg"
                               className="img-fluid rounded-circle border border-white"
                               alt="Patient"
                             />
                           </span>
                           <span className="avatar avatar-lg rounded-circle border-0">
-                            <ImageWithBasePath
-                              src={appointment.doctor.profilePicture || "assets/img/doctors/doctor-05.jpg"}
-                              className="img-fluid rounded-circle border border-white"
-                              alt="Doctor"
-                            />
+                            {appointment.doctor.profilePicture ? (
+                              <img
+                                src={`${API_URL}${appointment.doctor.profilePicture}`}
+                                className="img-fluid rounded-circle border border-white"
+                                alt="Doctor"
+                              />
+                            ) : (
+                              <ImageWithBasePath
+                                src={appointment.doctor.profilePicture || "assets/img/doctors/doctor-05.jpg"}
+                                className="img-fluid rounded-circle border border-white"
+                                alt="Doctor"
+                              />
+                            )}
                           </span>
                         </div>
                       </div>
@@ -3814,11 +3846,19 @@ const Dashboard = () => {
                                   to={all_routes.doctordetails}
                                   className="avatar me-2"
                                 >
-                                  <ImageWithBasePath
-                                    src={appointment.doctor.profilePicture || "assets/img/doctors/doctor-06.jpg"}
-                                    alt="img"
-                                    className="rounded-circle"
-                                  />
+                                  {appointment.doctor.profilePicture ? (
+                                    <img
+                                      src={`${API_URL}${appointment.doctor.profilePicture}`}
+                                      alt="img"
+                                      className="rounded-circle"
+                                    />
+                                  ) : (
+                                    <ImageWithBasePath
+                                      src="assets/img/doctors/doctor-06.jpg"
+                                      alt="img"
+                                      className="rounded-circle"
+                                    />
+                                  )}
                                 </Link>
                                 <div>
                                   <h6 className="fs-14 mb-1">
@@ -3839,11 +3879,19 @@ const Dashboard = () => {
                                   to={all_routes.patientDetails}
                                   className="avatar me-2"
                                 >
-                                  <ImageWithBasePath
-                                    src={appointment.patient.profilePicture || "assets/img/profiles/avatar-02.jpg"}
-                                    alt="img"
-                                    className="rounded-circle"
-                                  />
+                                  {appointment.patient.profilePicture ? (
+                                    <img
+                                      src={`${API_URL}${appointment.patient.profilePicture}`}
+                                      alt="img"
+                                      className="rounded-circle"
+                                    />
+                                  ) : (
+                                    <ImageWithBasePath
+                                      src="assets/img/profiles/avatar-02.jpg"
+                                      alt="img"
+                                      className="rounded-circle"
+                                    />
+                                  )}
                                 </Link>
                                 <div>
                                   <h6 className="fs-14 mb-1">
