@@ -2917,26 +2917,16 @@ const Dashboard = () => {
   // }, [selectedAppointmentType, appointments]);
 
 
-  // Filter appointments by type and show only today's appointments
+  // Filter appointments by type
   useEffect(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    let filtered = appointments.filter((apt) => {
-      const aptDate = new Date(apt.appointmentDate);
-      aptDate.setHours(0, 0, 0, 0);
-      return aptDate.getTime() === today.getTime();
-    });
-
-    if (selectedAppointmentType !== 'All Type') {
-      filtered = filtered.filter(
+    if (selectedAppointmentType === 'All Type') {
+      setFilteredAppointments(appointments);
+    } else {
+      const filtered = appointments.filter(
         (apt) => apt.appointmentType === selectedAppointmentType
       );
+      setFilteredAppointments(filtered);
     }
-
-    setFilteredAppointments(filtered);
   }, [selectedAppointmentType, appointments]);
 
   // Calculate growth percentage
@@ -3484,27 +3474,38 @@ const Dashboard = () => {
                         </div>
                         <div className="avatar-list-stacked avatar-group-sm event flex-shrink-0">
                           <span className="avatar avatar-lg rounded-circle border-0">
-                            <img src={`${API_URL}${appointment.patient.profilePicture}`} className="img-fluid rounded-circle border border-white" alt="patient" />
-                            <ImageWithBasePath
-                              src="assets/img/profiles/avatar-26.jpg"
-                              className="img-fluid rounded-circle border border-white"
-                              alt="Patient"
-                            />
+                            <span className="avatar avatar-lg rounded-circle border-0">
+                              {appointment.patient.profilePicture ? (
+                                <img
+                                  src={`${API_URL}${appointment.patient.profilePicture}`}
+                                  className="img-fluid rounded-circle border border-white"
+                                  alt="Patient"
+                                />
+                              ) : (
+                                <ImageWithBasePath
+                                  src="assets/img/profiles/avatar-26.jpg"
+                                  className="img-fluid rounded-circle border border-white"
+                                  alt="Patient"
+                                />
+                              )}
+                            </span>
                           </span>
                           <span className="avatar avatar-lg rounded-circle border-0">
-                            {appointment.doctor.profilePicture ? (
-                              <img
-                                src={`${API_URL}${appointment.doctor.profilePicture}`}
-                                className="img-fluid rounded-circle border border-white"
-                                alt="Doctor"
-                              />
-                            ) : (
-                              <ImageWithBasePath
-                                src={appointment.doctor.profilePicture || "assets/img/doctors/doctor-05.jpg"}
-                                className="img-fluid rounded-circle border border-white"
-                                alt="Doctor"
-                              />
-                            )}
+                            <span className="avatar avatar-lg rounded-circle border-0">
+                              {appointment.doctor.profilePicture ? (
+                                <img
+                                  src={`${API_URL}${appointment.doctor.profilePicture}`}
+                                  className="img-fluid rounded-circle border border-white"
+                                  alt="Doctor"
+                                />
+                              ) : (
+                                <ImageWithBasePath
+                                  src="assets/img/doctors/doctor-05.jpg"
+                                  className="img-fluid rounded-circle border border-white"
+                                  alt="Doctor"
+                                />
+                              )}
+                            </span>
                           </span>
                         </div>
                       </div>
