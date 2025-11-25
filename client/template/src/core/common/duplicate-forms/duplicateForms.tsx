@@ -180,7 +180,7 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
     }));
 
     // Only call if schedules actually changed
-    const schedulesString = JSON.stringify(schedules);
+    // const schedulesString = JSON.stringify(schedules);
     if (onScheduleChange) {
       onScheduleChange(schedules);
     }
