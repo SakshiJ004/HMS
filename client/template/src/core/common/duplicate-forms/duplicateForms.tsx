@@ -178,7 +178,7 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
       }));
       onScheduleChange(schedules);
     }
-  }, [rows]); // ✅ REMOVE onScheduleChange from dependencies
+  }, [rows, onScheduleChange]); // ✅ REMOVE onScheduleChange from dependencies
 
   const handleAddRow = (row: RowType) => {
     const idx = rows.findIndex((r) => r.id === row.id);

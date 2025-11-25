@@ -183,7 +183,7 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
         }));
       onEducationChange(education);
     }
-  }, [rows]);
+  }, [rows, onEducationChange]);
 
   const handleAddRow = (row: RowType) => {
     const idx = rows.findIndex((r) => r.id === row.id);
