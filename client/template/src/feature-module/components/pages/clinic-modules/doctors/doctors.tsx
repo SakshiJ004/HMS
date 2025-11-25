@@ -1294,7 +1294,7 @@ const Doctors = () => {
 
   // State management
   const [doctors, setDoctors] = useState<DoctorData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 

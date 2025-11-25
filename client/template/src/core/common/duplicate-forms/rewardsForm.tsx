@@ -149,7 +149,7 @@ const RewardsForms = ({ onRewardsChange, rewardsData }: RewardsFormsProps) => {
         }));
       onRewardsChange(rewards);
     }
-  }, [rows, onRewardsChange]);
+  }, [rows]);
 
   const handleAddRow = (row: RowType) => {
     const idx = rows.findIndex((r) => r.id === row.id);
