@@ -523,8 +523,6 @@ const createDoctor = async (req, res) => {
         const generatedPassword = generateDoctorPassword(username, dob);
         console.log('🔐 Generated password for doctor:', generatedPassword);
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(generatedPassword, salt);
 
         console.log('✅ Password hashed successfully');
 
@@ -541,7 +539,7 @@ const createDoctor = async (req, res) => {
             username: username.toLowerCase().trim(),
             email: email.toLowerCase(),
             phone,
-            password: hashedPassword,
+            password: generatedPassword,
             role: 'doctor',
             provider: 'local',
             providerId: email.toLowerCase(),
