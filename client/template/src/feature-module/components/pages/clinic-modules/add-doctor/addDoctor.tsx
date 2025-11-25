@@ -1485,7 +1485,7 @@ const AddDoctor = () => {
                               className="select"
                               value={appointmentType}
                               // onChange={setAppointmentType}
-                              onChange={(option) => option && setAppointmentType}
+                              onChange={(option) => option && setAppointmentType(option)}
                             />
                           </div>
                         </div>
