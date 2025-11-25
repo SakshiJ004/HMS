@@ -741,7 +741,7 @@ const AddDoctor = () => {
   const [saturdaySchedule, setSaturdaySchedule] = useState<Array<{ startTime: string; endTime: string }>>([]);
   const [sundaySchedule, setSundaySchedule] = useState<Array<{ startTime: string; endTime: string }>>([]);
 
-    // Appointment state
+  // Appointment state
   const [appointmentType, setAppointmentType] = useState(Appointment_Type[0]);
   const [acceptBookingsDays, setAcceptBookingsDays] = useState("");
   const [appointmentDuration, setAppointmentDuration] = useState("");
@@ -764,12 +764,64 @@ const AddDoctor = () => {
   };
 
   // Handle profile image upload
+  // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       setProfileImage(reader.result as string);
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
+
+  // Handle profile image upload with compression
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Image size should be less than 5MB");
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result as string);
+        const img = new Image();
+        img.src = reader.result as string;
+
+        img.onload = () => {
+          // Create canvas to compress image
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = height * (MAX_WIDTH / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = width * (MAX_HEIGHT / height);
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Compress to 70% quality
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          setProfileImage(compressedBase64);
+        };
       };
       reader.readAsDataURL(file);
     }

@@ -40,8 +40,12 @@ app.use(cors({
 }));
 
 // Body parser middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+
+// Body parser middleware - INCREASE SIZE LIMIT FOR IMAGES
+app.use(express.json({ limit: '50mb' }));  // ✅ ADD THIS
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));  // ✅ ADD THIS
 
 // Session middleware (required for passport)
 app.use(
