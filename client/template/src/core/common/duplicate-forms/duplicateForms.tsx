@@ -157,6 +157,7 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
   const [rows, setRows] = useState<RowType[]>([createRow()]);
 
   // Convert scheduleData to rows when component mounts or scheduleData changes
+  // Convert scheduleData to rows when component mounts or scheduleData changes
   useEffect(() => {
     if (scheduleData && scheduleData.length > 0 && rows.length === 1 && !rows[0].from) {
       const convertedRows = scheduleData.map((schedule, index) => ({
@@ -167,18 +168,24 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
       }));
       setRows(convertedRows);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduleData]);
 
   // Notify parent component whenever rows change
+  // Notify parent component whenever rows change
   useEffect(() => {
+    const schedules = rows.map(row => ({
+      startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
+      endTime: row.to ? row.to.format("HH:mm:ss") : "00:00:00",
+    }));
+
+    // Only call if schedules actually changed
+    const schedulesString = JSON.stringify(schedules);
     if (onScheduleChange) {
-      const schedules = rows.map(row => ({
-        startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
-        endTime: row.to ? row.to.format("HH:mm:ss") : "00:00:00",
-      }));
       onScheduleChange(schedules);
     }
-  }, [rows, onScheduleChange]); // ✅ REMOVE onScheduleChange from dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
 
   const handleAddRow = (row: RowType) => {
     const idx = rows.findIndex((r) => r.id === row.id);

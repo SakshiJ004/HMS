@@ -127,6 +127,7 @@ const RewardsForms = ({ onRewardsChange, rewardsData }: RewardsFormsProps) => {
   const [rows, setRows] = useState<RowType[]>([createRow()]);
 
   // Convert rewardsData to rows when component mounts or rewardsData changes
+  // Convert rewardsData to rows when component mounts or rewardsData changes
   useEffect(() => {
     if (rewardsData && rewardsData.length > 0) {
       const convertedRows = rewardsData.map((reward, index) => ({
@@ -136,20 +137,24 @@ const RewardsForms = ({ onRewardsChange, rewardsData }: RewardsFormsProps) => {
       }));
       setRows(convertedRows);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rewardsData]);
 
   // Notify parent component whenever rows change
+  // Notify parent component whenever rows change
   useEffect(() => {
+    const rewards = rows
+      .filter(row => row.title && row.year)
+      .map(row => ({
+        title: row.title,
+        year: row.year ? row.year.format("YYYY") : "",
+      }));
+
     if (onRewardsChange) {
-      const rewards = rows
-        .filter(row => row.title && row.year)
-        .map(row => ({
-          title: row.title,
-          year: row.year ? row.year.format("YYYY") : "",
-        }));
       onRewardsChange(rewards);
     }
-  }, [rows, onRewardsChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
 
   const handleAddRow = (row: RowType) => {
     const idx = rows.findIndex((r) => r.id === row.id);

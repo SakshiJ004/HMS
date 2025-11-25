@@ -158,6 +158,7 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
   const [rows, setRows] = useState<RowType[]>([createRow()]);
 
   // Convert educationData to rows when component mounts or educationData changes
+  // Convert educationData to rows when component mounts or educationData changes
   useEffect(() => {
     if (educationData && educationData.length > 0) {
       const convertedRows = educationData.map((edu, index) => ({
@@ -169,21 +170,24 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
       }));
       setRows(convertedRows);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [educationData]);
 
   // Notify parent component whenever rows change
   useEffect(() => {
+    const education = rows
+      .filter(row => row.degree && row.college && row.to)
+      .map(row => ({
+        degree: row.degree,
+        college: row.college,
+        year: row.to ? row.to.format("YYYY") : "",
+      }));
+
     if (onEducationChange) {
-      const education = rows
-        .filter(row => row.degree && row.college && row.to)
-        .map(row => ({
-          degree: row.degree,
-          college: row.college,
-          year: row.to ? row.to.format("YYYY") : "",
-        }));
       onEducationChange(education);
     }
-  }, [rows, onEducationChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
 
   const handleAddRow = (row: RowType) => {
     const idx = rows.findIndex((r) => r.id === row.id);
