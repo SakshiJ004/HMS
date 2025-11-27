@@ -401,7 +401,8 @@ const generateDoctorPassword = (username, dob) => {
         birthYear = new Date(dob).getFullYear();
     }
 
-    const password = `${lowerUsername}@${birthYear}`;
+    const capitalizedUsername = lowerUsername.charAt(0).toUpperCase() + lowerUsername.slice(1);
+    const password = `${capitalizedUsername}@${birthYear}`;
 
     console.log('🔐 Password Generation Debug:');
     console.log('  Username:', username, '→', lowerUsername);
