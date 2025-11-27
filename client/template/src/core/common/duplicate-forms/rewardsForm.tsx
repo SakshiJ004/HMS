@@ -129,7 +129,7 @@ const RewardsForms = ({ onRewardsChange, rewardsData }: RewardsFormsProps) => {
   // Convert rewardsData to rows when component mounts or rewardsData changes
   // Convert rewardsData to rows when component mounts or rewardsData changes
   useEffect(() => {
-    if (rewardsData && rewardsData.length > 0) {
+    if (rewardsData && rewardsData.length > 0 && rows.length === 1 && !rows[0].title) {
       const convertedRows = rewardsData.map((reward, index) => ({
         id: Date.now() + index,
         title: reward.title || "",

@@ -362,6 +362,7 @@ const userSchema = new mongoose.Schema(
         education: [{
             degree: String,
             college: String,
+            fromYear: String,
             year: String,
         }],
         awards: [{

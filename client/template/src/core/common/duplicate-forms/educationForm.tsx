@@ -142,8 +142,8 @@ type RowType = {
 };
 
 interface EducationFormsProps {
-  onEducationChange?: (education: Array<{ degree: string; college: string; year: string }>) => void;
-  educationData?: Array<{ degree: string; college: string; year: string }>;
+  onEducationChange?: (education: Array<{ degree: string; college: string; fromYear?: string; year: string }>) => void;
+  educationData?: Array<{ degree: string; college: string; fromYear?: string; year: string }>;
 }
 
 const createRow = (row?: RowType): RowType => ({
@@ -165,7 +165,7 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
         id: Date.now() + index,
         degree: edu.degree || "",
         college: edu.college || "",
-        from: null,
+        from: edu.fromYear ? dayjs(edu.fromYear, "YYYY") : null,
         to: edu.year ? dayjs(edu.year, "YYYY") : null,
       }));
       setRows(convertedRows);
@@ -180,6 +180,7 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
       .map(row => ({
         degree: row.degree,
         college: row.college,
+        fromYear: row.from ? row.from.format("YYYY") : undefined,
         year: row.to ? row.to.format("YYYY") : "",
       }));
 
