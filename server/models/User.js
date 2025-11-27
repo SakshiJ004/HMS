@@ -291,7 +291,7 @@ const userSchema = new mongoose.Schema(
             type: String,
             enum: [
                 'Cardiology',
-                'Orthopedic',
+                'Orthopedics',
                 'Pediatrics',
                 'Gynecology',
                 'Psychiatry',
