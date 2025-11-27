@@ -183,7 +183,11 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
         year: row.to ? row.to.format("YYYY") : "",
       }));
 
-    if (onEducationChange) {
+    // ✅ FIX: Only call if education data actually changed
+    const educationString = JSON.stringify(education);
+    const currentString = JSON.stringify(educationData || []);
+
+    if (educationString !== currentString && onEducationChange) {
       onEducationChange(education);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

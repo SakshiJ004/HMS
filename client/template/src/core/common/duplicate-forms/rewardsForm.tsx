@@ -140,8 +140,6 @@ const RewardsForms = ({ onRewardsChange, rewardsData }: RewardsFormsProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rewardsData]);
 
-  // Notify parent component whenever rows change
-  // Notify parent component whenever rows change
   useEffect(() => {
     const rewards = rows
       .filter(row => row.title && row.year)
@@ -150,7 +148,11 @@ const RewardsForms = ({ onRewardsChange, rewardsData }: RewardsFormsProps) => {
         year: row.year ? row.year.format("YYYY") : "",
       }));
 
-    if (onRewardsChange) {
+    // ✅ FIX: Only call if rewards data actually changed
+    const rewardsString = JSON.stringify(rewards);
+    const currentString = JSON.stringify(rewardsData || []);
+
+    if (rewardsString !== currentString && onRewardsChange) {
       onRewardsChange(rewards);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

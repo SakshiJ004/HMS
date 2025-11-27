@@ -171,17 +171,17 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduleData]);
 
-  // Notify parent component whenever rows change
-  // Notify parent component whenever rows change
   useEffect(() => {
     const schedules = rows.map(row => ({
       startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
       endTime: row.to ? row.to.format("HH:mm:ss") : "00:00:00",
     }));
 
-    // Only call if schedules actually changed
-    // const schedulesString = JSON.stringify(schedules);
-    if (onScheduleChange) {
+    // ✅ FIX: Only call if schedules data actually changed
+    const schedulesString = JSON.stringify(schedules);
+    const currentString = JSON.stringify(scheduleData || []);
+
+    if (schedulesString !== currentString && onScheduleChange) {
       onScheduleChange(schedules);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
