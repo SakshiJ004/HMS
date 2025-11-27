@@ -428,7 +428,11 @@ userSchema.index(
  * Pre-save middleware to hash password
  */
 userSchema.pre('save', async function (next) {
-    if (!this.isModified('password') || !this.password) {
+    if (!this.password) {
+        return next();
+    }
+
+    if(!this.isNew && !this.isModified('password')) {
         return next();
     }
 
