@@ -156,11 +156,12 @@ const createRow = (row?: RowType): RowType => ({
 
 const EducationForms = ({ onEducationChange, educationData }: EducationFormsProps) => {
   const [rows, setRows] = useState<RowType[]>([createRow()]);
+  const [initialized, setInitialized] = useState(false);
 
   // Convert educationData to rows when component mounts or educationData changes
   // Convert educationData to rows when component mounts or educationData changes
   useEffect(() => {
-    if (educationData && educationData.length > 0) {
+    if (educationData && educationData.length > 0 && !initialized) {
       const convertedRows = educationData.map((edu, index) => ({
         id: Date.now() + index,
         degree: edu.degree || "",
@@ -169,9 +170,10 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
         to: edu.year ? dayjs(edu.year, "YYYY") : null,
       }));
       setRows(convertedRows);
+      setInitialized(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [educationData]);
+  }, []);
 
   // Notify parent component whenever rows change
   useEffect(() => {
