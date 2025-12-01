@@ -974,27 +974,6 @@ const AddDoctor = () => {
     }
   };
 
-  // Helper function to get next occurrence of a weekday
-  const getNextDayOccurrence = (dayName: string): Date => {
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const targetDay = daysOfWeek.indexOf(dayName);
-
-    const today = new Date();
-    const currentDay = today.getDay();
-
-    let daysUntilTarget = targetDay - currentDay;
-    if (daysUntilTarget <= 0) {
-      daysUntilTarget += 7;
-    }
-
-    const nextOccurrence = new Date(today);
-    nextOccurrence.setDate(today.getDate() + daysUntilTarget);
-
-    return nextOccurrence;
-  };
-  
-
-
   return (
     <>
       {/* ========================
