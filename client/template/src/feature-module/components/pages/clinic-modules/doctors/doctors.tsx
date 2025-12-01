@@ -1368,7 +1368,7 @@ const Doctors = () => {
   };
 
   // Get next available day from schedules
-  const getNextAvailableDay = (schedules?: Array<{ day: string; timeSlots: any[] }>) => {
+  const getNextAvailableDay = (schedules?: Array<{ day: string; timeSlots: any[] }>): string => {
     if (!schedules || schedules.length === 0) {
       return "Not Available";
     }
@@ -1380,10 +1380,9 @@ const Doctors = () => {
 
     // Get the earliest upcoming schedule
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+    today.setHours(0, 0, 0, 0);
 
-    let nearestSchedule = null;
-    let nearestDate = null;
+    let nearestDate: Date | undefined;
     let minDiff = Infinity;
 
     availableSchedules.forEach(schedule => {
@@ -1395,12 +1394,13 @@ const Doctors = () => {
       if (diff < minDiff) {
         minDiff = diff;
         nearestDate = scheduleDate;
-        nearestSchedule = schedule;
       }
     });
 
-    if (!nearestDate || !nearestSchedule) return "Not Available";
+    // ✅ Early return if no date found
+    if (!nearestDate) return "Not Available";
 
+    // ✅ Now TypeScript knows nearestDate is definitely a Date
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
