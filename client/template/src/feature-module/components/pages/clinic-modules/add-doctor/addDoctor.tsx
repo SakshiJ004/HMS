@@ -959,7 +959,7 @@ const AddDoctor = () => {
       setShowSuccessModal(true);
 
       // Redirect to doctors list
-      navigate(all_routes.doctors);
+      // navigate(all_routes.doctors);
     } catch (err: any) {
       console.error("Error creating doctor:", err);
       setError(err.message || "Failed to create doctor. Please try again.");
