@@ -171,26 +171,41 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduleData]);
 
+  // useEffect(() => {
+  //   const schedules = rows.map(row => ({
+  //     startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
+  //     endTime: row.to ? row.to.format("HH:mm:ss") : "00:00:00",
+  //   }));
+
+  //   // ✅ FIX: Only call if schedules data actually changed
+  //   const schedulesString = JSON.stringify(schedules);
+  //   const currentString = JSON.stringify(scheduleData || []);
+
+  //   if (schedulesString !== currentString && onScheduleChange) {
+  //     onScheduleChange(schedules);
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [rows]);
+
+
   useEffect(() => {
-    const schedules = rows.map(row => ({
-      startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
-      endTime: row.to ? row.to.format("HH:mm:ss") : "00:00:00",
-    }));
-
-    // ✅ FIX: Only call if schedules data actually changed
-    const schedulesString = JSON.stringify(schedules);
-    const currentString = JSON.stringify(scheduleData || []);
-
-    if (schedulesString !== currentString && onScheduleChange) {
+    // Only notify parent if we have valid data to send
+    if (onScheduleChange) {
+      const schedules = rows.map(row => ({
+        startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
+        endTime: row.to ? row.to.format("HH:mm:ss") : "00:00:00",
+      }));
       onScheduleChange(schedules);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows]);
+  }, [rows, onScheduleChange]); // ✅ FIXED: Added onScheduleChange to deps
 
   const handleAddRow = (row: RowType) => {
+    const newRow = createRow(); // Create fresh row without copying previous
     const idx = rows.findIndex((r) => r.id === row.id);
+    if (idx === -1) return; // Safety check
+
     const newRows = [...rows];
-    newRows.splice(idx + 1, 0, createRow(row));
+    newRows.splice(idx + 1, 0, newRow);
     setRows(newRows);
   };
 

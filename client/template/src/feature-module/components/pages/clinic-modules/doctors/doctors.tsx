@@ -1345,15 +1345,32 @@ const Doctors = () => {
     }
   };
 
-  // Get next available day from schedules
+  // Add this helper function at the top of the component
+  const getNextDayOccurrence = (dayName: string): Date => {
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const targetDay = daysOfWeek.indexOf(dayName);
+
+    const today = new Date();
+    const currentDay = today.getDay();
+
+    let daysUntilTarget = targetDay - currentDay;
+    if (daysUntilTarget <= 0) {
+      daysUntilTarget += 7;
+    }
+
+    const nextOccurrence = new Date(today);
+    nextOccurrence.setDate(today.getDate() + daysUntilTarget);
+
+    return nextOccurrence;
+  };
+
+  // Replace your existing getNextAvailableDay function with this:
   const getNextAvailableDay = (schedules?: Array<{ day: string; timeSlots: any[] }>) => {
     if (!schedules || schedules.length === 0) {
       return "Not Available";
     }
 
     const daysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    const today = new Date();
-    const currentDay = daysOrder[today.getDay() === 0 ? 6 : today.getDay() - 1];
 
     // Find the next available day
     const availableDays = schedules
@@ -1362,15 +1379,17 @@ const Doctors = () => {
 
     if (availableDays.length === 0) return "Not Available";
 
-    // Get the next available day
-    const currentIndex = daysOrder.indexOf(currentDay);
+    // Get today's day name
+    const today = new Date();
+    const todayDayName = daysOrder[today.getDay() === 0 ? 6 : today.getDay() - 1];
+    const currentIndex = daysOrder.indexOf(todayDayName);
+
+    // Find next available day
     for (let i = 0; i < 7; i++) {
       const checkDay = daysOrder[(currentIndex + i) % 7];
       if (availableDays.includes(checkDay)) {
-        // Calculate the date
-        const daysToAdd = i;
-        const date = new Date(today);
-        date.setDate(date.getDate() + daysToAdd);
+        // Use getNextDayOccurrence to get the correct date
+        const date = getNextDayOccurrence(checkDay);
 
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         return `${checkDay.slice(0, 3)}, ${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;

@@ -723,6 +723,12 @@ const AddDoctor = () => {
   const [gender, setGender] = useState(Gender[0]);
   const [bio, setBio] = useState("About Doctor");
   const [featureOnWebsite, setFeatureOnWebsite] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModalData, setSuccessModalData] = useState<{
+    email: string;
+    password: string;
+    username: string;
+  } | null>(null);
 
   // Address state
   const [address1, setAddress1] = useState("");
@@ -827,6 +833,53 @@ const AddDoctor = () => {
     }
   };
 
+  const handleCopyCredentials = () => {
+    if (!successModalData) return;
+
+    const text = `Email: ${successModalData.email}\nUsername: ${successModalData.username}\nPassword: ${successModalData.password}`;
+    navigator.clipboard.writeText(text);
+    alert('Credentials copied to clipboard!');
+  };
+
+  // Apply current active tab's schedule to all days
+  const handleApplyAllSchedules = () => {
+    // Find which tab is currently active
+    const activeTab = document.querySelector('.schedule-tab .nav-link.active');
+    if (!activeTab) return;
+
+    // Get the active day's schedule
+    let sourceSchedule: Array<{ startTime: string; endTime: string }> = [];
+
+    if (activeTab.textContent?.includes('Monday')) sourceSchedule = mondaySchedule;
+    else if (activeTab.textContent?.includes('Tuesday')) sourceSchedule = tuesdaySchedule;
+    else if (activeTab.textContent?.includes('Wednesday')) sourceSchedule = wednesdaySchedule;
+    else if (activeTab.textContent?.includes('Thursday')) sourceSchedule = thursdaySchedule;
+    else if (activeTab.textContent?.includes('Friday')) sourceSchedule = fridaySchedule;
+    else if (activeTab.textContent?.includes('Saturday')) sourceSchedule = saturdaySchedule;
+    else if (activeTab.textContent?.includes('Sunday')) sourceSchedule = sundaySchedule;
+
+    if (sourceSchedule.length === 0) {
+      alert('Please add at least one time slot before applying to all days');
+      return;
+    }
+
+    // Confirm with user
+    if (!window.confirm('This will replace schedules on all other days. Continue?')) {
+      return;
+    }
+
+    // Apply to all days
+    setMondaySchedule([...sourceSchedule]);
+    setTuesdaySchedule([...sourceSchedule]);
+    setWednesdaySchedule([...sourceSchedule]);
+    setThursdaySchedule([...sourceSchedule]);
+    setFridaySchedule([...sourceSchedule]);
+    setSaturdaySchedule([...sourceSchedule]);
+    setSundaySchedule([...sourceSchedule]);
+
+    alert('Schedule applied to all days successfully!');
+  };
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -896,7 +949,14 @@ const AddDoctor = () => {
       console.log("Doctor created successfully:", response);
 
       // Show success message (you can add a toast notification here)
-      alert(`Doctor created successfully!\n\nCredentials:\nEmail: ${response.data.credentials.email}\nPassword: ${response.data.credentials.password}\nUsername: ${response.data.credentials.username}\n\nPlease save these credentials!`);
+      // alert(`Doctor created successfully!\n\nCredentials:\nEmail: ${response.data.credentials.email}\nPassword: ${response.data.credentials.password}\nUsername: ${response.data.credentials.username}\n\nPlease save these credentials!`);
+      // Show success modal with credentials
+      setSuccessModalData({
+        email: response.data.credentials.email,
+        password: response.data.credentials.password,
+        username: response.data.credentials.username
+      });
+      setShowSuccessModal(true);
 
       // Redirect to doctors list
       navigate(all_routes.doctors);
@@ -913,6 +973,26 @@ const AddDoctor = () => {
       navigate(all_routes.doctors);
     }
   };
+
+  // Helper function to get next occurrence of a weekday
+  const getNextDayOccurrence = (dayName: string): Date => {
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const targetDay = daysOfWeek.indexOf(dayName);
+
+    const today = new Date();
+    const currentDay = today.getDay();
+
+    let daysUntilTarget = targetDay - currentDay;
+    if (daysUntilTarget <= 0) {
+      daysUntilTarget += 7;
+    }
+
+    const nextOccurrence = new Date(today);
+    nextOccurrence.setDate(today.getDate() + daysUntilTarget);
+
+    return nextOccurrence;
+  };
+  
 
 
   return (
@@ -1517,9 +1597,9 @@ const AddDoctor = () => {
                         </div>
                       </div>
                       <div className="mb-3">
-                        <Link to="#" className="btn btn-dark">
+                        <button type="button" className="btn btn-dark" onClick={handleApplyAllSchedules}>
                           Apply All
-                        </Link>
+                        </button>
                       </div>
                     </div>
                     <div className="bg-light px-3 py-2 mb-3">
@@ -1709,6 +1789,83 @@ const AddDoctor = () => {
       {/* ========================
 			End Page Content
 		========================= */}
+
+      {/* Success Modal with Credentials */}
+      {showSuccessModal && successModalData && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-success text-white">
+                <h5 className="modal-title">
+                  <i className="ti ti-check-circle me-2"></i>
+                  Doctor Created Successfully!
+                </h5>
+              </div>
+              <div className="modal-body">
+                <div className="alert alert-warning mb-3">
+                  <i className="ti ti-alert-triangle me-2"></i>
+                  <strong>Important:</strong> Copy these credentials now. The password will not be shown again!
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Email</label>
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={successModalData.email}
+                      readOnly
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Username</label>
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={successModalData.username}
+                      readOnly
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Password</label>
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={successModalData.password}
+                      readOnly
+                    />
+                  </div>
+                </div>
+
+                <button
+                  className="btn btn-primary w-100 mb-2"
+                  onClick={handleCopyCredentials}
+                >
+                  <i className="ti ti-copy me-2"></i>
+                  Copy All Credentials
+                </button>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-success w-100"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    navigate(all_routes.doctors);
+                  }}
+                >
+                  Go to Doctors List
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
