@@ -150,6 +150,7 @@ export const Session = [
 ];
 export const Location = [{ value: "Select", label: "Select" }];
 export const Country = [
+  { value: "Select", label: "Select" },
   { value: "Afghanistan", label: "Afghanistan" },
   { value: "Albania", label: "Albania" },
   { value: "Algeria", label: "Algeria" },
@@ -346,6 +347,7 @@ export const Country = [
   { value: "Zimbabwe", label: "Zimbabwe" }
 ];
 export const State = [
+  { value: "Select", label: "Select" },
   { value: "Andhra Pradesh", label: "Andhra Pradesh" },
   { value: "Arunachal Pradesh", label: "Arunachal Pradesh" },
   { value: "Assam", label: "Assam" },
@@ -381,6 +383,7 @@ export const State = [
   { value: "Ladakh", label: "Ladakh" }
 ];
 export const City = [
+  { value: "Select", label: "Select" },
   { value: "Mumbai", label: "Mumbai" },
   { value: "Delhi", label: "Delhi" },
   { value: "Bangalore", label: "Bangalore" },
