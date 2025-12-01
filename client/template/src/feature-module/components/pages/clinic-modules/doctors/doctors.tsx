@@ -1345,8 +1345,7 @@ const Doctors = () => {
     }
   };
 
-
-  // Helper function to get next occurrence of a weekday
+  // Add this helper function at the top of the component
   const getNextDayOccurrence = (dayName: string): Date => {
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const targetDay = daysOfWeek.indexOf(dayName);
@@ -1355,8 +1354,6 @@ const Doctors = () => {
     const currentDay = today.getDay();
 
     let daysUntilTarget = targetDay - currentDay;
-
-    // If target day is today or already passed this week, get next week's occurrence
     if (daysUntilTarget <= 0) {
       daysUntilTarget += 7;
     }
@@ -1367,44 +1364,39 @@ const Doctors = () => {
     return nextOccurrence;
   };
 
-  // Get next available day from schedules
-  const getNextAvailableDay = (schedules?: Array<{ day: string; timeSlots: any[] }>): string => {
+  // Replace your existing getNextAvailableDay function with this:
+  const getNextAvailableDay = (schedules?: Array<{ day: string; timeSlots: any[] }>) => {
     if (!schedules || schedules.length === 0) {
       return "Not Available";
     }
 
-    // Filter schedules that have time slots
-    const availableSchedules = schedules.filter(s => s.timeSlots && s.timeSlots.length > 0);
+    const daysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-    if (availableSchedules.length === 0) return "Not Available";
+    // Find the next available day
+    const availableDays = schedules
+      .filter(s => s.timeSlots && s.timeSlots.length > 0)
+      .map(s => s.day);
 
-    // Get the earliest upcoming schedule
+    if (availableDays.length === 0) return "Not Available";
+
+    // Get today's day name
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayDayName = daysOrder[today.getDay() === 0 ? 6 : today.getDay() - 1];
+    const currentIndex = daysOrder.indexOf(todayDayName);
 
-    let nearestDate: Date | undefined;
-    let minDiff = Infinity;
+    // Find next available day
+    for (let i = 0; i < 7; i++) {
+      const checkDay = daysOrder[(currentIndex + i) % 7];
+      if (availableDays.includes(checkDay)) {
+        // Use getNextDayOccurrence to get the correct date
+        const date = getNextDayOccurrence(checkDay);
 
-    availableSchedules.forEach(schedule => {
-      const scheduleDate = getNextDayOccurrence(schedule.day);
-      scheduleDate.setHours(0, 0, 0, 0);
-
-      const diff = scheduleDate.getTime() - today.getTime();
-
-      if (diff < minDiff) {
-        minDiff = diff;
-        nearestDate = scheduleDate;
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        return `${checkDay.slice(0, 3)}, ${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
       }
-    });
+    }
 
-    // ✅ Early return if no date found
-    if (!nearestDate) return "Not Available";
-
-    // ✅ Now TypeScript knows nearestDate is definitely a Date
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-    return `${dayNames[nearestDate.getDay()]}, ${nearestDate.getDate()} ${monthNames[nearestDate.getMonth()]} ${nearestDate.getFullYear()}`;
+    return "Not Available";
   };
 
   // Get profile image or default
