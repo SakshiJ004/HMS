@@ -1400,7 +1400,7 @@ const Doctors = () => {
   };
 
   // Get profile image or default
-  const getProfileImage = (doctor: DoctorData, index: number) => {
+  const getProfileImage = (doctor: DoctorData) => {
     // ✅ Check if profileImage exists and is a base64 string or URL
     if (doctor.profileImage) {
       // If it's a base64 string, return it directly
@@ -1644,15 +1644,15 @@ const Doctors = () => {
             </div>
           ) : (
             <div className="row">
-              {doctors.map((doctor, index) => (
+              {doctors.map((doctor) => (
                 <div className="col-xl-4 col-md-6" key={doctor._id}>
                   <div className="card">
                     <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
                       <div className="me-3 doctor-profile-img">
                         <Link to={`${all_routes.doctordetails}?id=${doctor._id}`}>
-                          {getProfileImage(doctor, index) ? (
+                          {getProfileImage(doctor) ? (
                             <img
-                              src={getProfileImage(doctor, index)!}
+                              src={getProfileImage(doctor)!}
                               className="rounded"
                               alt={doctor.fullName}
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
