@@ -959,11 +959,11 @@ const AddDoctor = () => {
       setShowSuccessModal(true);
       setLoading(false);
 
-      // Redirect to doctors list
+
       // navigate(all_routes.doctors);
     } catch (err: any) {
       console.error("Error creating doctor:", err);
-      setError(err.message || "Failed to create doctor. Please try again.");
+      setError(err.message || "Failed to create doctor Please try again.");
       setLoading(false);
     }
   };
@@ -1048,6 +1048,7 @@ const AddDoctor = () => {
                           </div>
                         </div>
                         {/* end col*/}
+                        
                         <div className="col-lg-12">
                           <div className="row">
                             <div className="col-lg-6">

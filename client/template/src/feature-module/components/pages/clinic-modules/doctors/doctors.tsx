@@ -1266,7 +1266,7 @@ import Modals from "./modals/modals";
 import { all_routes } from "../../../../routes/all_routes";
 import { useEffect, useState } from "react";
 import { getDoctors, deleteDoctor } from "../../../../../api/doctorService";
-import type styles from "yet-another-react-lightbox/styles.css";
+// import type styles from "yet-another-react-lightbox/styles.css";
 
 // Interface for Doctor data from backend
 interface DoctorData {
@@ -1735,6 +1735,7 @@ const Doctors = () => {
           )}
         </div>
         {/* End Content */}
+
         {/* Footer Start */}
         <div className="footer text-center bg-white p-2 border-top">
           <p className="text-dark mb-0">
@@ -1747,6 +1748,7 @@ const Doctors = () => {
         </div>
         {/* Footer End */}
       </div>
+
       {/* ========================
 			End Page Content
 		========================= */}
