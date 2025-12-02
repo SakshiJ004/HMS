@@ -1260,7 +1260,7 @@ import {
   Doctor,
   Status,
 } from "../../../../../core/common/selectOption";
-import ImageWithBasePath from "../../../../../core/imageWithBasePath";
+// import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import { Link } from "react-router";
 import Modals from "./modals/modals";
 import { all_routes } from "../../../../routes/all_routes";
