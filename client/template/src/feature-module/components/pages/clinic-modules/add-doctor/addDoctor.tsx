@@ -689,7 +689,7 @@ import {
 } from "../../../../../core/common/selectOption";
 import CommonSelect from "../../../../../core/common/common-select/commonSelect";
 import TagInput from "../../../../../core/common/Taginput";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import DuplicateForms from "../../../../../core/common/duplicate-forms/duplicateForms";
 import EducationForms from "../../../../../core/common/duplicate-forms/educationForm";
 import RewardsForms from "../../../../../core/common/duplicate-forms/rewardsForm";
@@ -769,47 +769,6 @@ const AddDoctor = () => {
     setTags(newTags);
   };
 
-
-  // ✅ ADD THESE NEW FUNCTIONS HERE:
-  const handleMondayScheduleChange = useCallback((schedules: Array<{ startTime: string; endTime: string }>) => {
-    setMondaySchedule(schedules);
-  }, []);
-
-  const handleTuesdayScheduleChange = useCallback((schedules: Array<{ startTime: string; endTime: string }>) => {
-    setTuesdaySchedule(schedules);
-  }, []);
-
-  const handleWednesdayScheduleChange = useCallback((schedules: Array<{ startTime: string; endTime: string }>) => {
-    setWednesdaySchedule(schedules);
-  }, []);
-
-  const handleThursdayScheduleChange = useCallback((schedules: Array<{ startTime: string; endTime: string }>) => {
-    setThursdaySchedule(schedules);
-  }, []);
-
-  const handleFridayScheduleChange = useCallback((schedules: Array<{ startTime: string; endTime: string }>) => {
-    setFridaySchedule(schedules);
-  }, []);
-
-  const handleSaturdayScheduleChange = useCallback((schedules: Array<{ startTime: string; endTime: string }>) => {
-    setSaturdaySchedule(schedules);
-  }, []);
-
-  const handleSundayScheduleChange = useCallback((schedules: Array<{ startTime: string; endTime: string }>) => {
-    setSundaySchedule(schedules);
-  }, []);
-
-  const handleEducationChange = useCallback((education: Array<{ degree: string; college: string; year: string }>) => {
-    setEducation(education);
-  }, []);
-
-  const handleAwardsChange = useCallback((awards: Array<{ title: string; year: string }>) => {
-    setAwards(awards);
-  }, []);
-
-  const handleCertificationsChange = useCallback((certifications: Array<{ title: string; year: string }>) => {
-    setCertifications(certifications);
-  }, []);
   // Handle profile image upload
   // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   //   const file = e.target.files?.[0];
@@ -1089,7 +1048,7 @@ const AddDoctor = () => {
                           </div>
                         </div>
                         {/* end col*/}
-
+                        
                         <div className="col-lg-12">
                           <div className="row">
                             <div className="col-lg-6">
@@ -1540,7 +1499,7 @@ const AddDoctor = () => {
                         >
                           <div className="add-schedule-list">
                             <DuplicateForms
-                              onScheduleChange={handleMondayScheduleChange}
+                              onScheduleChange={setMondaySchedule}
                               scheduleData={mondaySchedule}
                             />
                           </div>
@@ -1552,7 +1511,7 @@ const AddDoctor = () => {
                         >
                           <div className="add-schedule-list">
                             <DuplicateForms
-                              onScheduleChange={handleTuesdayScheduleChange}
+                              onScheduleChange={setTuesdaySchedule}
                               scheduleData={tuesdaySchedule}
                             />
                           </div>
@@ -1564,7 +1523,7 @@ const AddDoctor = () => {
                         >
                           <div className="add-schedule-list">
                             <DuplicateForms
-                              onScheduleChange={handleWednesdayScheduleChange}
+                              onScheduleChange={setWednesdaySchedule}
                               scheduleData={wednesdaySchedule}
                             />
                           </div>
@@ -1576,7 +1535,7 @@ const AddDoctor = () => {
                         >
                           <div className="add-schedule-list">
                             <DuplicateForms
-                              onScheduleChange={handleThursdayScheduleChange}
+                              onScheduleChange={setThursdaySchedule}
                               scheduleData={thursdaySchedule}
                             />
                           </div>
@@ -1588,7 +1547,7 @@ const AddDoctor = () => {
                         >
                           <div className="add-schedule-list">
                             <DuplicateForms
-                              onScheduleChange={handleFridayScheduleChange}
+                              onScheduleChange={setFridaySchedule}
                               scheduleData={fridaySchedule}
                             />
                           </div>
@@ -1600,7 +1559,7 @@ const AddDoctor = () => {
                         >
                           <div className="add-schedule-list">
                             <DuplicateForms
-                              onScheduleChange={handleSaturdayScheduleChange}
+                              onScheduleChange={setSaturdaySchedule}
                               scheduleData={saturdaySchedule}
                             />
                           </div>
@@ -1612,7 +1571,7 @@ const AddDoctor = () => {
                         >
                           <div className="add-schedule-list">
                             <DuplicateForms
-                              onScheduleChange={handleSundayScheduleChange}
+                              onScheduleChange={setSundaySchedule}
                               scheduleData={sundaySchedule}
                             />
                           </div>
@@ -1737,7 +1696,7 @@ const AddDoctor = () => {
                     <div className="pb-0">
                       <div className="add-education-list">
                         <EducationForms
-                          onEducationChange={handleEducationChange}
+                          onEducationChange={setEducation}
                           educationData={education}
                         />
                       </div>
@@ -1748,7 +1707,7 @@ const AddDoctor = () => {
                     <div className="pb-0">
                       <div className="add-award-list">
                         <RewardsForms
-                          onRewardsChange={handleAwardsChange}
+                          onRewardsChange={setAwards}
                           rewardsData={awards}
                         />
                       </div>
@@ -1759,7 +1718,7 @@ const AddDoctor = () => {
                     <div className="pb-3 mb-3 border-bottom">
                       <div className="add-certification-list">
                         <RewardsForms
-                          onRewardsChange={handleCertificationsChange}
+                          onRewardsChange={setCertifications}
                           rewardsData={certifications}
                         />
                       </div>
@@ -1894,3 +1853,4 @@ const AddDoctor = () => {
 
 export default AddDoctor;
 
+  

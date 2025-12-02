@@ -159,7 +159,7 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
   // Convert scheduleData to rows when component mounts or scheduleData changes
   // Convert scheduleData to rows when component mounts or scheduleData changes
   useEffect(() => {
-    if (scheduleData && scheduleData.length > 0) {
+    if (scheduleData && scheduleData.length > 0 && rows.length === 1 && !rows[0].from) {
       const convertedRows = scheduleData.map((schedule, index) => ({
         id: Date.now() + index,
         session: Session[0]?.value || "",
@@ -195,7 +195,13 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
         startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
         endTime: row.to ? row.to.format("HH:mm:ss") : "00:00:00",
       }));
-      onScheduleChange(schedules);
+
+      const schedulesString = JSON.stringify(schedules);
+      const currentString = JSON.stringify(scheduleData || []);
+      
+      if(schedulesString !== currentString) {
+        onScheduleChange(schedules);
+      }
     }
   }, [rows]); // ✅ FIXED: Added onScheduleChange to deps
 
