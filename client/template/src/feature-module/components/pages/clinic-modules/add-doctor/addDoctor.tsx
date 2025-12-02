@@ -842,29 +842,86 @@ const AddDoctor = () => {
   };
 
   // Apply current active tab's schedule to all days
+  // const handleApplyAllSchedules = () => {
+  //   // Find which tab is currently active
+  //   const activeTab = document.querySelector('.schedule-tab .nav-link.active');
+  //   if (!activeTab) return;
+
+  //   // Get the active day's schedule
+  //   let sourceSchedule: Array<{ startTime: string; endTime: string }> = [];
+
+  //   if (activeTab.textContent?.includes('Monday')) sourceSchedule = mondaySchedule;
+  //   else if (activeTab.textContent?.includes('Tuesday')) sourceSchedule = tuesdaySchedule;
+  //   else if (activeTab.textContent?.includes('Wednesday')) sourceSchedule = wednesdaySchedule;
+  //   else if (activeTab.textContent?.includes('Thursday')) sourceSchedule = thursdaySchedule;
+  //   else if (activeTab.textContent?.includes('Friday')) sourceSchedule = fridaySchedule;
+  //   else if (activeTab.textContent?.includes('Saturday')) sourceSchedule = saturdaySchedule;
+  //   else if (activeTab.textContent?.includes('Sunday')) sourceSchedule = sundaySchedule;
+
+  //   if (sourceSchedule.length === 0) {
+  //     alert('Please add at least one time slot before applying to all days');
+  //     return;
+  //   }
+
+  //   // Confirm with user
+  //   if (!window.confirm('This will replace schedules on all other days. Continue?')) {
+  //     return;
+  //   }
+
+  //   // Apply to all days
+  //   setMondaySchedule([...sourceSchedule]);
+  //   setTuesdaySchedule([...sourceSchedule]);
+  //   setWednesdaySchedule([...sourceSchedule]);
+  //   setThursdaySchedule([...sourceSchedule]);
+  //   setFridaySchedule([...sourceSchedule]);
+  //   setSaturdaySchedule([...sourceSchedule]);
+  //   setSundaySchedule([...sourceSchedule]);
+
+  //   alert('Schedule applied to all days successfully!');
+  // };
+
   const handleApplyAllSchedules = () => {
     // Find which tab is currently active
     const activeTab = document.querySelector('.schedule-tab .nav-link.active');
-    if (!activeTab) return;
+    if (!activeTab) {
+      alert('Please select a day first');
+      return;
+    }
 
     // Get the active day's schedule
     let sourceSchedule: Array<{ startTime: string; endTime: string }> = [];
+    let dayName = '';
 
-    if (activeTab.textContent?.includes('Monday')) sourceSchedule = mondaySchedule;
-    else if (activeTab.textContent?.includes('Tuesday')) sourceSchedule = tuesdaySchedule;
-    else if (activeTab.textContent?.includes('Wednesday')) sourceSchedule = wednesdaySchedule;
-    else if (activeTab.textContent?.includes('Thursday')) sourceSchedule = thursdaySchedule;
-    else if (activeTab.textContent?.includes('Friday')) sourceSchedule = fridaySchedule;
-    else if (activeTab.textContent?.includes('Saturday')) sourceSchedule = saturdaySchedule;
-    else if (activeTab.textContent?.includes('Sunday')) sourceSchedule = sundaySchedule;
+    if (activeTab.textContent?.includes('Monday')) {
+      sourceSchedule = mondaySchedule;
+      dayName = 'Monday';
+    } else if (activeTab.textContent?.includes('Tuesday')) {
+      sourceSchedule = tuesdaySchedule;
+      dayName = 'Tuesday';
+    } else if (activeTab.textContent?.includes('Wednesday')) {
+      sourceSchedule = wednesdaySchedule;
+      dayName = 'Wednesday';
+    } else if (activeTab.textContent?.includes('Thursday')) {
+      sourceSchedule = thursdaySchedule;
+      dayName = 'Thursday';
+    } else if (activeTab.textContent?.includes('Friday')) {
+      sourceSchedule = fridaySchedule;
+      dayName = 'Friday';
+    } else if (activeTab.textContent?.includes('Saturday')) {
+      sourceSchedule = saturdaySchedule;
+      dayName = 'Saturday';
+    } else if (activeTab.textContent?.includes('Sunday')) {
+      sourceSchedule = sundaySchedule;
+      dayName = 'Sunday';
+    }
 
     if (sourceSchedule.length === 0) {
-      alert('Please add at least one time slot before applying to all days');
+      alert(`Please add at least one time slot for ${dayName} before applying to all days`);
       return;
     }
 
     // Confirm with user
-    if (!window.confirm('This will replace schedules on all other days. Continue?')) {
+    if (!window.confirm(`This will copy ${dayName}'s schedule to all other days. Continue?`)) {
       return;
     }
 
@@ -877,7 +934,7 @@ const AddDoctor = () => {
     setSaturdaySchedule([...sourceSchedule]);
     setSundaySchedule([...sourceSchedule]);
 
-    alert('Schedule applied to all days successfully!');
+    alert(`${dayName}'s schedule applied to all days successfully!`);
   };
 
   // Handle form submission
@@ -1048,7 +1105,7 @@ const AddDoctor = () => {
                           </div>
                         </div>
                         {/* end col*/}
-                        
+
                         <div className="col-lg-12">
                           <div className="row">
                             <div className="col-lg-6">
@@ -1853,4 +1910,3 @@ const AddDoctor = () => {
 
 export default AddDoctor;
 
-  

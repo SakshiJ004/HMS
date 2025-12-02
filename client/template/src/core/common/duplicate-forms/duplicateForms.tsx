@@ -155,21 +155,23 @@ const createRow = (row?: RowType): RowType => ({
 
 const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps) => {
   const [rows, setRows] = useState<RowType[]>([createRow()]);
+  const [initialized, setInitialized] = useState(false);
 
   // Convert scheduleData to rows when component mounts or scheduleData changes
   // Convert scheduleData to rows when component mounts or scheduleData changes
   useEffect(() => {
     if (scheduleData && scheduleData.length > 0 && rows.length === 1 && !rows[0].from) {
       const convertedRows = scheduleData.map((schedule, index) => ({
-        id: Date.now() + index,
+        id: Date.now() + index * 100,
         session: Session[0]?.value || "",
         from: schedule.startTime ? dayjs(schedule.startTime, "HH:mm:ss") : dayjs("00:00:00", "HH:mm:ss"),
         to: schedule.endTime ? dayjs(schedule.endTime, "HH:mm:ss") : dayjs("00:00:00", "HH:mm:ss"),
       }));
       setRows(convertedRows);
+      setInitialized(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scheduleData]);
+  }, [scheduleData, initialized]);
 
   // useEffect(() => {
   //   const schedules = rows.map(row => ({

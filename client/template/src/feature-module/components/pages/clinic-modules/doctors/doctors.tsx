@@ -1347,23 +1347,23 @@ const Doctors = () => {
   };
 
   // Add this helper function at the top of the component
-  const getNextDayOccurrence = (dayName: string): Date => {
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const targetDay = daysOfWeek.indexOf(dayName);
+  // const getNextDayOccurrence = (dayName: string): Date => {
+  //   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  //   const targetDay = daysOfWeek.indexOf(dayName);
 
-    const today = new Date();
-    const currentDay = today.getDay();
+  //   const today = new Date();
+  //   const currentDay = today.getDay();
 
-    let daysUntilTarget = targetDay - currentDay;
-    if (daysUntilTarget <= 0) {
-      daysUntilTarget += 7;
-    }
+  //   let daysUntilTarget = targetDay - currentDay;
+  //   if (daysUntilTarget <= 0) {
+  //     daysUntilTarget += 7;
+  //   }
 
-    const nextOccurrence = new Date(today);
-    nextOccurrence.setDate(today.getDate() + daysUntilTarget);
+  //   const nextOccurrence = new Date(today);
+  //   nextOccurrence.setDate(today.getDate() + daysUntilTarget);
 
-    return nextOccurrence;
-  };
+  //   return nextOccurrence;
+  // };
 
   const getNextAvailableDay = (schedules?: Array<{ day: string; timeSlots: any[] }>) => {
     if (!schedules || schedules.length === 0) {
@@ -1389,11 +1389,11 @@ const Doctors = () => {
       const checkDay = daysOrder[checkDayIndex];
 
       if (availableDays.includes(checkDay)) {
-        // Use getNextDayOccurrence to get correct date
-        const date = getNextDayOccurrence(checkDay);
+        const nextDate = new Date(today)
+        nextDate.setDate(today.getDate() + i);
 
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        return `${checkDay.slice(0, 3)}, ${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+        return `${checkDay.slice(0, 3)}, ${nextDate.getDate()} ${monthNames[nextDate.getMonth()]} ${nextDate.getFullYear()}`;
       }
     }
 
@@ -1632,14 +1632,11 @@ const Doctors = () => {
           )}
           {doctors.length === 0 && !loading ? (
             <div className="card">
-            <div className="card-body text-center py-5">
-              <i className="ti ti-users fs-1 text-muted mb-3"></i>
-              <h5>No Doctors Found</h5>
-              <p className="text-muted">Start by adding your first doctor</p>
-              <Link to={all_routes.addDoctors} className="btn btn-primary">
+            <div className="card-body text-center py-5">              
+              {/* <Link to={all_routes.addDoctors} className="btn btn-primary">
                 <i className="ti ti-plus me-1" />
                 Add Doctor
-              </Link>
+              </Link> */}
             </div>
           </div>
           ) : (
