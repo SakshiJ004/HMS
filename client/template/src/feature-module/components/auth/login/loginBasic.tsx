@@ -91,6 +91,8 @@ const LoginBasic = () => {
         localStorage.setItem("userData", JSON.stringify(data.data));
         localStorage.setItem("token", data.data.token);
 
+        window.dispatchEvent(new Event('userDataUpdated'));
+
         // Handle Remember Me
         if (rememberMe) {
           localStorage.setItem("rememberedEmail", formData.email);

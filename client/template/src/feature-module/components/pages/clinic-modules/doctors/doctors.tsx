@@ -1364,31 +1364,31 @@ const Doctors = () => {
     return nextOccurrence;
   };
 
-  // Replace your existing getNextAvailableDay function with this:
   const getNextAvailableDay = (schedules?: Array<{ day: string; timeSlots: any[] }>) => {
     if (!schedules || schedules.length === 0) {
       return "Not Available";
     }
 
-    const daysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const daysOrder = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-    // Find the next available day
+    // Filter schedules that have time slots
     const availableDays = schedules
       .filter(s => s.timeSlots && s.timeSlots.length > 0)
       .map(s => s.day);
 
     if (availableDays.length === 0) return "Not Available";
 
-    // Get today's day name
+    // Get today
     const today = new Date();
-    const todayDayName = daysOrder[today.getDay() === 0 ? 6 : today.getDay() - 1];
-    const currentIndex = daysOrder.indexOf(todayDayName);
+    const currentDayIndex = today.getDay(); // 0 = Sunday, 6 = Saturday
 
-    // Find next available day
-    for (let i = 0; i < 7; i++) {
-      const checkDay = daysOrder[(currentIndex + i) % 7];
+    // Find the NEXT available day (starting from tomorrow)
+    for (let i = 1; i <= 7; i++) { // ✅ Start from 1 (tomorrow), not 0
+      const checkDayIndex = (currentDayIndex + i) % 7;
+      const checkDay = daysOrder[checkDayIndex];
+
       if (availableDays.includes(checkDay)) {
-        // Use getNextDayOccurrence to get the correct date
+        // Use getNextDayOccurrence to get correct date
         const date = getNextDayOccurrence(checkDay);
 
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -1401,18 +1401,30 @@ const Doctors = () => {
 
   // Get profile image or default
   const getProfileImage = (doctor: DoctorData, index: number) => {
+    // ✅ Check if profileImage exists and is a base64 string or URL
     if (doctor.profileImage) {
-      return doctor.profileImage;
+      // If it's a base64 string, return it directly
+      if (doctor.profileImage.startsWith('data:image')) {
+        return doctor.profileImage;
+      }
+      // If it's a URL (Google photo or uploaded), return it
+      if (doctor.profileImage.startsWith('http')) {
+        return doctor.profileImage;
+      }
     }
-    // Fallback to default images
-    const defaultImages = [
-      "assets/img/doctors/doctor-01.jpg",
-      "assets/img/doctors/doctor-02.jpg",
-      "assets/img/doctors/doctor-03.jpg",
-      "assets/img/doctors/doctor-04.jpg",
-      "assets/img/doctors/doctor-05.jpg",
-    ];
-    return defaultImages[index % defaultImages.length];
+
+    // ✅ Return null to show initials instead
+    return null;
+  };
+
+  // ✅ Add this NEW function to get initials
+  const getInitials = (fullName: string) => {
+    if (!fullName) return "D";
+    const nameParts = fullName.trim().split(' ');
+    if (nameParts.length >= 2) {
+      return nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
+    }
+    return nameParts[0].charAt(0).toUpperCase();
   };
 
   return (
@@ -1638,11 +1650,26 @@ const Doctors = () => {
                     <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
                       <div className="me-3 doctor-profile-img">
                         <Link to={`${all_routes.doctordetails}?id=${doctor._id}`}>
-                          <ImageWithBasePath
-                            src={getProfileImage(doctor, index)}
-                            className="rounded"
-                            alt={doctor.fullName}
-                          />
+                          {getProfileImage(doctor, index) ? (
+                            <img
+                              src={getProfileImage(doctor, index)!}
+                              className="rounded"
+                              alt={doctor.fullName}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div
+                              className="rounded d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                fontSize: '24px',
+                                aspectRatio: '1'
+                              }}
+                            >
+                              {getInitials(doctor.fullName)}
+                            </div>
+                          )}
                         </Link>
                       </div>
                       <div className="flex-fill">

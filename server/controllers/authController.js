@@ -187,6 +187,7 @@ const loginUser = async (req, res) => {
                 lastName: lastName,
                 email: user.email,
                 role: user.role,
+                profileImage: user.profileImage || null,
                 token,
                 rememberMe, // Send back rememberMe status
             },
