@@ -1306,7 +1306,7 @@ const Doctors = () => {
 
   const fetchDoctors = async () => {
     try {
-      setLoading(true);
+      // setLoading(true);
       const response = await getDoctors();
       console.log("Fetched doctors:", response);
 
@@ -1624,114 +1624,113 @@ const Doctors = () => {
           )}
 
           {/* Loading State */}
-          {loading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <p className="mt-2">Loading doctors...</p>
+          {error && !loading && (
+            <div className="alert alert-danger alert-dismissible fade show" role="alert">
+              {error}
+              <button type="button" className="btn-close" onClick={() => setError("")}></button>
             </div>
-          ) : doctors.length === 0 ? (
+          )}
+          {doctors.length === 0 && !loading ? (
             <div className="card">
-              <div className="card-body text-center py-5">
-                <i className="ti ti-users fs-1 text-muted mb-3"></i>
-                <h5>No Doctors Found</h5>
-                <p className="text-muted">Start by adding your first doctor</p>
-                <Link to={all_routes.addDoctors} className="btn btn-primary">
-                  <i className="ti ti-plus me-1" />
-                  Add Doctor
-                </Link>
-              </div>
+            <div className="card-body text-center py-5">
+              <i className="ti ti-users fs-1 text-muted mb-3"></i>
+              <h5>No Doctors Found</h5>
+              <p className="text-muted">Start by adding your first doctor</p>
+              <Link to={all_routes.addDoctors} className="btn btn-primary">
+                <i className="ti ti-plus me-1" />
+                Add Doctor
+              </Link>
             </div>
+          </div>
           ) : (
-            <div className="row">
-              {doctors.map((doctor) => (
-                <div className="col-xl-4 col-md-6" key={doctor._id}>
-                  <div className="card">
-                    <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
-                      <div className="me-3 doctor-profile-img" style={{ width: '80px', height: '80px', flexShrink: 0 }}>
-                        <Link to={`${all_routes.doctordetails}?id=${doctor._id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
-                          {getProfileImage(doctor) ? (
-                            <img
-                              src={getProfileImage(doctor)!}
-                              className="rounded"
-                              alt={doctor.fullName}
-                              style={{ width: '80px', height: '80px', objectFit: 'cover', display: 'block' }}
-                            />
-                          ) : (
-                            <div
-                              className="rounded d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
-                              style={{
-                                width: '80px',
-                                height: '80px',
-                                fontSize: '24px'
-                              }}
-                            >
-                              {getInitials(doctor.fullName)}
-                            </div>
-                          )}
-                        </Link>
-                      </div>
-                      <div className="flex-fill">
-                        <div className="d-flex align-items-center justify-content-between mb-1">
-                          <h6 className="mb-0 fw-semibold">
-                            <Link to={`${all_routes.doctordetails}?id=${doctor._id}`}>
-                              Dr. {doctor.fullName}
-                            </Link>
-                          </h6>
-                          <div className="action-item">
-                            <Link to="#" data-bs-toggle="dropdown">
-                              <i className="ti ti-dots-vertical" />
-                            </Link>
-                            <ul className="dropdown-menu">
-                              <li>
-                                <Link
-                                  to={`${all_routes.editDoctors}?id=${doctor._id}`}
-                                  className="dropdown-item d-flex align-items-center"
-                                >
-                                  Edit
-                                </Link>
-                              </li>
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#delete_modal"
-                                  onClick={() => setDeleteId(doctor._id)}
-                                >
-                                  Delete
-                                </Link>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                        <span className="d-block mb-2 fs-13">
-                          {doctor.designation || doctor.department}
-                        </span>
-                        <p className="mb-2 fs-13">
-                          Available : {getNextAvailableDay(doctor.schedules)}
-                        </p>
-                        <div className="d-flex align-items-center justify-content-between">
-                          <h6 className="text-primary fs-14 mb-0">
-                            <span className="text-muted fs-13 fw-normal">
-                              Starts From :
-                            </span>
-                            ${doctor.consultationCharge || 0}
-                          </h6>
-                          <Link
-                            to={all_routes.appointmentCalendar}
-                            className="avatar avatar-xs border text-muted fs-14"
+          <div className="row">
+            {doctors.map((doctor) => (
+              <div className="col-xl-4 col-md-6" key={doctor._id}>
+                <div className="card">
+                  <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
+                    <div className="me-3 doctor-profile-img" style={{ width: '80px', height: '80px', flexShrink: 0 }}>
+                      <Link to={`/doctor-details?id=${doctor._id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
+                        {getProfileImage(doctor) ? (
+                          <img
+                            src={getProfileImage(doctor)!}
+                            className="rounded"
+                            alt={doctor.fullName}
+                            style={{ width: '80px', height: '80px', objectFit: 'cover', display: 'block' }}
+                          />
+                        ) : (
+                          <div
+                            className="rounded d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                            style={{
+                              width: '80px',
+                              height: '80px',
+                              fontSize: '24px'
+                            }}
                           >
-                            <i className="ti ti-calendar-cog" />
+                            {getInitials(doctor.fullName)}
+                          </div>
+                        )}
+                      </Link>
+                    </div>
+                    <div className="flex-fill">
+                      <div className="d-flex align-items-center justify-content-between mb-1">
+                        <h6 className="mb-0 fw-semibold">
+                          <Link to={`/doctor-details?id=${doctor._id}`}>
+                            Dr. {doctor.fullName}
                           </Link>
+                        </h6>
+                        <div className="action-item">
+                          <Link to="#" data-bs-toggle="dropdown">
+                            <i className="ti ti-dots-vertical" />
+                          </Link>
+                          <ul className="dropdown-menu">
+                            <li>
+                              <Link
+                                to={`${all_routes.editDoctors}?id=${doctor._id}`}
+                                className="dropdown-item d-flex align-items-center"
+                              >
+                                Edit
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                to="#"
+                                className="dropdown-item d-flex align-items-center"
+                                data-bs-toggle="modal"
+                                data-bs-target="#delete_modal"
+                                onClick={() => setDeleteId(doctor._id)}
+                              >
+                                Delete
+                              </Link>
+                            </li>
+                          </ul>
                         </div>
+                      </div>
+                      <span className="d-block mb-2 fs-13">
+                        {doctor.designation || doctor.department}
+                      </span>
+                      <p className="mb-2 fs-13">
+                        Available : {getNextAvailableDay(doctor.schedules)}
+                      </p>
+                      <div className="d-flex align-items-center justify-content-between">
+                        <h6 className="text-primary fs-14 mb-0">
+                          <span className="text-muted fs-13 fw-normal">
+                            Starts From :
+                          </span>
+                          ${doctor.consultationCharge || 0}
+                        </h6>
+                        <Link
+                          to={all_routes.appointmentCalendar}
+                          className="avatar avatar-xs border text-muted fs-14"
+                        >
+                          <i className="ti ti-calendar-cog" />
+                        </Link>
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
           )}
         </div>
         {/* End Content */}
