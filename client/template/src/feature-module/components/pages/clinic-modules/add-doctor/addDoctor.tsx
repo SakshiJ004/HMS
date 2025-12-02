@@ -957,6 +957,7 @@ const AddDoctor = () => {
         username: response.data.credentials.username
       });
       setShowSuccessModal(true);
+      setLoading(false);
 
       // Redirect to doctors list
       // navigate(all_routes.doctors);

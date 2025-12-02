@@ -1266,6 +1266,7 @@ import Modals from "./modals/modals";
 import { all_routes } from "../../../../routes/all_routes";
 import { useEffect, useState } from "react";
 import { getDoctors, deleteDoctor } from "../../../../../api/doctorService";
+import type styles from "yet-another-react-lightbox/styles.css";
 
 // Interface for Doctor data from backend
 interface DoctorData {
@@ -1648,23 +1649,22 @@ const Doctors = () => {
                 <div className="col-xl-4 col-md-6" key={doctor._id}>
                   <div className="card">
                     <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
-                      <div className="me-3 doctor-profile-img">
-                        <Link to={`${all_routes.doctordetails}?id=${doctor._id}`}>
+                      <div className="me-3 doctor-profile-img" style={{ width: '80px', height: '80px', flexShrink: 0 }}>
+                        <Link to={`${all_routes.doctordetails}?id=${doctor._id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
                           {getProfileImage(doctor) ? (
                             <img
                               src={getProfileImage(doctor)!}
                               className="rounded"
                               alt={doctor.fullName}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              style={{ width: '80px', height: '80px', objectFit: 'cover', display: 'block' }}
                             />
                           ) : (
                             <div
                               className="rounded d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
                               style={{
-                                width: '100%',
-                                height: '100%',
-                                fontSize: '24px',
-                                aspectRatio: '1'
+                                width: '80px',
+                                height: '80px',
+                                fontSize: '24px'
                               }}
                             >
                               {getInitials(doctor.fullName)}
