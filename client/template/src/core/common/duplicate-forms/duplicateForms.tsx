@@ -197,7 +197,7 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
       }));
       onScheduleChange(schedules);
     }
-  }, [rows, onScheduleChange]); // ✅ FIXED: Added onScheduleChange to deps
+  }, [rows]); // ✅ FIXED: Added onScheduleChange to deps
 
   const handleAddRow = (row: RowType) => {
     const newRow = createRow(); // Create fresh row without copying previous
