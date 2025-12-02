@@ -1648,7 +1648,7 @@ const Doctors = () => {
               {doctors.map((doctor) => (
                 <div className="col-xl-4 col-md-6" key={doctor._id}>
                   <div className="card">
-                    <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
+                    <div className="card-body d-flex align-items-start flex-sm-nowrap flex-wrap row-gap-3">
                       <div className="me-3 doctor-profile-img" style={{ width: '80px', height: '80px', flexShrink: 0 }}>
                         <Link to={`${all_routes.doctordetails}?id=${doctor._id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
                           {getProfileImage(doctor) ? (
