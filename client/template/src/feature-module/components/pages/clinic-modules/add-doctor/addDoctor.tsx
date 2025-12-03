@@ -1002,6 +1002,8 @@ const AddDoctor = () => {
 
       // Submit to backend
       const response = await createDoctor(doctorData);
+      console.log("🚀 SENDING TO BACKEND:", JSON.stringify(doctorData.schedules, null, 2));
+
 
       console.log("Doctor created successfully:", response);
 
