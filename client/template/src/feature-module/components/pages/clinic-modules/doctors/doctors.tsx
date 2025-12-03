@@ -1623,7 +1623,7 @@ const Doctors = () => {
             </div>
           )}
 
-          {/* Loading State */}
+          {/* Loading State
           {error && !loading && (
             <div className="alert alert-danger alert-dismissible fade show" role="alert">
               {error}
@@ -1636,7 +1636,7 @@ const Doctors = () => {
                 <p className="text-muted">No doctors found</p>
               </div>
             </div>
-          ) : (
+          ) : ( */}
             <div className="row">
               {doctors.map((doctor) => (
                 <div className="col-xl-4 col-md-6" key={doctor._id}>
@@ -1725,7 +1725,7 @@ const Doctors = () => {
                 </div>
               ))}
             </div>
-          )}
+          {/* )} */}
         </div>
         {/* End Content */}
 
