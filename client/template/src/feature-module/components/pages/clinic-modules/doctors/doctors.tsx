@@ -1384,7 +1384,7 @@ const Doctors = () => {
     const currentDayIndex = today.getDay(); // 0 = Sunday, 6 = Saturday
 
     // Find the NEXT available day (starting from tomorrow)
-    for (let i = 1; i <= 7; i++) { // ✅ Start from 1 (tomorrow), not 0
+    for (let i = 0; i <= 7; i++) { // ✅ Start from 1 (tomorrow), not 0
       const checkDayIndex = (currentDayIndex + i) % 7;
       const checkDay = daysOrder[checkDayIndex];
 
@@ -1630,104 +1630,101 @@ const Doctors = () => {
               <button type="button" className="btn-close" onClick={() => setError("")}></button>
             </div>
           )}
-          {doctors.length === 0 && !loading ? (
+          {doctors.length === 0 && !loading && !error ? (
             <div className="card">
-            <div className="card-body text-center py-5">              
-              {/* <Link to={all_routes.addDoctors} className="btn btn-primary">
-                <i className="ti ti-plus me-1" />
-                Add Doctor
-              </Link> */}
+              <div className="card-body text-center py-5">
+                <p className="text-muted">No doctors found</p>
+              </div>
             </div>
-          </div>
           ) : (
-          <div className="row">
-            {doctors.map((doctor) => (
-              <div className="col-xl-4 col-md-6" key={doctor._id}>
-                <div className="card">
-                  <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
-                    <div className="me-3 doctor-profile-img" style={{ width: '80px', height: '80px', flexShrink: 0 }}>
-                      <Link to={`/doctor-details?id=${doctor._id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
-                        {getProfileImage(doctor) ? (
-                          <img
-                            src={getProfileImage(doctor)!}
-                            className="rounded"
-                            alt={doctor.fullName}
-                            style={{ width: '80px', height: '80px', objectFit: 'cover', display: 'block' }}
-                          />
-                        ) : (
-                          <div
-                            className="rounded d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
-                            style={{
-                              width: '80px',
-                              height: '80px',
-                              fontSize: '24px'
-                            }}
-                          >
-                            {getInitials(doctor.fullName)}
-                          </div>
-                        )}
-                      </Link>
-                    </div>
-                    <div className="flex-fill">
-                      <div className="d-flex align-items-center justify-content-between mb-1">
-                        <h6 className="mb-0 fw-semibold">
-                          <Link to={`/doctor-details?id=${doctor._id}`}>
-                            Dr. {doctor.fullName}
-                          </Link>
-                        </h6>
-                        <div className="action-item">
-                          <Link to="#" data-bs-toggle="dropdown">
-                            <i className="ti ti-dots-vertical" />
-                          </Link>
-                          <ul className="dropdown-menu">
-                            <li>
-                              <Link
-                                to={`${all_routes.editDoctors}?id=${doctor._id}`}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                to="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                                onClick={() => setDeleteId(doctor._id)}
-                              >
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                      <span className="d-block mb-2 fs-13">
-                        {doctor.designation || doctor.department}
-                      </span>
-                      <p className="mb-2 fs-13">
-                        Available : {getNextAvailableDay(doctor.schedules)}
-                      </p>
-                      <div className="d-flex align-items-center justify-content-between">
-                        <h6 className="text-primary fs-14 mb-0">
-                          <span className="text-muted fs-13 fw-normal">
-                            Starts From :
-                          </span>
-                          ${doctor.consultationCharge || 0}
-                        </h6>
-                        <Link
-                          to={all_routes.appointmentCalendar}
-                          className="avatar avatar-xs border text-muted fs-14"
-                        >
-                          <i className="ti ti-calendar-cog" />
+            <div className="row">
+              {doctors.map((doctor) => (
+                <div className="col-xl-4 col-md-6" key={doctor._id}>
+                  <div className="card">
+                    <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
+                      <div className="me-3 doctor-profile-img" style={{ width: '80px', height: '80px', flexShrink: 0 }}>
+                        <Link to={`/doctor-details?id=${doctor._id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
+                          {getProfileImage(doctor) ? (
+                            <img
+                              src={getProfileImage(doctor)!}
+                              className="rounded"
+                              alt={doctor.fullName}
+                              style={{ width: '80px', height: '80px', objectFit: 'cover', display: 'block' }}
+                            />
+                          ) : (
+                            <div
+                              className="rounded d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                              style={{
+                                width: '80px',
+                                height: '80px',
+                                fontSize: '24px'
+                              }}
+                            >
+                              {getInitials(doctor.fullName)}
+                            </div>
+                          )}
                         </Link>
+                      </div>
+                      <div className="flex-fill">
+                        <div className="d-flex align-items-center justify-content-between mb-1">
+                          <h6 className="mb-0 fw-semibold">
+                            <Link to={`/doctor-details?id=${doctor._id}`}>
+                              Dr. {doctor.fullName}
+                            </Link>
+                          </h6>
+                          <div className="action-item">
+                            <Link to="#" data-bs-toggle="dropdown">
+                              <i className="ti ti-dots-vertical" />
+                            </Link>
+                            <ul className="dropdown-menu">
+                              <li>
+                                <Link
+                                  to={`${all_routes.editDoctors}?id=${doctor._id}`}
+                                  className="dropdown-item d-flex align-items-center"
+                                >
+                                  Edit
+                                </Link>
+                              </li>
+                              <li>
+                                <Link
+                                  to="#"
+                                  className="dropdown-item d-flex align-items-center"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#delete_modal"
+                                  onClick={() => setDeleteId(doctor._id)}
+                                >
+                                  Delete
+                                </Link>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                        <span className="d-block mb-2 fs-13">
+                          {doctor.designation || doctor.department}
+                        </span>
+                        <p className="mb-2 fs-13">
+                          Available : {getNextAvailableDay(doctor.schedules)}
+                        </p>
+                        <div className="d-flex align-items-center justify-content-between">
+                          <h6 className="text-primary fs-14 mb-0">
+                            <span className="text-muted fs-13 fw-normal">
+                              Starts From :
+                            </span>
+                            ${doctor.consultationCharge || 0}
+                          </h6>
+                          <Link
+                            to={all_routes.appointmentCalendar}
+                            className="avatar avatar-xs border text-muted fs-14"
+                          >
+                            <i className="ti ti-calendar-cog" />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           )}
         </div>
         {/* End Content */}
