@@ -1365,40 +1365,97 @@ const Doctors = () => {
   //   return nextOccurrence;
   // };
 
-  const getNextAvailableDay = (schedules?: Array<{ day: string; timeSlots: any[] }>) => {
+  // const getNextAvailableDay = (schedules?: Array<{ day: string; timeSlots: any[] }>) => {
+  //   if (!schedules || schedules.length === 0) {
+  //     return "Not Available";
+  //   }
+
+  //   const daysOrder = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  //   // Filter schedules that have time slots
+  //   const availableDays = schedules
+  //     .filter(s => s.timeSlots && s.timeSlots.length > 0)
+  //     .map(s => s.day);
+
+  //   if (availableDays.length === 0) return "Not Available";
+
+  //   // Get today
+  //   const today = new Date();
+  //   const currentDayIndex = today.getDay(); // 0 = Sunday, 6 = Saturday
+
+  //   // Find the NEXT available day (starting from tomorrow)
+  //   for (let i = 0; i <= 7; i++) { // ✅ Start from 1 (tomorrow), not 0
+  //     const checkDayIndex = (currentDayIndex + i) % 7;
+  //     const checkDay = daysOrder[checkDayIndex];
+
+  //     if (availableDays.includes(checkDay)) {
+  //       const nextDate = new Date(today)
+  //       nextDate.setDate(today.getDate() + i);
+
+  //       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  //       return `${checkDay.slice(0, 3)}, ${nextDate.getDate()} ${monthNames[nextDate.getMonth()]} ${nextDate.getFullYear()}`;
+  //     }
+  //   }
+
+  //   return "Not Available";
+  // };
+
+
+  const getNextAvailableDay = (
+    schedules?: Array<{ day: string; timeSlots: Array<{ startTime: string; endTime: string }> }>
+  ) => {
     if (!schedules || schedules.length === 0) {
       return "Not Available";
     }
 
     const daysOrder = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-    // Filter schedules that have time slots
-    const availableDays = schedules
-      .filter(s => s.timeSlots && s.timeSlots.length > 0)
-      .map(s => s.day);
+    // Filter only days that actually have time slots
+    const validSchedules = schedules.filter(
+      (s) => s.timeSlots && s.timeSlots.length > 0 && daysOrder.includes(s.day)
+    );
 
-    if (availableDays.length === 0) return "Not Available";
+    if (validSchedules.length === 0) {
+      return "Not Available";
+    }
 
-    // Get today
     const today = new Date();
-    const currentDayIndex = today.getDay(); // 0 = Sunday, 6 = Saturday
+    const currentDayIndex = today.getDay(); // 0 = Sunday, ..., 6 = Saturday
 
-    // Find the NEXT available day (starting from tomorrow)
-    for (let i = 0; i <= 7; i++) { // ✅ Start from 1 (tomorrow), not 0
-      const checkDayIndex = (currentDayIndex + i) % 7;
-      const checkDay = daysOrder[checkDayIndex];
+    let bestDiff = Infinity;
+    let bestDayIndex: number | null = null;
 
-      if (availableDays.includes(checkDay)) {
-        const nextDate = new Date(today)
-        nextDate.setDate(today.getDate() + i);
+    // 🔍 For each scheduled day, compute how many days ahead it is
+    for (const s of validSchedules) {
+      const targetDayIndex = daysOrder.indexOf(s.day); // e.g. "Saturday" -> 6
+      if (targetDayIndex === -1) continue;
 
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        return `${checkDay.slice(0, 3)}, ${nextDate.getDate()} ${monthNames[nextDate.getMonth()]} ${nextDate.getFullYear()}`;
+      let diff = (targetDayIndex - currentDayIndex + 7) % 7;
+
+      // If diff is 0, it means "today". Treat that as "next week" (7 days later)
+      if (diff === 0) diff = 7;
+
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestDayIndex = targetDayIndex;
       }
     }
 
-    return "Not Available";
+    if (bestDayIndex === null || !isFinite(bestDiff)) {
+      return "Not Available";
+    }
+
+    // 📅 Compute the next date using the smallest diff
+    const nextDate = new Date(today);
+    nextDate.setDate(today.getDate() + bestDiff);
+
+    const dayName = daysOrder[bestDayIndex];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    return `${dayName.slice(0, 3)}, ${nextDate.getDate()} ${monthNames[nextDate.getMonth()]
+      } ${nextDate.getFullYear()}`;
   };
+
 
   // Get profile image or default
   const getProfileImage = (doctor: DoctorData) => {
@@ -1637,94 +1694,94 @@ const Doctors = () => {
               </div>
             </div>
           ) : ( */}
-            <div className="row">
-              {doctors.map((doctor) => (
-                <div className="col-xl-4 col-md-6" key={doctor._id}>
-                  <div className="card">
-                    <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
-                      <div className="me-3 doctor-profile-img" style={{ width: '80px', height: '80px', flexShrink: 0 }}>
-                        <Link to={`/doctor-details?id=${doctor._id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
-                          {getProfileImage(doctor) ? (
-                            <img
-                              src={getProfileImage(doctor)!}
-                              className="rounded"
-                              alt={doctor.fullName}
-                              style={{ width: '80px', height: '80px', objectFit: 'cover', display: 'block' }}
-                            />
-                          ) : (
-                            <div
-                              className="rounded d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
-                              style={{
-                                width: '80px',
-                                height: '80px',
-                                fontSize: '24px'
-                              }}
-                            >
-                              {getInitials(doctor.fullName)}
-                            </div>
-                          )}
-                        </Link>
-                      </div>
-                      <div className="flex-fill">
-                        <div className="d-flex align-items-center justify-content-between mb-1">
-                          <h6 className="mb-0 fw-semibold">
-                            <Link to={`/doctor-details?id=${doctor._id}`}>
-                              Dr. {doctor.fullName}
-                            </Link>
-                          </h6>
-                          <div className="action-item">
-                            <Link to="#" data-bs-toggle="dropdown">
-                              <i className="ti ti-dots-vertical" />
-                            </Link>
-                            <ul className="dropdown-menu">
-                              <li>
-                                <Link
-                                  to={`${all_routes.editDoctors}?id=${doctor._id}`}
-                                  className="dropdown-item d-flex align-items-center"
-                                >
-                                  Edit
-                                </Link>
-                              </li>
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#delete_modal"
-                                  onClick={() => setDeleteId(doctor._id)}
-                                >
-                                  Delete
-                                </Link>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                        <span className="d-block mb-2 fs-13">
-                          {doctor.designation || doctor.department}
-                        </span>
-                        <p className="mb-2 fs-13">
-                          Available : {getNextAvailableDay(doctor.schedules)}
-                        </p>
-                        <div className="d-flex align-items-center justify-content-between">
-                          <h6 className="text-primary fs-14 mb-0">
-                            <span className="text-muted fs-13 fw-normal">
-                              Starts From :
-                            </span>
-                            ${doctor.consultationCharge || 0}
-                          </h6>
-                          <Link
-                            to={all_routes.appointmentCalendar}
-                            className="avatar avatar-xs border text-muted fs-14"
+          <div className="row">
+            {doctors.map((doctor) => (
+              <div className="col-xl-4 col-md-6" key={doctor._id}>
+                <div className="card">
+                  <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
+                    <div className="me-3 doctor-profile-img" style={{ width: '80px', height: '80px', flexShrink: 0 }}>
+                      <Link to={`/doctor-details?id=${doctor._id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
+                        {getProfileImage(doctor) ? (
+                          <img
+                            src={getProfileImage(doctor)!}
+                            className="rounded"
+                            alt={doctor.fullName}
+                            style={{ width: '80px', height: '80px', objectFit: 'cover', display: 'block' }}
+                          />
+                        ) : (
+                          <div
+                            className="rounded d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                            style={{
+                              width: '80px',
+                              height: '80px',
+                              fontSize: '24px'
+                            }}
                           >
-                            <i className="ti ti-calendar-cog" />
+                            {getInitials(doctor.fullName)}
+                          </div>
+                        )}
+                      </Link>
+                    </div>
+                    <div className="flex-fill">
+                      <div className="d-flex align-items-center justify-content-between mb-1">
+                        <h6 className="mb-0 fw-semibold">
+                          <Link to={`/doctor-details?id=${doctor._id}`}>
+                            Dr. {doctor.fullName}
                           </Link>
+                        </h6>
+                        <div className="action-item">
+                          <Link to="#" data-bs-toggle="dropdown">
+                            <i className="ti ti-dots-vertical" />
+                          </Link>
+                          <ul className="dropdown-menu">
+                            <li>
+                              <Link
+                                to={`${all_routes.editDoctors}?id=${doctor._id}`}
+                                className="dropdown-item d-flex align-items-center"
+                              >
+                                Edit
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                to="#"
+                                className="dropdown-item d-flex align-items-center"
+                                data-bs-toggle="modal"
+                                data-bs-target="#delete_modal"
+                                onClick={() => setDeleteId(doctor._id)}
+                              >
+                                Delete
+                              </Link>
+                            </li>
+                          </ul>
                         </div>
+                      </div>
+                      <span className="d-block mb-2 fs-13">
+                        {doctor.designation || doctor.department}
+                      </span>
+                      <p className="mb-2 fs-13">
+                        Available : {getNextAvailableDay(doctor.schedules)}
+                      </p>
+                      <div className="d-flex align-items-center justify-content-between">
+                        <h6 className="text-primary fs-14 mb-0">
+                          <span className="text-muted fs-13 fw-normal">
+                            Starts From :
+                          </span>
+                          ${doctor.consultationCharge || 0}
+                        </h6>
+                        <Link
+                          to={all_routes.appointmentCalendar}
+                          className="avatar avatar-xs border text-muted fs-14"
+                        >
+                          <i className="ti ti-calendar-cog" />
+                        </Link>
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
           {/* )} */}
         </div>
         {/* End Content */}
