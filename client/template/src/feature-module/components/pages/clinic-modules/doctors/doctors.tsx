@@ -1411,8 +1411,14 @@ const Doctors = () => {
     const daysOrder = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
     // Filter only days that actually have time slots
+    // const validSchedules = schedules.filter(
+    //   (s) => s.timeSlots && s.timeSlots.length > 0 && daysOrder.includes(s.day)
+    // );
+
     const validSchedules = schedules.filter(
-      (s) => s.timeSlots && s.timeSlots.length > 0 && daysOrder.includes(s.day)
+      (s) => s.timeSlots.some(
+        ts => ts.startTime !== "00:00:00" && ts.endTime !== "00:00:00"
+      )
     );
 
     if (validSchedules.length === 0) {

@@ -149,12 +149,12 @@ interface DuplicateFormsProps {
 const createRow = (row?: RowType): RowType => ({
   id: Date.now() + Math.random(),
   session: row ? row.session : Session[0]?.value || "",
-  from: row ? row.from : dayjs("00:00:00", "HH:mm:ss"),
-  to: row ? row.to : dayjs("00:00:00", "HH:mm:ss"),
+  from: row ? row.from : null,
+  to: row ? row.to : null,
 });
 
 const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps) => {
-  const [rows, setRows] = useState<RowType[]>([createRow()]);
+  const [rows, setRows] = useState<RowType[]>([]);
   const [initialized, setInitialized] = useState(false);
 
   // Convert scheduleData to rows when component mounts or scheduleData changes

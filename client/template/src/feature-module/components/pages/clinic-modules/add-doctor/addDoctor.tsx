@@ -953,14 +953,44 @@ const AddDoctor = () => {
       }
 
       // Prepare schedules array
+      // const schedules = [];
+      // if (mondaySchedule.length > 0) schedules.push({ day: "Monday", timeSlots: mondaySchedule });
+      // if (tuesdaySchedule.length > 0) schedules.push({ day: "Tuesday", timeSlots: tuesdaySchedule });
+      // if (wednesdaySchedule.length > 0) schedules.push({ day: "Wednesday", timeSlots: wednesdaySchedule });
+      // if (thursdaySchedule.length > 0) schedules.push({ day: "Thursday", timeSlots: thursdaySchedule });
+      // if (fridaySchedule.length > 0) schedules.push({ day: "Friday", timeSlots: fridaySchedule });
+      // if (saturdaySchedule.length > 0) schedules.push({ day: "Saturday", timeSlots: saturdaySchedule });
+      // if (sundaySchedule.length > 0) schedules.push({ day: "Sunday", timeSlots: sundaySchedule });
+
+      // Prepare VALID schedules (ignore empty / 00:00)
+      const sanitizeSlots = (slots: Array<{ startTime: string; endTime: string }>) => {
+        return slots.filter(
+          ts => ts.startTime !== "00:00:00" && ts.endTime !== "00:00:00"
+        );
+      };
+
       const schedules = [];
-      if (mondaySchedule.length > 0) schedules.push({ day: "Monday", timeSlots: mondaySchedule });
-      if (tuesdaySchedule.length > 0) schedules.push({ day: "Tuesday", timeSlots: tuesdaySchedule });
-      if (wednesdaySchedule.length > 0) schedules.push({ day: "Wednesday", timeSlots: wednesdaySchedule });
-      if (thursdaySchedule.length > 0) schedules.push({ day: "Thursday", timeSlots: thursdaySchedule });
-      if (fridaySchedule.length > 0) schedules.push({ day: "Friday", timeSlots: fridaySchedule });
-      if (saturdaySchedule.length > 0) schedules.push({ day: "Saturday", timeSlots: saturdaySchedule });
-      if (sundaySchedule.length > 0) schedules.push({ day: "Sunday", timeSlots: sundaySchedule });
+
+      if (sanitizeSlots(mondaySchedule).length > 0)
+        schedules.push({ day: "Monday", timeSlots: sanitizeSlots(mondaySchedule) });
+
+      if (sanitizeSlots(tuesdaySchedule).length > 0)
+        schedules.push({ day: "Tuesday", timeSlots: sanitizeSlots(tuesdaySchedule) });
+
+      if (sanitizeSlots(wednesdaySchedule).length > 0)
+        schedules.push({ day: "Wednesday", timeSlots: sanitizeSlots(wednesdaySchedule) });
+
+      if (sanitizeSlots(thursdaySchedule).length > 0)
+        schedules.push({ day: "Thursday", timeSlots: sanitizeSlots(thursdaySchedule) });
+
+      if (sanitizeSlots(fridaySchedule).length > 0)
+        schedules.push({ day: "Friday", timeSlots: sanitizeSlots(fridaySchedule) });
+
+      if (sanitizeSlots(saturdaySchedule).length > 0)
+        schedules.push({ day: "Saturday", timeSlots: sanitizeSlots(saturdaySchedule) });
+
+      if (sanitizeSlots(sundaySchedule).length > 0)
+        schedules.push({ day: "Sunday", timeSlots: sanitizeSlots(sundaySchedule) });
 
       // Prepare form data
       const doctorData: DoctorFormData = {
