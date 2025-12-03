@@ -1623,14 +1623,14 @@ const Doctors = () => {
             </div>
           )}
 
-          {/* Loading State
+          {/* Loading State */}
           {error && !loading && (
             <div className="alert alert-danger alert-dismissible fade show" role="alert">
               {error}
               <button type="button" className="btn-close" onClick={() => setError("")}></button>
             </div>
           )}
-          {doctors.length === 0 && !loading && !error ? (
+          {/* {doctors.length === 0 && !loading && !error ? (
             <div className="card">
               <div className="card-body text-center py-5">
                 <p className="text-muted">No doctors found</p>
