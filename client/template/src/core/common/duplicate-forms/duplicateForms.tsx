@@ -149,12 +149,19 @@ interface DuplicateFormsProps {
 const createRow = (row?: RowType): RowType => ({
   id: Date.now() + Math.random(),
   session: row ? row.session : Session[0]?.value || "",
-  from: row ? row.from : null,
-  to: row ? row.to : null,
+  from: null,
+  to: null,
 });
 
 const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps) => {
-  const [rows, setRows] = useState<RowType[]>([]);
+  const [rows, setRows] = useState<RowType[]>([
+    {
+      id: Date.now(),
+      session: Session[0]?.value || "",
+      from: null,
+      to: null
+    }
+  ]);
   const [initialized, setInitialized] = useState(false);
 
   // Convert scheduleData to rows when component mounts or scheduleData changes
@@ -200,8 +207,8 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
 
       const schedulesString = JSON.stringify(schedules);
       const currentString = JSON.stringify(scheduleData || []);
-      
-      if(schedulesString !== currentString) {
+
+      if (schedulesString !== currentString) {
         onScheduleChange(schedules);
       }
     }
