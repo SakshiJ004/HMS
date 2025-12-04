@@ -103,7 +103,6 @@
 
 import { DatePicker } from "antd";
 import dayjs, { Dayjs } from "dayjs";
-import { Link } from "react-router";
 import { useEffect, useState } from "react";
 
 type RowType = {
@@ -228,28 +227,26 @@ const RewardsForms = ({ onRewardsChange, rewardsData }: RewardsFormsProps) => {
           </div>
           <div className="col-lg-1">
             <div className="mb-3 d-flex">
-              <Link
-                to="#"
-                onClick={(e) => {
-                  e.preventDefault();
+              <button
+                type="button"
+                onClick={() => {
                   handleAddRow(row);
                 }}
                 className="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center"
                 style={{ marginRight: 8 }}
               >
                 <i className="ti ti-plus fs-16" />
-              </Link>
+              </button>
               {rows.length > 1 && (
-                <Link
-                  to="#"
-                  onClick={(e) => {
-                    e.preventDefault();
+                <button
+                  type="button"
+                  onClick={() => {
                     handleDeleteRow(row.id);
                   }}
                   className="remove-schedule-btn p-2 bg-soft-danger btn-icon text-danger rounded d-flex align-items-center justify-content-center"
                 >
                   <i className="ti ti-trash fs-16" />
-                </Link>
+                </button>
               )}
             </div>
           </div>
