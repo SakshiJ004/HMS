@@ -267,6 +267,7 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
                       suffixIcon={null}
                       value={row.from}
                       onChange={(date) => handleDateChange(row.id, "from", date)}
+                      onKeyDown={(e) => e.preventDefault()}
                     />
                     <span className="input-icon-addon">
                       <i className="ti ti-calendar" />
@@ -289,6 +290,7 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
                       suffixIcon={null}
                       value={row.to}
                       onChange={(date) => handleDateChange(row.id, "to", date)}
+                      onKeyDown={(e) => e.preventDefault()}
                     />
                     <span className="input-icon-addon">
                       <i className="ti ti-calendar" />
