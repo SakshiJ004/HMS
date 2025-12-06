@@ -842,7 +842,7 @@ const DoctorDetailsReal = () => {
                   <span className="fw-normal text-body fs-14"> / {doctor.appointmentDuration} Min</span>
                 </h6>
                 <Link
-                  to={all_routes.appointmentCalendar}
+                  to={all_routes.newAppointment}
                   className="btn btn-primary"
                 >
                   <i className="ti ti-calendar-event me-1" />

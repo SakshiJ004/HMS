@@ -96,9 +96,9 @@ const Sidebar = () => {
   const mobileSidebar = useSelector(
     (state: any) => state.sidebarSlice.mobileSidebar
   );
-   const toggleMobileSidebar = () => {
-      dispatch(setMobileSidebar(!mobileSidebar));
-    };
+  const toggleMobileSidebar = () => {
+    dispatch(setMobileSidebar(!mobileSidebar));
+  };
   useEffect(() => {
     const rootElement: any = document.documentElement;
     Object.entries(themeSettings).forEach(([key, value]) => {
@@ -111,7 +111,7 @@ const Sidebar = () => {
     }
   }, [themeSettings]);
 
-  
+
 
   return (
     <>
@@ -146,7 +146,7 @@ const Sidebar = () => {
             <i className="ti ti-arrow-left" />
           </button>
           {/* Sidebar Menu Close */}
-          <button className="sidebar-close"  onClick={toggleMobileSidebar}>
+          <button className="sidebar-close" onClick={toggleMobileSidebar}>
             <i className="ti ti-x align-middle" />
           </button>
         </div>
@@ -300,17 +300,15 @@ const Sidebar = () => {
                                   handleLayoutClick(title?.label);
                                 }
                               }}
-                              className={`${
-                                subOpen === title?.label ||
-                                title?.links?.includes(Location.pathname)
+                              className={`${subOpen === title?.label ||
+                                  title?.links?.includes(Location.pathname)
                                   ? "subdrop"
                                   : ""
-                              } ${
-                                title?.links?.includes(Location.pathname) ||
-                                title?.link === Location.pathname
+                                } ${title?.links?.includes(Location.pathname) ||
+                                  title?.link === Location.pathname
                                   ? "active"
                                   : ""
-                              }`}
+                                }`}
                             >
                               <i className={`ti ti-${title.icon}`}></i>
                               <span>{title?.label}</span>
@@ -330,7 +328,7 @@ const Sidebar = () => {
                                 style={{
                                   display:
                                     subOpen === title?.label ||
-                                    title?.links?.includes(Location.pathname)
+                                      title?.links?.includes(Location.pathname)
                                       ? "block"
                                       : "none",
                                 }}
@@ -345,22 +343,19 @@ const Sidebar = () => {
 
                                     return (
                                       <li
-                                        className={`${
-                                          item?.submenuItems
+                                        className={`${item?.submenuItems
                                             ? "submenu submenu-two"
                                             : ""
-                                        } `}
+                                          } `}
                                         key={`item-${j}`}
                                       >
                                         <Link
                                           to={item?.submenu ? "#" : item?.link}
-                                          className={`${
-                                            isSubActive ? "active subdrop" : ""
-                                          } ${
-                                            subsidebar === item?.label
+                                          className={`${isSubActive ? "active subdrop" : ""
+                                            } ${subsidebar === item?.label
                                               ? "subdrop"
                                               : ""
-                                          }`}
+                                            }`}
                                           onClick={() => {
                                             toggleSubsidebar(item?.label);
                                             if (title?.label === "Layouts") {
@@ -373,8 +368,8 @@ const Sidebar = () => {
                                           {item?.label}
                                           {(item?.submenu ||
                                             item?.customSubmenuTwo) && (
-                                            <span className="menu-arrow"></span>
-                                          )}
+                                              <span className="menu-arrow"></span>
+                                            )}
                                         </Link>
                                         {item?.submenuItems ? (
                                           <ul
@@ -396,7 +391,7 @@ const Sidebar = () => {
                                                       Location.pathname
                                                     ) ||
                                                   items?.link ===
-                                                    Location.pathname;
+                                                  Location.pathname;
 
                                                 return (
                                                   <li key={`submenu-item-${k}`}>
@@ -406,11 +401,10 @@ const Sidebar = () => {
                                                           ? "#"
                                                           : items?.link
                                                       }
-                                                      className={`${
-                                                        isSubSubActive
+                                                      className={`${isSubSubActive
                                                           ? "active"
                                                           : ""
-                                                      }`}
+                                                        }`}
                                                     >
                                                       {items?.label}
                                                     </Link>
