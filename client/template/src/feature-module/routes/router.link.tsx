@@ -1367,11 +1367,11 @@ export const publicRoutes = [
   },
 ];
 export const authRoutes = [
-  {
-    path: routes.authCallback,
-    element: <AuthCallback />,
-    route: Route,
-  },
+  // {
+  //   path: routes.authCallback,
+  //   element: <AuthCallback />,
+  //   route: Route,
+  // },
   {
     path: routes.loginbasic,
     element: <LoginBasic />,

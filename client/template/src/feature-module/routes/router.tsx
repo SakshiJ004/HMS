@@ -4,6 +4,7 @@ import { authRoutes, publicRoutes } from "./router.link";
 import AuthFeature from "../feathure-components/authFeature";
 import Feature from "../feathure-components/feature";
 import { all_routes } from "./all_routes";
+import AuthCallback from "../components/auth/callback/AuthCallback";
 
 
 const ALLRoutes: React.FC = () => {
@@ -12,6 +13,8 @@ const ALLRoutes: React.FC = () => {
       <Routes>
         {/* Default Redirect to Login Page */}
         <Route path="/" element={<Navigate to={all_routes.loginbasic} />} />
+
+        <Route path={all_routes.authCallback} element={<AuthCallback />} />
 
         <Route element={<Feature />}>
           {publicRoutes.map((route, idx) => (
