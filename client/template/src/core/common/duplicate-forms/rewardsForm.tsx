@@ -216,6 +216,7 @@ const RewardsForms = ({ onRewardsChange, rewardsData }: RewardsFormsProps) => {
                       suffixIcon={null}
                       value={row.year}
                       onChange={(date) => handleDateChange(row.id, date)}
+                      onKeyDown={(e) => e.preventDefault()}
                     />
                     <span className="input-icon-addon">
                       <i className="ti ti-calendar" />
