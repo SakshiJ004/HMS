@@ -1889,8 +1889,6 @@ const Modals = ({ onDelete }: ModalsProps) => {
         tabIndex={-1}
         id="edit_doctor"
       >
-        {/* ... existing edit doctor code ... */}
-
         <div className="offcanvas-header d-block pb-0 px-0">
           <div className="border-bottom d-flex align-items-center justify-content-between pb-3 px-3">
             <h5 className="offcanvas-title fs-18 fw-bold">Edit Doctor</h5>

@@ -728,15 +728,9 @@
 // export default EditDoctor;
 
 
-
-// ============================================
-// PART 1: IMPORTS, STATE, AND DATA FETCHING
-// ============================================
-
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { all_routes } from "../../../../routes/all_routes";
 import { DatePicker } from "antd";
-import dayjs, { Dayjs } from "dayjs";
 import {
   Appointment_Type,
   Blood_Group,
@@ -757,21 +751,17 @@ import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { getDoctor, updateDoctor } from "../../../../../api/doctorService";
 import type { DoctorFormData } from "../../../../../api/doctorService";
+import dayjs, { Dayjs } from "dayjs";
 
 const EditDoctor = () => {
-  const [searchParams] = useSearchParams();
-  const doctorId = searchParams.get('id');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const doctorId = searchParams.get("id");
 
   const getModalContainer = () => {
     const modalElement = document.getElementById("modal-datepicker");
     return modalElement ? modalElement : document.body;
   };
-
-  // Loading & Error states
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
 
   // Form state
   const [firstName, setFirstName] = useState("");
@@ -787,7 +777,7 @@ const EditDoctor = () => {
   const [tags, setTags] = useState<string[]>(["English", "French"]);
   const [bloodGroup, setBloodGroup] = useState(Blood_Group[0]);
   const [gender, setGender] = useState(Gender[0]);
-  const [bio, setBio] = useState("About Doctor");
+  const [bio, setBio] = useState("");
   const [featureOnWebsite, setFeatureOnWebsite] = useState(false);
 
   // Address state
@@ -815,32 +805,44 @@ const EditDoctor = () => {
   const [maxBookingsPerSlot, setMaxBookingsPerSlot] = useState("");
   const [displayOnBookingPage, setDisplayOnBookingPage] = useState(false);
 
-  // Professional details
-  const [education, setEducation] = useState<Array<{ degree: string; college: string; fromYear?: string; year: string }>>([]);
+  // Professional details state
+  const [education, setEducation] = useState<Array<{ degree: string; college: string; year: string }>>([]);
   const [awards, setAwards] = useState<Array<{ title: string; year: string }>>([]);
   const [certifications, setCertifications] = useState<Array<{ title: string; year: string }>>([]);
 
+  // UI state
+  const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
+  const [error, setError] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  const handleTagsChange = (newTags: string[]) => {
+    setTags(newTags);
+  };
 
   // Fetch doctor data on mount
   useEffect(() => {
     if (!doctorId) {
       setError("No doctor ID provided");
-      setLoading(false);
+      setFetchLoading(false);
       return;
     }
+
     fetchDoctorData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorId]);
 
   const fetchDoctorData = async () => {
+    if (!doctorId) return;
+
     try {
-      setLoading(true);
-      const response = await getDoctor(doctorId!);
+      setFetchLoading(true);
+      const response = await getDoctor(doctorId);
 
       if (response.success && response.data) {
         const doctor = response.data;
 
+        // Set basic info
         setFirstName(doctor.firstName || "");
         setLastName(doctor.lastName || "");
         setUsername(doctor.username || "");
@@ -849,76 +851,81 @@ const EditDoctor = () => {
         setDob(doctor.dob ? dayjs(doctor.dob) : null);
         setYearOfExperience(doctor.yearOfExperience?.toString() || "");
         setMedicalLicenseNumber(doctor.medicalLicenseNumber || "");
-        setTags(doctor.languageSpoken || ["English"]);
+        setTags(doctor.languageSpoken || ["English", "French"]);
         setBio(doctor.bio || "");
         setFeatureOnWebsite(doctor.featureOnWebsite || false);
         setProfileImage(doctor.profileImage || null);
 
-        const foundDepartment = Department.find(d => d.value === doctor.department);
-        if (foundDepartment) setDepartment(foundDepartment);
+        // Set dropdowns
+        const deptOption = Department.find(d => d.value === doctor.department);
+        if (deptOption) setDepartment(deptOption);
 
-        const foundDesignation = Designation.find(d => d.value === doctor.designation);
-        if (foundDesignation) setDesignation(foundDesignation);
+        const desOption = Designation.find(d => d.value === doctor.designation);
+        if (desOption) setDesignation(desOption);
 
-        const foundBloodGroup = Blood_Group.find(b => b.value === doctor.bloodGroup);
-        if (foundBloodGroup) setBloodGroup(foundBloodGroup);
+        const bgOption = Blood_Group.find(b => b.value === doctor.bloodGroup);
+        if (bgOption) setBloodGroup(bgOption);
 
-        const foundGender = Gender.find(g => g.value === doctor.gender);
-        if (foundGender) setGender(foundGender);
+        const genderOption = Gender.find(g => g.value === doctor.gender);
+        if (genderOption) setGender(genderOption);
 
+        // Set address
         if (doctor.address) {
           setAddress1(doctor.address.address1 || "");
           setAddress2(doctor.address.address2 || "");
-
-          const foundCity = City.find(c => c.value === doctor.address.city);
-          if (foundCity) setCity(foundCity);
-
-          const foundState = State.find(s => s.value === doctor.address.state);
-          if (foundState) setState(foundState);
-
-          const foundCountry = Country.find(c => c.value === doctor.address.country);
-          if (foundCountry) setCountry(foundCountry);
-
           setPincode(doctor.address.pincode || "");
+
+          const countryOption = Country.find(c => c.value === doctor.address.country);
+          if (countryOption) setCountry(countryOption);
+
+          const cityOption = City.find(c => c.value === doctor.address.city);
+          if (cityOption) setCity(cityOption);
+
+          const stateOption = State.find(s => s.value === doctor.address.state);
+          if (stateOption) setState(stateOption);
         }
 
-        if (doctor.schedules && Array.isArray(doctor.schedules)) {
-          doctor.schedules.forEach((schedule: { day: string; timeSlots: Array<{ startTime: string; endTime: string }> }) => {
+        // Set schedules
+        if (doctor.schedules && doctor.schedules.length > 0) {
+          doctor.schedules.forEach((schedule: any) => {
+            const timeSlots = schedule.timeSlots || [];
             switch (schedule.day) {
               case "Monday":
-                setMondaySchedule(schedule.timeSlots || []);
+                setMondaySchedule(timeSlots);
                 break;
               case "Tuesday":
-                setTuesdaySchedule(schedule.timeSlots || []);
+                setTuesdaySchedule(timeSlots);
                 break;
               case "Wednesday":
-                setWednesdaySchedule(schedule.timeSlots || []);
+                setWednesdaySchedule(timeSlots);
                 break;
               case "Thursday":
-                setThursdaySchedule(schedule.timeSlots || []);
+                setThursdaySchedule(timeSlots);
                 break;
               case "Friday":
-                setFridaySchedule(schedule.timeSlots || []);
+                setFridaySchedule(timeSlots);
                 break;
               case "Saturday":
-                setSaturdaySchedule(schedule.timeSlots || []);
+                setSaturdaySchedule(timeSlots);
                 break;
               case "Sunday":
-                setSundaySchedule(schedule.timeSlots || []);
+                setSundaySchedule(timeSlots);
                 break;
             }
           });
         }
 
-        const foundAppointmentType = Appointment_Type.find(a => a.value === doctor.appointmentType);
-        if (foundAppointmentType) setAppointmentType(foundAppointmentType);
+        // Set appointment settings
+        const aptOption = Appointment_Type.find(a => a.value === doctor.appointmentType);
+        if (aptOption) setAppointmentType(aptOption);
 
-        setAcceptBookingsDays(doctor.acceptBookingsDays?.toString() || "0");
-        setAppointmentDuration(doctor.appointmentDuration?.toString() || "30");
-        setConsultationCharge(doctor.consultationCharge?.toString() || "0");
-        setMaxBookingsPerSlot(doctor.maxBookingsPerSlot?.toString() || "1");
+        setAcceptBookingsDays(doctor.acceptBookingsDays?.toString() || "");
+        setAppointmentDuration(doctor.appointmentDuration?.toString() || "");
+        setConsultationCharge(doctor.consultationCharge?.toString() || "");
+        setMaxBookingsPerSlot(doctor.maxBookingsPerSlot?.toString() || "");
         setDisplayOnBookingPage(doctor.displayOnBookingPage || false);
 
+        // Set professional details
         setEducation(doctor.education || []);
         setAwards(doctor.awards || []);
         setCertifications(doctor.certifications || []);
@@ -928,128 +935,45 @@ const EditDoctor = () => {
       }
     } catch (err: any) {
       console.error("Error fetching doctor:", err);
-      setError(err.message || "Failed to load doctor");
+      setError(err.message || "Failed to load doctor data");
     } finally {
-      setLoading(false);
+      setFetchLoading(false);
     }
   };
-
-  const handleTagsChange = (newTags: string[]) => {
-    setTags(newTags);
-  };
-
+  // Handle profile image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Image size should be less than 5MB");
-        return;
-      }
-
       const reader = new FileReader();
       reader.onloadend = () => {
-        const img = new Image();
-        img.src = reader.result as string;
-
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
-
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height = height * (MAX_WIDTH / width);
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width = width * (MAX_HEIGHT / height);
-              height = MAX_HEIGHT;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-          setProfileImage(compressedBase64);
-        };
+        setProfileImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleApplyAllSchedules = () => {
-    const activeTab = document.querySelector('.schedule-tab .nav-link.active');
-    if (!activeTab) {
-      alert('Please select a day first');
-      return;
-    }
-
-    let sourceSchedule: Array<{ startTime: string; endTime: string }> = [];
-    let dayName = '';
-
-    if (activeTab.textContent?.includes('Monday')) {
-      sourceSchedule = mondaySchedule;
-      dayName = 'Monday';
-    } else if (activeTab.textContent?.includes('Tuesday')) {
-      sourceSchedule = tuesdaySchedule;
-      dayName = 'Tuesday';
-    } else if (activeTab.textContent?.includes('Wednesday')) {
-      sourceSchedule = wednesdaySchedule;
-      dayName = 'Wednesday';
-    } else if (activeTab.textContent?.includes('Thursday')) {
-      sourceSchedule = thursdaySchedule;
-      dayName = 'Thursday';
-    } else if (activeTab.textContent?.includes('Friday')) {
-      sourceSchedule = fridaySchedule;
-      dayName = 'Friday';
-    } else if (activeTab.textContent?.includes('Saturday')) {
-      sourceSchedule = saturdaySchedule;
-      dayName = 'Saturday';
-    } else if (activeTab.textContent?.includes('Sunday')) {
-      sourceSchedule = sundaySchedule;
-      dayName = 'Sunday';
-    }
-
-    if (sourceSchedule.length === 0) {
-      alert(`Please add at least one time slot for ${dayName} before applying to all days`);
-      return;
-    }
-
-    if (!window.confirm(`This will copy ${dayName}'s schedule to all other days. Continue?`)) {
-      return;
-    }
-
-    setMondaySchedule([...sourceSchedule]);
-    setTuesdaySchedule([...sourceSchedule]);
-    setWednesdaySchedule([...sourceSchedule]);
-    setThursdaySchedule([...sourceSchedule]);
-    setFridaySchedule([...sourceSchedule]);
-    setSaturdaySchedule([...sourceSchedule]);
-    setSundaySchedule([...sourceSchedule]);
-
-    alert(`${dayName}'s schedule applied to all days successfully!`);
-  };
-
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSaving(true);
+    setLoading(true);
 
     try {
-      if (!firstName || !lastName || !email || !phone) {
-        setError("Please fill in all required fields");
-        setSaving(false);
+      if (!doctorId) {
+        setError("No doctor ID provided");
+        setLoading(false);
         return;
       }
 
+      // Validate required fields
+      if (!firstName || !lastName || !username || !email || !phone || !dob || !yearOfExperience ||
+        !medicalLicenseNumber || !address1 || !city || !state || !pincode) {
+        setError("Please fill in all required fields");
+        setLoading(false);
+        return;
+      }
+
+      // Prepare schedules array
       const schedules = [];
       if (mondaySchedule.length > 0) schedules.push({ day: "Monday", timeSlots: mondaySchedule });
       if (tuesdaySchedule.length > 0) schedules.push({ day: "Tuesday", timeSlots: tuesdaySchedule });
@@ -1059,14 +983,15 @@ const EditDoctor = () => {
       if (saturdaySchedule.length > 0) schedules.push({ day: "Saturday", timeSlots: saturdaySchedule });
       if (sundaySchedule.length > 0) schedules.push({ day: "Sunday", timeSlots: sundaySchedule });
 
+      // Prepare form data
       const doctorData: Partial<DoctorFormData> = {
         firstName,
         lastName,
         username,
         email,
         phone,
-        dob: dob?.format("YYYY-MM-DD"),
-        yearOfExperience: yearOfExperience ? parseInt(yearOfExperience) : undefined,
+        dob: dob.format("YYYY-MM-DD"),
+        yearOfExperience: parseInt(yearOfExperience),
         department: department.value,
         designation: designation.value,
         medicalLicenseNumber,
@@ -1096,26 +1021,32 @@ const EditDoctor = () => {
         profileImage: profileImage || undefined,
       };
 
-      const response = await updateDoctor(doctorId!, doctorData);
+      // Submit to backend
+      const response = await updateDoctor(doctorId, doctorData);
+
       console.log("Doctor updated successfully:", response);
 
+      // Show success message
       alert("Doctor updated successfully!");
-      navigate(`/doctor-details?id=${doctorId}`);
+
+      // Redirect to doctors list
+      navigate(all_routes.doctors);
     } catch (err: any) {
       console.error("Error updating doctor:", err);
       setError(err.message || "Failed to update doctor. Please try again.");
-    } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
+  // Handle cancel
   const handleCancel = () => {
     if (window.confirm("Are you sure you want to cancel? All changes will be lost.")) {
-      navigate(`/doctor-details?id=${doctorId}`);
+      navigate(all_routes.doctors);
     }
   };
 
-  if (loading) {
+  // Show loading state
+  if (fetchLoading) {
     return (
       <div className="page-wrapper">
         <div className="content">
@@ -1130,43 +1061,52 @@ const EditDoctor = () => {
     );
   }
 
-  if (error && !doctorId) {
+  // Show error if doctor ID is missing
+  if (!doctorId) {
     return (
       <div className="page-wrapper">
         <div className="content">
-          <div className="alert alert-danger">{error}</div>
-          <Link to={all_routes.doctors} className="btn btn-primary">
-            Back to Doctors
-          </Link>
+          <div className="alert alert-danger">
+            <h5>Error</h5>
+            <p>No doctor ID provided. Please go back and try again.</p>
+            <Link to={all_routes.doctors} className="btn btn-primary">
+              Back to Doctors
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
-  // ============================================
-  // PART 2: JSX RETURN - MERGE THIS AFTER PART 1
-  // ============================================
 
   return (
     <>
+      {/* Page Content */}
       <div className="page-wrapper">
         <div className="content">
           <div className="row">
             <div className="col-lg-10 mx-auto">
-              <div className="mb-3">
-                <h6 className="fw-semibold fs-14 mb-0">
-                  <Link to={all_routes.doctors}>
-                    <i className="ti ti-chevron-left me-1" />
-                    Doctors
-                  </Link>
-                </h6>
+              {/* Page Header */}
+              <div className="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
+                <div className="flex-grow-1">
+                  <h6 className="fw-bold mb-0 d-flex align-items-center">
+                    <Link to={all_routes.doctors}>
+                      <i className="ti ti-chevron-left me-1 fs-14" />
+                      Doctor
+                    </Link>
+                  </h6>
+                </div>
               </div>
 
+              {/* Edit Doctor Card */}
               <div className="card">
                 <div className="card-body">
                   <div className="border-bottom d-flex align-items-center justify-content-between pb-3 mb-3">
-                    <h5 className="offcanvas-title fs-18 fw-bold">Edit Doctor</h5>
+                    <h5 className="offcanvas-title fs-18 fw-bold">
+                      Edit Doctor
+                    </h5>
                   </div>
 
+                  {/* Error Message */}
                   {error && (
                     <div className="alert alert-danger alert-dismissible fade show" role="alert">
                       {error}
@@ -1175,6 +1115,7 @@ const EditDoctor = () => {
                   )}
 
                   <form onSubmit={handleSubmit}>
+                    {/* Contact Information */}
                     <div className="bg-light px-3 py-2 mb-3">
                       <h6 className="fw-bold mb-0">Contact Information</h6>
                     </div>
@@ -1185,7 +1126,7 @@ const EditDoctor = () => {
                             <label className="form-label">Profile Image</label>
                             <div className="drag-upload-btn avatar avatar-xxl rounded-circle bg-light text-muted position-relative overflow-hidden z-1 mb-2 ms-4 p-0">
                               {profileImage ? (
-                                <img src={profileImage} alt="Profile" className="w-100 h-100 object-fit-cover rounded-circle position-relative z-n1" />
+                                <img src={profileImage} alt="Profile" className="w-100 h-100 object-fit-cover" />
                               ) : (
                                 <i className="ti ti-user-plus fs-16" />
                               )}
@@ -1196,7 +1137,10 @@ const EditDoctor = () => {
                                 onChange={handleImageUpload}
                               />
                               <div className="position-absolute bottom-0 end-0 star-0 w-100 h-25 bg-dark d-flex align-items-center justify-content-center z-n1">
-                                <Link to="#" className="text-white d-flex align-items-center justify-content-center">
+                                <Link
+                                  to="#"
+                                  className="text-white d-flex align-items-center justify-content-center"
+                                >
                                   <i className="ti ti-photo fs-14" />
                                 </Link>
                               </div>
@@ -1208,32 +1152,73 @@ const EditDoctor = () => {
                           <div className="row">
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">First Name <span className="text-danger">*</span></label>
-                                <input type="text" className="form-control" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                                <label className="form-label">
+                                  First Name <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={firstName}
+                                  onChange={(e) => setFirstName(e.target.value)}
+                                  required
+                                />
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Last Name <span className="text-danger">*</span></label>
-                                <input type="text" className="form-control" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                                <label className="form-label">
+                                  Last Name <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={lastName}
+                                  onChange={(e) => setLastName(e.target.value)}
+                                  required
+                                />
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Username <span className="text-danger">*</span></label>
-                                <input type="text" className="form-control" value={username} onChange={(e) => setUsername(e.target.value)} required />
+                                <label className="form-label">
+                                  Username <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={username}
+                                  onChange={(e) => setUsername(e.target.value)}
+                                  required
+                                  disabled
+                                />
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Email Address <span className="text-danger">*</span></label>
-                                <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                <label className="form-label">
+                                  Email Address <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                  type="email"
+                                  className="form-control"
+                                  value={email}
+                                  onChange={(e) => setEmail(e.target.value)}
+                                  required
+                                  disabled
+                                />
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Phone Number <span className="text-danger">*</span></label>
-                                <PhoneInput defaultCountry="US" value={phone} onChange={setPhone} required />
+                                <label className="form-label">
+                                  Phone Number <span className="text-danger">*</span>
+                                </label>
+                                <PhoneInput
+                                  defaultCountry="US"
+                                  value={phone}
+                                  onChange={setPhone}
+                                  required
+                                />
                               </div>
                             </div>
                           </div>
@@ -1243,25 +1228,40 @@ const EditDoctor = () => {
                           <div className="row">
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">DOB <span className="text-danger">*</span></label>
+                                <label className="form-label">
+                                  DOB <span className="text-danger">*</span>
+                                </label>
                                 <div className="input-icon-end position-relative">
                                   <DatePicker
                                     className="form-control datetimepicker"
-                                    format={{ format: "DD-MM-YYYY", type: "mask" }}
+                                    format={{
+                                      format: "DD-MM-YYYY",
+                                      type: "mask",
+                                    }}
                                     getPopupContainer={getModalContainer}
                                     placeholder="DD-MM-YYYY"
                                     suffixIcon={null}
                                     value={dob}
                                     onChange={(date) => setDob(date)}
                                   />
-                                  <span className="input-icon-addon"><i className="ti ti-calendar" /></span>
+                                  <span className="input-icon-addon">
+                                    <i className="ti ti-calendar" />
+                                  </span>
                                 </div>
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Year Of Experience <span className="text-danger">*</span></label>
-                                <input type="number" className="form-control" value={yearOfExperience} onChange={(e) => setYearOfExperience(e.target.value)} required />
+                                <label className="form-label">
+                                  Year Of Experience <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  value={yearOfExperience}
+                                  onChange={(e) => setYearOfExperience(e.target.value)}
+                                  required
+                                />
                               </div>
                             </div>
                           </div>
@@ -1271,14 +1271,28 @@ const EditDoctor = () => {
                           <div className="row">
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Department<span className="text-danger ms-1">*</span></label>
-                                <CommonSelect options={Department} className="select" defaultValue={department} onChange={(option) => option && setDepartment(option)} />
+                                <label className="form-label">
+                                  Department <span className="text-danger ms-1">*</span>
+                                </label>
+                                <CommonSelect
+                                  options={Department}
+                                  className="select"
+                                  value={department}
+                                  onChange={(option) => option && setDepartment(option)}
+                                />
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Designation<span className="text-danger ms-1">*</span></label>
-                                <CommonSelect options={Designation} className="select" defaultValue={designation} onChange={(option) => option && setDesignation(option)} />
+                                <label className="form-label">
+                                  Designation <span className="text-danger ms-1">*</span>
+                                </label>
+                                <CommonSelect
+                                  options={Designation}
+                                  className="select"
+                                  value={designation}
+                                  onChange={(option) => option && setDesignation(option)}
+                                />
                               </div>
                             </div>
                           </div>
@@ -1288,14 +1302,25 @@ const EditDoctor = () => {
                           <div className="row">
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Medical License Number <span className="text-danger">*</span></label>
-                                <input type="text" className="form-control" value={medicalLicenseNumber} onChange={(e) => setMedicalLicenseNumber(e.target.value)} required />
+                                <label className="form-label">
+                                  Medical License Number <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={medicalLicenseNumber}
+                                  onChange={(e) => setMedicalLicenseNumber(e.target.value)}
+                                  required
+                                />
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
                                 <label className="form-label">Language Spoken</label>
-                                <TagInput initialTags={tags} onTagsChange={handleTagsChange} />
+                                <TagInput
+                                  initialTags={tags}
+                                  onTagsChange={handleTagsChange}
+                                />
                               </div>
                             </div>
                           </div>
@@ -1305,14 +1330,28 @@ const EditDoctor = () => {
                           <div className="row">
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Blood Group<span className="text-danger ms-1">*</span></label>
-                                <CommonSelect options={Blood_Group} className="select" defaultValue={bloodGroup} onChange={(option) => option && setBloodGroup(option)} />
+                                <label className="form-label">
+                                  Blood Group <span className="text-danger ms-1">*</span>
+                                </label>
+                                <CommonSelect
+                                  options={Blood_Group}
+                                  className="select"
+                                  value={bloodGroup}
+                                  onChange={(option) => option && setBloodGroup(option)}
+                                />
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
-                                <label className="form-label">Gender <span className="text-danger ms-1">*</span></label>
-                                <CommonSelect options={Gender} className="select" defaultValue={gender} onChange={(option) => option && setGender(option)} />
+                                <label className="form-label">
+                                  Gender <span className="text-danger ms-1">*</span>
+                                </label>
+                                <CommonSelect
+                                  options={Gender}
+                                  className="select"
+                                  value={gender}
+                                  onChange={(option) => option && setGender(option)}
+                                />
                               </div>
                             </div>
                           </div>
@@ -1321,16 +1360,34 @@ const EditDoctor = () => {
                         <div className="col-lg-12">
                           <div className="mb-3">
                             <label className="form-label">Bio</label>
-                            <textarea className="form-control" rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
+                            <textarea
+                              className="form-control"
+                              rows={3}
+                              value={bio}
+                              onChange={(e) => setBio(e.target.value)}
+                            />
                           </div>
                           <div className="form-check form-switch mb-3">
-                            <label className="form-check-label" htmlFor="switchCheckDefault">Feature On Website</label>
-                            <input className="form-check-input" type="checkbox" role="switch" id="switchCheckDefault" checked={featureOnWebsite} onChange={(e) => setFeatureOnWebsite(e.target.checked)} />
+                            <label
+                              className="form-check-label"
+                              htmlFor="switchCheckDefault"
+                            >
+                              Feature On Website
+                            </label>
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              role="switch"
+                              id="switchCheckDefault"
+                              checked={featureOnWebsite}
+                              onChange={(e) => setFeatureOnWebsite(e.target.checked)}
+                            />
                           </div>
                         </div>
                       </div>
                     </div>
 
+                    {/* Address Information */}
                     <div className="bg-light px-3 py-2 mb-3">
                       <h6 className="fw-bold mb-0">Address Information</h6>
                     </div>
@@ -1338,14 +1395,27 @@ const EditDoctor = () => {
                       <div className="row">
                         <div className="col-lg-6">
                           <div className="mb-3">
-                            <label className="form-label">Address 1 <span className="text-danger">*</span></label>
-                            <input type="text" className="form-control" value={address1} onChange={(e) => setAddress1(e.target.value)} required />
+                            <label className="form-label">
+                              Address 1 <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={address1}
+                              onChange={(e) => setAddress1(e.target.value)}
+                              required
+                            />
                           </div>
                         </div>
                         <div className="col-lg-6">
                           <div className="mb-3">
                             <label className="form-label">Address 2</label>
-                            <input type="text" className="form-control" value={address2} onChange={(e) => setAddress2(e.target.value)} />
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={address2}
+                              onChange={(e) => setAddress2(e.target.value)}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1353,101 +1423,253 @@ const EditDoctor = () => {
                         <div className="col-lg-6">
                           <div className="mb-3">
                             <label className="form-label">Country</label>
-                            <CommonSelect options={Country} className="select" defaultValue={country} onChange={(option) => option && setCountry(option)} />
+                            <CommonSelect
+                              options={Country}
+                              className="select"
+                              value={country}
+                              onChange={(option) => option && setCountry(option)}
+                            />
                           </div>
                         </div>
                         <div className="col-lg-6">
                           <div className="mb-3">
-                            <label className="form-label">City <span className="text-danger">*</span></label>
-                            <CommonSelect options={City} className="select" defaultValue={city} onChange={(option) => option && setCity(option)} />
+                            <label className="form-label">
+                              City <span className="text-danger">*</span>
+                            </label>
+                            <CommonSelect
+                              options={City}
+                              className="select"
+                              value={city}
+                              onChange={(option) => option && setCity(option)}
+                            />
                           </div>
                         </div>
                       </div>
                       <div className="row">
                         <div className="col-lg-6">
                           <div className="mb-3">
-                            <label className="form-label">State <span className="text-danger">*</span></label>
-                            <CommonSelect options={State} className="select" defaultValue={state} onChange={(option) => option && setState(option)} />
+                            <label className="form-label">
+                              State <span className="text-danger">*</span>
+                            </label>
+                            <CommonSelect
+                              options={State}
+                              className="select"
+                              value={state}
+                              onChange={(option) => option && setState(option)}
+                            />
                           </div>
                         </div>
                         <div className="col-lg-6">
                           <div className="mb-3">
-                            <label className="form-label">Pincode <span className="text-danger">*</span></label>
-                            <input type="text" className="form-control" value={pincode} onChange={(e) => setPincode(e.target.value)} required />
+                            <label className="form-label">
+                              Pincode <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={pincode}
+                              onChange={(e) => setPincode(e.target.value)}
+                              required
+                            />
                           </div>
                         </div>
                       </div>
                     </div>
-
+                    {/* Schedule Information */}
                     <div className="bg-light px-3 py-2 mb-3">
                       <h6 className="fw-bold mb-0">Schedule Information</h6>
                     </div>
                     <div className="p-3">
-                      <ul className="nav nav-pills schedule-tab mb-3" id="pills-tab" role="tablist">
+                      <ul
+                        className="nav nav-pills schedule-tab mb-3"
+                        id="pills-tab"
+                        role="tablist"
+                      >
                         <li className="nav-item me-1" role="presentation">
-                          <button className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto active" data-bs-toggle="pill" data-bs-target="#schedule-1" type="button" role="tab" aria-selected="true">Monday</button>
+                          <button
+                            className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto active"
+                            data-bs-toggle="pill"
+                            data-bs-target="#schedule-1"
+                            type="button"
+                            role="tab"
+                            aria-selected="true"
+                          >
+                            Monday
+                          </button>
                         </li>
                         <li className="nav-item me-1" role="presentation">
-                          <button className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto" data-bs-toggle="pill" data-bs-target="#schedule-2" type="button" role="tab" aria-selected="false" tabIndex={-1}>Tuesday</button>
+                          <button
+                            className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto"
+                            data-bs-toggle="pill"
+                            data-bs-target="#schedule-2"
+                            type="button"
+                            role="tab"
+                            aria-selected="false"
+                            tabIndex={-1}
+                          >
+                            Tuesday
+                          </button>
                         </li>
                         <li className="nav-item me-1" role="presentation">
-                          <button className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto" data-bs-toggle="pill" data-bs-target="#schedule-3" type="button" role="tab" aria-selected="false" tabIndex={-1}>Wednesday</button>
+                          <button
+                            className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto"
+                            data-bs-toggle="pill"
+                            data-bs-target="#schedule-3"
+                            type="button"
+                            role="tab"
+                            aria-selected="false"
+                            tabIndex={-1}
+                          >
+                            Wednesday
+                          </button>
                         </li>
                         <li className="nav-item me-1" role="presentation">
-                          <button className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto" data-bs-toggle="pill" data-bs-target="#schedule-4" type="button" role="tab" aria-selected="false" tabIndex={-1}>Thursday</button>
+                          <button
+                            className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto"
+                            data-bs-toggle="pill"
+                            data-bs-target="#schedule-4"
+                            type="button"
+                            role="tab"
+                            aria-selected="false"
+                            tabIndex={-1}
+                          >
+                            Thursday
+                          </button>
                         </li>
                         <li className="nav-item me-1" role="presentation">
-                          <button className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto" data-bs-toggle="pill" data-bs-target="#schedule-5" type="button" role="tab" aria-selected="false" tabIndex={-1}>Friday</button>
+                          <button
+                            className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto"
+                            data-bs-toggle="pill"
+                            data-bs-target="#schedule-5"
+                            type="button"
+                            role="tab"
+                            aria-selected="false"
+                            tabIndex={-1}
+                          >
+                            Friday
+                          </button>
                         </li>
                         <li className="nav-item me-1" role="presentation">
-                          <button className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto" data-bs-toggle="pill" data-bs-target="#schedule-6" type="button" role="tab" aria-selected="false" tabIndex={-1}>Saturday</button>
+                          <button
+                            className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto"
+                            data-bs-toggle="pill"
+                            data-bs-target="#schedule-6"
+                            type="button"
+                            role="tab"
+                            aria-selected="false"
+                            tabIndex={-1}
+                          >
+                            Saturday
+                          </button>
                         </li>
                         <li className="nav-item me-1" role="presentation">
-                          <button className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto" data-bs-toggle="pill" data-bs-target="#schedule-7" type="button" role="tab" aria-selected="false" tabIndex={-1}>Sunday</button>
+                          <button
+                            className="nav-link btn btn-sm btn-icon p-2 d-flex align-items-center justify-content-center w-auto"
+                            data-bs-toggle="pill"
+                            data-bs-target="#schedule-7"
+                            type="button"
+                            role="tab"
+                            aria-selected="false"
+                            tabIndex={-1}
+                          >
+                            Sunday
+                          </button>
                         </li>
                       </ul>
                       <div className="tab-content" id="pills-tabContent">
-                        <div className="tab-pane fade active show" id="schedule-1" role="tabpanel">
+                        <div
+                          className="tab-pane fade active show"
+                          id="schedule-1"
+                          role="tabpanel"
+                        >
                           <div className="add-schedule-list">
-                            <DuplicateForms onScheduleChange={setMondaySchedule} scheduleData={mondaySchedule} />
+                            <DuplicateForms
+                              onScheduleChange={setMondaySchedule}
+                              scheduleData={mondaySchedule}
+                            />
                           </div>
                         </div>
-                        <div className="tab-pane fade" id="schedule-2" role="tabpanel">
+                        <div
+                          className="tab-pane fade"
+                          id="schedule-2"
+                          role="tabpanel"
+                        >
                           <div className="add-schedule-list">
-                            <DuplicateForms onScheduleChange={setTuesdaySchedule} scheduleData={tuesdaySchedule} />
+                            <DuplicateForms
+                              onScheduleChange={setTuesdaySchedule}
+                              scheduleData={tuesdaySchedule}
+                            />
                           </div>
                         </div>
-                        <div className="tab-pane fade" id="schedule-3" role="tabpanel">
+                        <div
+                          className="tab-pane fade"
+                          id="schedule-3"
+                          role="tabpanel"
+                        >
                           <div className="add-schedule-list">
-                            <DuplicateForms onScheduleChange={setWednesdaySchedule} scheduleData={wednesdaySchedule} />
+                            <DuplicateForms
+                              onScheduleChange={setWednesdaySchedule}
+                              scheduleData={wednesdaySchedule}
+                            />
                           </div>
                         </div>
-                        <div className="tab-pane fade" id="schedule-4" role="tabpanel">
+                        <div
+                          className="tab-pane fade"
+                          id="schedule-4"
+                          role="tabpanel"
+                        >
                           <div className="add-schedule-list">
-                            <DuplicateForms onScheduleChange={setThursdaySchedule} scheduleData={thursdaySchedule} />
+                            <DuplicateForms
+                              onScheduleChange={setThursdaySchedule}
+                              scheduleData={thursdaySchedule}
+                            />
                           </div>
                         </div>
-                        <div className="tab-pane fade" id="schedule-5" role="tabpanel">
+                        <div
+                          className="tab-pane fade"
+                          id="schedule-5"
+                          role="tabpanel"
+                        >
                           <div className="add-schedule-list">
-                            <DuplicateForms onScheduleChange={setFridaySchedule} scheduleData={fridaySchedule} />
+                            <DuplicateForms
+                              onScheduleChange={setFridaySchedule}
+                              scheduleData={fridaySchedule}
+                            />
                           </div>
                         </div>
-                        <div className="tab-pane fade" id="schedule-6" role="tabpanel">
+                        <div
+                          className="tab-pane fade"
+                          id="schedule-6"
+                          role="tabpanel"
+                        >
                           <div className="add-schedule-list">
-                            <DuplicateForms onScheduleChange={setSaturdaySchedule} scheduleData={saturdaySchedule} />
+                            <DuplicateForms
+                              onScheduleChange={setSaturdaySchedule}
+                              scheduleData={saturdaySchedule}
+                            />
                           </div>
                         </div>
-                        <div className="tab-pane fade" id="schedule-7" role="tabpanel">
+                        <div
+                          className="tab-pane fade"
+                          id="schedule-7"
+                          role="tabpanel"
+                        >
                           <div className="add-schedule-list">
-                            <DuplicateForms onScheduleChange={setSundaySchedule} scheduleData={sundaySchedule} />
+                            <DuplicateForms
+                              onScheduleChange={setSundaySchedule}
+                              scheduleData={sundaySchedule}
+                            />
                           </div>
                         </div>
                       </div>
                       <div className="mb-3">
-                        <button type="button" className="btn btn-dark" onClick={handleApplyAllSchedules}>Apply All</button>
+                        <Link to="#" className="btn btn-dark">
+                          Apply All
+                        </Link>
                       </div>
                     </div>
 
+                    {/* Appointment Information */}
                     <div className="bg-light px-3 py-2 mb-3">
                       <h6 className="fw-bold mb-0">Appointment Information</h6>
                     </div>
@@ -1455,87 +1677,164 @@ const EditDoctor = () => {
                       <div className="row">
                         <div className="col-lg-6">
                           <div className="mb-3">
-                            <label className="form-label">Appointment Type</label>
-                            <CommonSelect options={Appointment_Type} className="select" defaultValue={appointmentType} onChange={(option) => option && setAppointmentType(option)} />
+                            <label className="form-label">
+                              Appointment Type
+                            </label>
+                            <CommonSelect
+                              options={Appointment_Type}
+                              className="select"
+                              value={appointmentType}
+                              onChange={(option) => option && setAppointmentType(option)}
+                            />
                           </div>
                         </div>
                         <div className="col-lg-6" />
                         <div className="col-lg-6">
                           <div className="mb-3">
-                            <label className="form-label">Accept bookings (in Advance)</label>
+                            <label className="form-label">
+                              Accept bookings (in Advance)
+                            </label>
                             <div className="input-group">
-                              <input type="number" className="form-control" value={acceptBookingsDays} onChange={(e) => setAcceptBookingsDays(e.target.value)} />
-                              <span className="input-group-text bg-transparent text-dark fs-14">Days</span>
+                              <input
+                                type="number"
+                                className="form-control"
+                                value={acceptBookingsDays}
+                                onChange={(e) => setAcceptBookingsDays(e.target.value)}
+                              />
+                              <span className="input-group-text bg-transparent text-dark fs-14">
+                                Days
+                              </span>
                             </div>
                           </div>
                         </div>
                         <div className="col-lg-6">
                           <div className="mb-3">
-                            <label className="form-label">Appointment Duration</label>
+                            <label className="form-label">
+                              Appointment Duration
+                            </label>
                             <div className="input-group">
-                              <input type="number" className="form-control" value={appointmentDuration} onChange={(e) => setAppointmentDuration(e.target.value)} />
-                              <span className="input-group-text bg-transparent text-dark fs-14">Mins</span>
+                              <input
+                                type="number"
+                                className="form-control"
+                                value={appointmentDuration}
+                                onChange={(e) => setAppointmentDuration(e.target.value)}
+                              />
+                              <span className="input-group-text bg-transparent text-dark fs-14">
+                                Mins
+                              </span>
                             </div>
                           </div>
                         </div>
                         <div className="col-lg-6">
                           <div className="mb-3">
-                            <label className="form-label">Consultation Charge</label>
+                            <label className="form-label">
+                              Consultation Charge
+                            </label>
                             <div className="input-group">
-                              <input type="number" className="form-control" value={consultationCharge} onChange={(e) => setConsultationCharge(e.target.value)} />
-                              <span className="input-group-text bg-transparent text-dark fs-14">$</span>
+                              <input
+                                type="number"
+                                className="form-control"
+                                value={consultationCharge}
+                                onChange={(e) => setConsultationCharge(e.target.value)}
+                              />
+                              <span className="input-group-text bg-transparent text-dark fs-14">
+                                $
+                              </span>
                             </div>
                           </div>
                         </div>
                         <div className="col-lg-6">
                           <div className="mb-3">
-                            <label className="form-label">Max Bookings Per Slot</label>
-                            <input type="number" className="form-control" value={maxBookingsPerSlot} onChange={(e) => setMaxBookingsPerSlot(e.target.value)} />
+                            <label className="form-label">
+                              Max Bookings Per Slot
+                            </label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={maxBookingsPerSlot}
+                              onChange={(e) => setMaxBookingsPerSlot(e.target.value)}
+                            />
                           </div>
                         </div>
                         <div className="col-md-6">
                           <div className="form-check form-switch mb-3">
-                            <label className="form-check-label" htmlFor="switchCheckDefault2">Display on Booking Page</label>
-                            <input className="form-check-input" type="checkbox" role="switch" id="switchCheckDefault2" checked={displayOnBookingPage} onChange={(e) => setDisplayOnBookingPage(e.target.checked)} />
+                            <label
+                              className="form-check-label"
+                              htmlFor="switchCheckDefault2"
+                            >
+                              Display on Booking Page
+                            </label>
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              role="switch"
+                              id="switchCheckDefault2"
+                              checked={displayOnBookingPage}
+                              onChange={(e) => setDisplayOnBookingPage(e.target.checked)}
+                            />
                           </div>
                         </div>
                       </div>
                     </div>
 
+                    {/* Educational Information */}
                     <div className="bg-light px-3 py-2 mb-3">
                       <h6 className="fw-bold mb-0">Educational Information</h6>
                     </div>
                     <div className="pb-0">
                       <div className="add-education-list">
-                        <EducationForms onEducationChange={setEducation} educationData={education} />
+                        <EducationForms
+                          onEducationChange={setEducation}
+                          educationData={education}
+                        />
                       </div>
                     </div>
 
+                    {/* Awards & Recognition */}
                     <div className="bg-light px-3 py-2 mb-3">
                       <h6 className="fw-bold mb-0">Awards &amp; Recognition</h6>
                     </div>
                     <div className="pb-0">
                       <div className="add-award-list">
-                        <RewardsForms onRewardsChange={setAwards} rewardsData={awards} />
+                        <RewardsForms
+                          onRewardsChange={setAwards}
+                          rewardsData={awards}
+                        />
                       </div>
                     </div>
 
+                    {/* Certifications */}
                     <div className="bg-light px-3 py-2">
                       <h6 className="fw-bold mb-0">Certifications</h6>
                     </div>
                     <div className="pb-3 mb-3 border-bottom">
                       <div className="add-certification-list">
-                        <RewardsForms onRewardsChange={setCertifications} rewardsData={certifications} />
+                        <RewardsForms
+                          onRewardsChange={setCertifications}
+                          rewardsData={certifications}
+                        />
                       </div>
                     </div>
 
+                    {/* Form Actions */}
                     <div className="d-flex justify-content-end gap-2">
-                      <button type="button" className="btn btn-light btm-md" onClick={handleCancel} disabled={saving}>Cancel</button>
-                      <button type="submit" className="btn btn-primary btm-md" disabled={saving}>
-                        {saving ? (
+                      <button
+                        type="button"
+                        className="btn btn-light btm-md"
+                        onClick={handleCancel}
+                        disabled={loading}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary btm-md"
+                        disabled={loading}
+                      >
+                        {loading ? (
                           <>
                             <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            Saving...
+                            Updating...
                           </>
                         ) : (
                           'Save Changes'
@@ -1549,9 +1848,14 @@ const EditDoctor = () => {
           </div>
         </div>
 
+        {/* Footer */}
         <div className="footer text-center bg-white p-2 border-top">
           <p className="text-dark mb-0">
-            2025 © <Link to="#" className="link-primary">Preclinic</Link>, All Rights Reserved
+            2025 ©
+            <Link to="#" className="link-primary">
+              Preclinic
+            </Link>
+            , All Rights Reserved
           </p>
         </div>
       </div>
