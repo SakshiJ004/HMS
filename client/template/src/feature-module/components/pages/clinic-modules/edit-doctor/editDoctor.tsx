@@ -848,7 +848,10 @@ const EditDoctor = () => {
         setUsername(doctor.username || "");
         setEmail(doctor.email || "");
         setPhone(doctor.phone || "");
-        setDob(doctor.dob ? dayjs(doctor.dob) : null);
+
+        const parsedDob = dayjs(doctor.dob);
+        setDob(parsedDob.isValid() ? parsedDob : null);
+        
         setYearOfExperience(doctor.yearOfExperience?.toString() || "");
         setMedicalLicenseNumber(doctor.medicalLicenseNumber || "");
         setTags(doctor.languageSpoken || ["English", "French"]);
@@ -858,16 +861,16 @@ const EditDoctor = () => {
 
         // Set dropdowns
         const deptOption = Department.find(d => d.value === doctor.department);
-        if (deptOption) setDepartment(deptOption);
+        setDepartment(deptOption || Department[0]);
 
         const desOption = Designation.find(d => d.value === doctor.designation);
-        if (desOption) setDesignation(desOption);
+        setDesignation(desOption || Designation[0]);
 
         const bgOption = Blood_Group.find(b => b.value === doctor.bloodGroup);
-        if (bgOption) setBloodGroup(bgOption);
+        setBloodGroup(bgOption || Blood_Group[0]);
 
         const genderOption = Gender.find(g => g.value === doctor.gender);
-        if (genderOption) setGender(genderOption);
+        setGender(genderOption || Gender[0]);
 
         // Set address
         if (doctor.address) {
@@ -876,13 +879,13 @@ const EditDoctor = () => {
           setPincode(doctor.address.pincode || "");
 
           const countryOption = Country.find(c => c.value === doctor.address.country);
-          if (countryOption) setCountry(countryOption);
+          setCountry(countryOption || Country[0]);
 
           const cityOption = City.find(c => c.value === doctor.address.city);
-          if (cityOption) setCity(cityOption);
+          setCity(cityOption || City[0]);
 
           const stateOption = State.find(s => s.value === doctor.address.state);
-          if (stateOption) setState(stateOption);
+          setState(stateOption || State[0]);
         }
 
         // Set schedules
@@ -917,7 +920,7 @@ const EditDoctor = () => {
 
         // Set appointment settings
         const aptOption = Appointment_Type.find(a => a.value === doctor.appointmentType);
-        if (aptOption) setAppointmentType(aptOption);
+        setAppointmentType(aptOption || Appointment_Type[0]);
 
         setAcceptBookingsDays(doctor.acceptBookingsDays?.toString() || "");
         setAppointmentDuration(doctor.appointmentDuration?.toString() || "");
