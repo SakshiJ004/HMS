@@ -833,6 +833,100 @@ const EditDoctor = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorId]);
 
+  // const fetchDoctorData = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const response = await getDoctor(doctorId!);
+
+  //     if (response.success && response.data) {
+  //       const doctor = response.data;
+
+  //       // Basic info
+  //       setFirstName(doctor.firstName || "");
+  //       setLastName(doctor.lastName || "");
+  //       setUsername(doctor.username || "");
+  //       setEmail(doctor.email || "");
+  //       setPhone(doctor.phone || "");
+  //       setDob(doctor.dob ? dayjs(doctor.dob) : null);
+  //       setYearOfExperience(doctor.yearOfExperience?.toString() || "");
+  //       setMedicalLicenseNumber(doctor.medicalLicenseNumber || "");
+  //       setTags(doctor.languageSpoken || ["English"]);
+  //       setBio(doctor.bio || "");
+  //       setFeatureOnWebsite(doctor.featureOnWebsite || false);
+  //       setProfileImage(doctor.profileImage || null);
+
+  //       // Dropdowns
+  //       setDepartment(Department.find(d => d.value === doctor.department) || Department[0]);
+  //       setDesignation(Designation.find(d => d.value === doctor.designation) || Designation[0]);
+  //       setBloodGroup(Blood_Group.find(b => b.value === doctor.bloodGroup) || Blood_Group[0]);
+  //       setGender(Gender.find(g => g.value === doctor.gender) || Gender[0]);
+
+  //       // Address
+  //       if (doctor.address) {
+  //         setAddress1(doctor.address.address1 || "");
+  //         setAddress2(doctor.address.address2 || "");
+  //         setCity(City.find(c => c.value === doctor.address.city) || City[0]);
+  //         setState(State.find(s => s.value === doctor.address.state) || State[0]);
+  //         setCountry(Country.find(c => c.value === doctor.address.country) || Country[0]);
+  //         setPincode(doctor.address.pincode || "");
+  //       }
+
+  //       // Schedules
+  //       // Schedules
+  //       if (doctor.schedules && Array.isArray(doctor.schedules)) {
+  //         doctor.schedules.forEach((schedule: { day: string; timeSlots: Array<{ startTime: string; endTime: string }> }) => {
+  //           switch (schedule.day) {
+  //             case "Monday":
+  //               setMondaySchedule(schedule.timeSlots || []);
+  //               break;
+  //             case "Tuesday":
+  //               setTuesdaySchedule(schedule.timeSlots || []);
+  //               break;
+  //             case "Wednesday":
+  //               setWednesdaySchedule(schedule.timeSlots || []);
+  //               break;
+  //             case "Thursday":
+  //               setThursdaySchedule(schedule.timeSlots || []);
+  //               break;
+  //             case "Friday":
+  //               setFridaySchedule(schedule.timeSlots || []);
+  //               break;
+  //             case "Saturday":
+  //               setSaturdaySchedule(schedule.timeSlots || []);
+  //               break;
+  //             case "Sunday":
+  //               setSundaySchedule(schedule.timeSlots || []);
+  //               break;
+  //           }
+  //         });
+  //       }
+
+  //       // Appointment settings
+  //       setAppointmentType(Appointment_Type.find(a => a.value === doctor.appointmentType) || Appointment_Type[0]);
+  //       setAcceptBookingsDays(doctor.acceptBookingsDays?.toString() || "0");
+  //       setAppointmentDuration(doctor.appointmentDuration?.toString() || "30");
+  //       setConsultationCharge(doctor.consultationCharge?.toString() || "0");
+  //       setMaxBookingsPerSlot(doctor.maxBookingsPerSlot?.toString() || "1");
+  //       setDisplayOnBookingPage(doctor.displayOnBookingPage || false);
+
+  //       // Professional details
+  //       setEducation(doctor.education || []);
+  //       setAwards(doctor.awards || []);
+  //       setCertifications(doctor.certifications || []);
+
+  //     } else {
+  //       setError("Failed to load doctor data");
+  //     }
+  //   } catch (err: any) {
+  //     console.error("Error fetching doctor:", err);
+  //     setError(err.message || "Failed to load doctor");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
+
   const fetchDoctorData = async () => {
     try {
       setLoading(true);
@@ -841,7 +935,6 @@ const EditDoctor = () => {
       if (response.success && response.data) {
         const doctor = response.data;
 
-        // Basic info
         setFirstName(doctor.firstName || "");
         setLastName(doctor.lastName || "");
         setUsername(doctor.username || "");
@@ -855,24 +948,34 @@ const EditDoctor = () => {
         setFeatureOnWebsite(doctor.featureOnWebsite || false);
         setProfileImage(doctor.profileImage || null);
 
-        // Dropdowns
-        setDepartment(Department.find(d => d.value === doctor.department) || Department[0]);
-        setDesignation(Designation.find(d => d.value === doctor.designation) || Designation[0]);
-        setBloodGroup(Blood_Group.find(b => b.value === doctor.bloodGroup) || Blood_Group[0]);
-        setGender(Gender.find(g => g.value === doctor.gender) || Gender[0]);
+        const foundDepartment = Department.find(d => d.value === doctor.department);
+        if (foundDepartment) setDepartment(foundDepartment);
 
-        // Address
+        const foundDesignation = Designation.find(d => d.value === doctor.designation);
+        if (foundDesignation) setDesignation(foundDesignation);
+
+        const foundBloodGroup = Blood_Group.find(b => b.value === doctor.bloodGroup);
+        if (foundBloodGroup) setBloodGroup(foundBloodGroup);
+
+        const foundGender = Gender.find(g => g.value === doctor.gender);
+        if (foundGender) setGender(foundGender);
+
         if (doctor.address) {
           setAddress1(doctor.address.address1 || "");
           setAddress2(doctor.address.address2 || "");
-          setCity(City.find(c => c.value === doctor.address.city) || City[0]);
-          setState(State.find(s => s.value === doctor.address.state) || State[0]);
-          setCountry(Country.find(c => c.value === doctor.address.country) || Country[0]);
+
+          const foundCity = City.find(c => c.value === doctor.address.city);
+          if (foundCity) setCity(foundCity);
+
+          const foundState = State.find(s => s.value === doctor.address.state);
+          if (foundState) setState(foundState);
+
+          const foundCountry = Country.find(c => c.value === doctor.address.country);
+          if (foundCountry) setCountry(foundCountry);
+
           setPincode(doctor.address.pincode || "");
         }
 
-        // Schedules
-        // Schedules
         if (doctor.schedules && Array.isArray(doctor.schedules)) {
           doctor.schedules.forEach((schedule: { day: string; timeSlots: Array<{ startTime: string; endTime: string }> }) => {
             switch (schedule.day) {
@@ -901,15 +1004,15 @@ const EditDoctor = () => {
           });
         }
 
-        // Appointment settings
-        setAppointmentType(Appointment_Type.find(a => a.value === doctor.appointmentType) || Appointment_Type[0]);
+        const foundAppointmentType = Appointment_Type.find(a => a.value === doctor.appointmentType);
+        if (foundAppointmentType) setAppointmentType(foundAppointmentType);
+
         setAcceptBookingsDays(doctor.acceptBookingsDays?.toString() || "0");
         setAppointmentDuration(doctor.appointmentDuration?.toString() || "30");
         setConsultationCharge(doctor.consultationCharge?.toString() || "0");
         setMaxBookingsPerSlot(doctor.maxBookingsPerSlot?.toString() || "1");
         setDisplayOnBookingPage(doctor.displayOnBookingPage || false);
 
-        // Professional details
         setEducation(doctor.education || []);
         setAwards(doctor.awards || []);
         setCertifications(doctor.certifications || []);
@@ -924,7 +1027,6 @@ const EditDoctor = () => {
       setLoading(false);
     }
   };
-
   const handleTagsChange = (newTags: string[]) => {
     setTags(newTags);
   };
