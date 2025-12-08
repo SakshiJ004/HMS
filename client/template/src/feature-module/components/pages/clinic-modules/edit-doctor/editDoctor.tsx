@@ -728,7 +728,7 @@
 // export default EditDoctor;
 
 
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { all_routes } from "../../../../routes/all_routes";
 import { DatePicker } from "antd";
 import {
