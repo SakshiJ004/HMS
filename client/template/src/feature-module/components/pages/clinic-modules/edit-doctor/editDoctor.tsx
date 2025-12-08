@@ -1272,13 +1272,13 @@ const EditDoctor = () => {
                             <div className="col-lg-6">
                               <div className="mb-3">
                                 <label className="form-label">Department<span className="text-danger ms-1">*</span></label>
-                                <CommonSelect options={Department} className="select" value={department} onChange={(option) => option && setDepartment(option)} />
+                                <CommonSelect options={Department} className="select" defaultValue={department} onChange={(option) => option && setDepartment(option)} />
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
                                 <label className="form-label">Designation<span className="text-danger ms-1">*</span></label>
-                                <CommonSelect options={Designation} className="select" value={designation} onChange={(option) => option && setDesignation(option)} />
+                                <CommonSelect options={Designation} className="select" defaultValue={designation} onChange={(option) => option && setDesignation(option)} />
                               </div>
                             </div>
                           </div>
@@ -1306,13 +1306,13 @@ const EditDoctor = () => {
                             <div className="col-lg-6">
                               <div className="mb-3">
                                 <label className="form-label">Blood Group<span className="text-danger ms-1">*</span></label>
-                                <CommonSelect options={Blood_Group} className="select" value={bloodGroup} onChange={(option) => option && setBloodGroup(option)} />
+                                <CommonSelect options={Blood_Group} className="select" defaultValue={bloodGroup} onChange={(option) => option && setBloodGroup(option)} />
                               </div>
                             </div>
                             <div className="col-lg-6">
                               <div className="mb-3">
                                 <label className="form-label">Gender <span className="text-danger ms-1">*</span></label>
-                                <CommonSelect options={Gender} className="select" value={gender} onChange={(option) => option && setGender(option)} />
+                                <CommonSelect options={Gender} className="select" defaultValue={gender} onChange={(option) => option && setGender(option)} />
                               </div>
                             </div>
                           </div>
@@ -1353,13 +1353,13 @@ const EditDoctor = () => {
                         <div className="col-lg-6">
                           <div className="mb-3">
                             <label className="form-label">Country</label>
-                            <CommonSelect options={Country} className="select" value={country} onChange={(option) => option && setCountry(option)} />
+                            <CommonSelect options={Country} className="select" defaultValue={country} onChange={(option) => option && setCountry(option)} />
                           </div>
                         </div>
                         <div className="col-lg-6">
                           <div className="mb-3">
                             <label className="form-label">City <span className="text-danger">*</span></label>
-                            <CommonSelect options={City} className="select" value={city} onChange={(option) => option && setCity(option)} />
+                            <CommonSelect options={City} className="select" defaultValue={city} onChange={(option) => option && setCity(option)} />
                           </div>
                         </div>
                       </div>
@@ -1367,7 +1367,7 @@ const EditDoctor = () => {
                         <div className="col-lg-6">
                           <div className="mb-3">
                             <label className="form-label">State <span className="text-danger">*</span></label>
-                            <CommonSelect options={State} className="select" value={state} onChange={(option) => option && setState(option)} />
+                            <CommonSelect options={State} className="select" defaultValue={state} onChange={(option) => option && setState(option)} />
                           </div>
                         </div>
                         <div className="col-lg-6">
@@ -1456,7 +1456,7 @@ const EditDoctor = () => {
                         <div className="col-lg-6">
                           <div className="mb-3">
                             <label className="form-label">Appointment Type</label>
-                            <CommonSelect options={Appointment_Type} className="select" value={appointmentType} onChange={(option) => option && setAppointmentType(option)} />
+                            <CommonSelect options={Appointment_Type} className="select" defaultValue={appointmentType} onChange={(option) => option && setAppointmentType(option)} />
                           </div>
                         </div>
                         <div className="col-lg-6" />
