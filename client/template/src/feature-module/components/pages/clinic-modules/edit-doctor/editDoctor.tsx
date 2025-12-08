@@ -832,6 +832,10 @@ const EditDoctor = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorId]);
 
+  useEffect(() => {
+    window.addEventListener("error", (e) => console.log("Runtime Error:", e.error));
+  });
+
   const fetchDoctorData = async () => {
     if (!doctorId) return;
 
@@ -851,7 +855,7 @@ const EditDoctor = () => {
 
         const parsedDob = dayjs(doctor.dob);
         setDob(parsedDob.isValid() ? parsedDob : null);
-        
+
         setYearOfExperience(doctor.yearOfExperience?.toString() || "");
         setMedicalLicenseNumber(doctor.medicalLicenseNumber || "");
         setTags(doctor.languageSpoken || ["English", "French"]);
