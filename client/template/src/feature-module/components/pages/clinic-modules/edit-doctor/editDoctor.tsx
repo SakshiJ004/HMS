@@ -832,9 +832,6 @@ const EditDoctor = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorId]);
 
-  useEffect(() => {
-    window.addEventListener("error", (e) => console.log("Runtime Error:", e.error));
-  });
 
   const fetchDoctorData = async () => {
     if (!doctorId) return;
@@ -1222,7 +1219,7 @@ const EditDoctor = () => {
                                 </label>
                                 <PhoneInput
                                   defaultCountry="US"
-                                  value={phone}
+                                  value={phone || ""}
                                   onChange={setPhone}
                                   required
                                 />
@@ -1241,16 +1238,14 @@ const EditDoctor = () => {
                                 <div className="input-icon-end position-relative">
                                   <DatePicker
                                     className="form-control datetimepicker"
-                                    format={{
-                                      format: "DD-MM-YYYY",
-                                      type: "mask",
-                                    }}
+                                    format="DD-MM-YYYY"
                                     getPopupContainer={getModalContainer}
                                     placeholder="DD-MM-YYYY"
                                     suffixIcon={null}
                                     value={dob}
                                     onChange={(date) => setDob(date)}
                                   />
+
                                   <span className="input-icon-addon">
                                     <i className="ti ti-calendar" />
                                   </span>
