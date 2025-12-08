@@ -282,7 +282,8 @@ const EducationForms = ({ onEducationChange, educationData }: EducationFormsProp
                     <DatePicker
                       className="form-control datetimepicker"
                       format={{
-                        format: "DD-MM-YYYY"
+                        format: "DD-MM-YYYY",
+                        type: "mask",
                       }}
                       getPopupContainer={getModalContainer}
                       placeholder="DD-MM-YYYY"
