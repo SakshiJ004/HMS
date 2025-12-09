@@ -849,6 +849,7 @@ const EditDoctor = () => {
     if (doctorId) {
       fetchDoctorData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorId]);
 
   const fetchDoctorData = async () => {
@@ -945,6 +946,12 @@ const EditDoctor = () => {
       const existingSchedules = prev.schedules || [];
       const filteredSchedules = existingSchedules.filter((s) => s.day !== day);
 
+      // Only update if schedules actually changed
+      const existingDaySchedule = existingSchedules.find((s) => s.day === day);
+      if (existingDaySchedule && JSON.stringify(existingDaySchedule.timeSlots) === JSON.stringify(schedules)) {
+        return prev;
+      }
+
       return {
         ...prev,
         schedules: [
@@ -959,24 +966,42 @@ const EditDoctor = () => {
   };
 
   const handleEducationChange = (education: Array<{ degree: string; college: string; fromYear?: string; year: string }>) => {
-    setFormData((prev) => ({
-      ...prev,
-      education,
-    }));
+    setFormData((prev) => {
+      // Only update if education actually changed
+      if (JSON.stringify(prev.education) === JSON.stringify(education)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        education,
+      };
+    });
   };
 
   const handleAwardsChange = (awards: Array<{ title: string; year: string }>) => {
-    setFormData((prev) => ({
-      ...prev,
-      awards,
-    }));
+    setFormData((prev) => {
+      // Only update if awards actually changed
+      if (JSON.stringify(prev.awards) === JSON.stringify(awards)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        awards,
+      };
+    });
   };
 
   const handleCertificationsChange = (certifications: Array<{ title: string; year: string }>) => {
-    setFormData((prev) => ({
-      ...prev,
-      certifications,
-    }));
+    setFormData((prev) => {
+      // Only update if certifications actually changed
+      if (JSON.stringify(prev.certifications) === JSON.stringify(certifications)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        certifications,
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
