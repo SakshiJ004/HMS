@@ -1266,12 +1266,7 @@ import { all_routes } from "../../../../routes/all_routes";
 import { useEffect, useState } from "react";
 import { getDoctors, deleteDoctor } from "../../../../../api/doctorService";
 import dayjs from "dayjs";
-const [filterDoctor, setFilterDoctor] = useState<string[]>([]);
-const [filterDesignation, setFilterDesignation] = useState<string[]>([]);
-const [filterDepartment, setFilterDepartment] = useState<string[]>([]);
-const [filterDate, setFilterDate] = useState<string>("");
-const [filterAmount, setFilterAmount] = useState<string[]>([]);
-const [filterStatus, setFilterStatus] = useState<string[]>([]);
+
 
 // Interface for Doctor data from backend
 interface DoctorData {
@@ -1293,6 +1288,13 @@ interface DoctorData {
 }
 
 const Doctors = () => {
+
+  const [filterDoctor, setFilterDoctor] = useState<string[]>([]);
+  const [filterDesignation, setFilterDesignation] = useState<string[]>([]);
+  const [filterDepartment, setFilterDepartment] = useState<string[]>([]);
+  const [filterDate, setFilterDate] = useState<string>("");
+  const [filterAmount, setFilterAmount] = useState<string[]>([]);
+  const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const getModalContainer = () => {
     const modalElement = document.getElementById("modal-datepicker");
     return modalElement ? modalElement : document.body;
