@@ -166,19 +166,19 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
 
   // Convert scheduleData to rows when component mounts or scheduleData changes
   // Convert scheduleData to rows when component mounts or scheduleData changes
-  // useEffect(() => {
-  //   if (scheduleData && scheduleData.length > 0) {
-  //     const convertedRows = scheduleData.map((schedule, index) => ({
-  //       id: Date.now() + index * 100,
-  //       session: Session[0]?.value || "",
-  //       from: schedule.startTime ? dayjs(schedule.startTime, "HH:mm:ss") : dayjs("00:00:00", "HH:mm:ss"),
-  //       to: schedule.endTime ? dayjs(schedule.endTime, "HH:mm:ss") : dayjs("00:00:00", "HH:mm:ss"),
-  //     }));
-  //     setRows(convertedRows);
-  //     setInitialized(true);
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [scheduleData, initialized]);
+  useEffect(() => {
+    if (scheduleData && scheduleData.length > 0) {
+      const convertedRows = scheduleData.map((schedule, index) => ({
+        id: Date.now() + index * 100,
+        session: Session[0]?.value || "",
+        from: schedule.startTime ? dayjs(schedule.startTime, "HH:mm:ss") : dayjs("00:00:00", "HH:mm:ss"),
+        to: schedule.endTime ? dayjs(schedule.endTime, "HH:mm:ss") : dayjs("00:00:00", "HH:mm:ss"),
+      }));
+      setRows(convertedRows);
+      setInitialized(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheduleData, initialized]);
 
   // useEffect(() => {
   //   const schedules = rows.map(row => ({
@@ -197,43 +197,8 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
   // }, [rows]);
 
 
-  // useEffect(() => {
-  //   // Only notify parent if we have valid data to send
-  //   if (onScheduleChange) {
-  //     const schedules = rows.map(row => ({
-  //       startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
-  //       endTime: row.to ? row.to.format("HH:mm:ss") : "00:00:00",
-  //     }));
-
-  //     const schedulesString = JSON.stringify(schedules);
-  //     const currentString = JSON.stringify(scheduleData || []);
-
-  //     if (schedulesString !== currentString) {
-  //       onScheduleChange(schedules);
-  //     }
-  //   }
-  // }, [rows]); // ✅ FIXED: Added onScheduleChange to deps
-
-  // Line 35-52 - First useEffect
   useEffect(() => {
-    if (scheduleData && scheduleData.length > 0 && !initialized) {
-      const convertedRows = scheduleData.map((schedule, index) => ({
-        id: Date.now() + index * 100,
-        session: Session[0]?.value || "",
-        from: schedule.startTime ? dayjs(schedule.startTime, "HH:mm:ss") : dayjs("00:00:00", "HH:mm:ss"),
-        to: schedule.endTime ? dayjs(schedule.endTime, "HH:mm:ss") : dayjs("00:00:00", "HH:mm:ss"),
-      }));
-      setRows(convertedRows);
-      setInitialized(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scheduleData]);
-
-  // Line 70-85 - Second useEffect
-  useEffect(() => {
-    // ✅ Skip if we just initialized from props
-    if (!initialized) return;
-
+    // Only notify parent if we have valid data to send
     if (onScheduleChange) {
       const schedules = rows.map(row => ({
         startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
@@ -247,8 +212,7 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
         onScheduleChange(schedules);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, initialized]);
+  }, [rows]); // ✅ FIXED: Added onScheduleChange to deps
 
   const handleAddRow = (row: RowType) => {
     const newRow = createRow(); // Create fresh row without copying previous
