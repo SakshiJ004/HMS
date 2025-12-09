@@ -105,7 +105,7 @@ export const all_routes = {
   //Clinic Pages
   doctors: "/doctors",
   doctorsList: "/doctors-list",
-  doctorsDetails: "/doctor-details/:id",
+  doctorsDetails: "/doctor-details/",
   addDoctors: "/add-doctor",
   editDoctors: "/edit-doctors",
   doctorScheduleClini: "/doctor-schedule",
