@@ -1295,6 +1295,14 @@ const Doctors = () => {
   const [filterDate, setFilterDate] = useState<string>("");
   const [filterAmount, setFilterAmount] = useState<string[]>([]);
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
+
+  const getDoctorOptions = () => {
+    return doctors.map(doctor => ({
+      label: `Dr. ${doctor.fullName}`,
+      value: doctor.fullName
+    }));
+  };
+
   const getModalContainer = () => {
     const modalElement = document.getElementById("modal-datepicker");
     return modalElement ? modalElement : document.body;
@@ -1581,7 +1589,7 @@ const Doctors = () => {
                           placeholder="Please select"
                           value={filterDoctor}
                           onChange={setFilterDoctor}
-                          options={Doctor}
+                          options={getDoctorOptions()}
                         />
                       </div>
                       <div className="mb-3">
