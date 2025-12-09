@@ -1260,13 +1260,18 @@ import {
   Doctor,
   Status,
 } from "../../../../../core/common/selectOption";
-// import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import { Link } from "react-router";
 import Modals from "./modals/modals";
 import { all_routes } from "../../../../routes/all_routes";
 import { useEffect, useState } from "react";
 import { getDoctors, deleteDoctor } from "../../../../../api/doctorService";
-// import type styles from "yet-another-react-lightbox/styles.css";
+import dayjs from "dayjs";
+const [filterDoctor, setFilterDoctor] = useState<string[]>([]);
+const [filterDesignation, setFilterDesignation] = useState<string[]>([]);
+const [filterDepartment, setFilterDepartment] = useState<string[]>([]);
+const [filterDate, setFilterDate] = useState<string>("");
+const [filterAmount, setFilterAmount] = useState<string[]>([]);
+const [filterStatus, setFilterStatus] = useState<string[]>([]);
 
 // Interface for Doctor data from backend
 interface DoctorData {
@@ -1491,6 +1496,16 @@ const Doctors = () => {
     return nameParts[0].charAt(0).toUpperCase();
   };
 
+  const getFilteredDoctors = () => {
+    return doctors.filter(doctor => {
+      if (filterDoctor.length > 0 && !filterDoctor.includes(doctor.fullName)) return false;
+      if (filterDesignation.length > 0 && !filterDesignation.includes(doctor.designation)) return false;
+      if (filterDepartment.length > 0 && !filterDepartment.includes(doctor.department)) return false;
+      // Add more filter conditions as needed
+      return true;
+    });
+  };
+
   return (
     <>
       {/* ========================
@@ -1530,6 +1545,15 @@ const Doctors = () => {
                       <Link
                         to="#"
                         className="link-danger text-decoration-underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setFilterDoctor([]);
+                          setFilterDesignation([]);
+                          setFilterDepartment([]);
+                          setFilterDate("");
+                          setFilterAmount([]);
+                          setFilterStatus([]);
+                        }}
                       >
                         Clear All
                       </Link>
@@ -1540,7 +1564,11 @@ const Doctors = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Doctor</label>
-                          <Link to="#" className="link-primary mb-1">
+                          <Link to="#" className="link-primary mb-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setFilterDoctor([]); // Change this for each field
+                            }}>
                             Reset
                           </Link>
                         </div>
@@ -1549,14 +1577,19 @@ const Doctors = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          defaultValue={[]}
+                          value={filterDoctor}
+                          onChange={setFilterDoctor}
                           options={Doctor}
                         />
                       </div>
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Designation</label>
-                          <Link to="#" className="link-primary mb-1">
+                          <Link to="#" className="link-primary mb-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setFilterDesignation([]); // Change this for each field
+                            }}>
                             Reset
                           </Link>
                         </div>
@@ -1565,14 +1598,19 @@ const Doctors = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          defaultValue={[]}
+                          value={filterDesignation}
+                          onChange={setFilterDesignation}
                           options={Designation}
                         />
                       </div>
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Department</label>
-                          <Link to="#" className="link-primary mb-1">
+                          <Link to="#" className="link-primary mb-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setFilterDepartment([]); // Change this for each field
+                            }}>
                             Reset
                           </Link>
                         </div>
@@ -1581,7 +1619,8 @@ const Doctors = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          defaultValue={[]}
+                          value={filterDepartment}
+                          onChange={setFilterDepartment}
                           options={Department}
                         />
                       </div>
@@ -1599,6 +1638,8 @@ const Doctors = () => {
                             getPopupContainer={getModalContainer}
                             placeholder="DD-MM-YYYY"
                             suffixIcon={null}
+                            value={filterDate ? dayjs(filterDate) : null}
+                            onChange={(date) => setFilterDate(date ? date.format("YYYY-MM-DD") : "")}
                           />
                           <span className="input-icon-addon">
                             <i className="ti ti-calendar" />
@@ -1608,7 +1649,11 @@ const Doctors = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Amount</label>
-                          <Link to="#" className="link-primary mb-1">
+                          <Link to="#" className="link-primary mb-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setFilterAmount([]); // Change this for each field
+                            }}>
                             Reset
                           </Link>
                         </div>
@@ -1617,14 +1662,19 @@ const Doctors = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          defaultValue={[]}
+                          value={filterAmount}
+                          onChange={setFilterAmount}
                           options={Amount}
                         />
                       </div>
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Status</label>
-                          <Link to="#" className="link-primary mb-1">
+                          <Link to="#" className="link-primary mb-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setFilterStatus([]); // Change this for each field
+                            }}>
                             Reset
                           </Link>
                         </div>
@@ -1633,7 +1683,8 @@ const Doctors = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          defaultValue={[]}
+                          value={filterStatus}
+                          onChange={setFilterStatus}
                           options={Status}
                         />
                       </div>
@@ -1646,7 +1697,10 @@ const Doctors = () => {
                       >
                         Close
                       </Link>
-                      <button type="submit" className="btn btn-primary btn-md">
+                      <button type="submit" className="btn btn-primary btn-md"
+                        onClick={() => {
+                          document.getElementById('close-filter')?.click();
+                        }}>
                         Filter
                       </button>
                     </div>
@@ -1701,7 +1755,7 @@ const Doctors = () => {
             </div>
           ) : ( */}
           <div className="row">
-            {doctors.map((doctor) => (
+            {getFilteredDoctors().map((doctor) => (
               <div className="col-xl-4 col-md-6" key={doctor._id}>
                 <div className="card">
                   <div className="card-body d-flex align-items-center flex-sm-nowrap flex-wrap row-gap-3">
