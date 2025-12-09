@@ -1257,7 +1257,7 @@ import {
   Amount,
   Department,
   Designation,
-  Doctor,
+  // Doctor,
   Status,
 } from "../../../../../core/common/selectOption";
 import { Link } from "react-router";
@@ -1590,6 +1590,7 @@ const Doctors = () => {
                           value={filterDoctor}
                           onChange={setFilterDoctor}
                           options={getDoctorOptions()}
+
                         />
                       </div>
                       <div className="mb-3">
