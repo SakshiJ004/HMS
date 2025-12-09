@@ -1660,7 +1660,7 @@ const EditDoctor = () => {
 
                     {/* Action Buttons */}
                     <div className="d-flex justify-content-end gap-2">
-                      <Link to={all_routes.doctors} className="btn btn-light btm-md">
+                      <Link to={all_routes.doctorsDetails} className="btn btn-light btm-md">
                         Cancel
                       </Link>
                       <button type="submit" className="btn btn-primary btm-md" disabled={loading}>
