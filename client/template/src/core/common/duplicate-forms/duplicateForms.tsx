@@ -390,7 +390,7 @@ const DuplicateForms = ({ onScheduleChange, scheduleData }: DuplicateFormsProps)
 
   // Notify parent when rows change
   useEffect(() => {
-    if (onScheduleChange && initialized) {
+    if (onScheduleChange) {
       const schedules = rows.map(row => ({
         startTime: row.from ? row.from.format("HH:mm:ss") : "00:00:00",
         endTime: row.to ? row.to.format("HH:mm:ss") : "00:00:00",
