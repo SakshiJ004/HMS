@@ -1022,7 +1022,7 @@ const EditDoctor = () => {
       if (response.success) {
         setSuccess("Doctor updated successfully!");
         setTimeout(() => {
-          navigate(all_routes.doctors);
+          navigate(all_routes.doctordetails);
         }, 1500);
       }
     } catch (err: any) {
@@ -1660,7 +1660,7 @@ const EditDoctor = () => {
 
                     {/* Action Buttons */}
                     <div className="d-flex justify-content-end gap-2">
-                      <Link to={all_routes.doctorsDetails} className="btn btn-light btm-md">
+                      <Link to={all_routes.doctors} className="btn btn-light btm-md">
                         Cancel
                       </Link>
                       <button type="submit" className="btn btn-primary btm-md" disabled={loading}>
