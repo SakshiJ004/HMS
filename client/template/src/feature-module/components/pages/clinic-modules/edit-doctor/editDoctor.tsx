@@ -1022,7 +1022,7 @@ const EditDoctor = () => {
       if (response.success) {
         setSuccess("Doctor updated successfully!");
         setTimeout(() => {
-          navigate(`${all_routes.doctorsDetails}/${doctorId}`);
+          navigate(all_routes.doctorsDetails);
         }, 1500);
       }
     } catch (err: any) {
