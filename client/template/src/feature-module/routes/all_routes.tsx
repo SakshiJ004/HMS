@@ -107,7 +107,7 @@ export const all_routes = {
   doctorsList: "/doctors-list",
   doctorsDetails: "/doctor-details/",
   doctorAppointmentCalendar: '/doctor-appointment-calendar',
-  doctorAppointments: '/doctor-appointment-list',
+  doctorAppointments: '/doctor-appointments',
   addDoctors: "/add-doctor",
   editDoctors: "/edit-doctors",
   doctorScheduleClini: "/doctor-schedule",
