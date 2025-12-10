@@ -257,7 +257,8 @@ export const SidebarData = [
         dot: true,
         submenuItems: [
           { label: "Doctors", link: routes.doctors },
-          { label: "Doctor Details", link: routes.doctorsDetails },
+          // { label: "Doctor Details", link: routes.doctorsDetails },
+          { label: "Doctor Calender", link: routes.doctorAppointmentCalendar },
           { label: "Add Doctor", link: routes.addDoctors },
           { label: "Doctor Schedule", link: routes.doctorScheduleClini },
         ],

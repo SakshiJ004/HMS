@@ -1841,8 +1841,9 @@ const Doctors = () => {
                           ${doctor.consultationCharge || 0}
                         </h6>
                         <Link
-                          to={all_routes.appointmentCalendar}
+                          to={`${all_routes.doctorAppointmentCalendar}?doctorId=${doctor._id}`}
                           className="avatar avatar-xs border text-muted fs-14"
+                          title="View Doctor's Calendar"
                         >
                           <i className="ti ti-calendar-cog" />
                         </Link>

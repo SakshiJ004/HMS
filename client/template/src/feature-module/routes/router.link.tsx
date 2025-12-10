@@ -43,6 +43,8 @@ import AppointmentConsultations from "../components/pages/clinic-modules/appoint
 import Appointments from "../components/pages/clinic-modules/appointments/appointments";
 import Assets from "../components/pages/clinic-modules/assets/assets";
 import CreatePatient from "../components/pages/clinic-modules/create-patient/createPatient";
+import DoctorAppointmentList from "../components/pages/clinic-modules/doctor-appointment-list/doctorAppointmentList";
+import DoctorAppointmentCalendar from "../components/pages/clinic-modules/doctor-calender/doctorAppointmentCalender";
 import DoctorDetails from "../components/pages/clinic-modules/doctor-details/doctorDetails";
 import DoctorsList from "../components/pages/clinic-modules/doctors-list/doctorsList";
 import Doctors from "../components/pages/clinic-modules/doctors/doctors";
@@ -288,6 +290,14 @@ export const publicRoutes = [
     path: routes.doctorsappointmentdetails,
     element: <DoctorsAppointmentDetails />,
     route: Route,
+  },
+  {
+    path: '/doctor-appointment-calendar',
+    element: <DoctorAppointmentCalendar />
+  },
+  {
+    path: '/doctor-appointments',
+    element: <DoctorAppointmentList />
   },
   {
     path: routes.onlineconsultations,

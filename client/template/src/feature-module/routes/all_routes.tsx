@@ -91,7 +91,7 @@ export const all_routes = {
   searchList: "/application/search-list",
   invoiceDetails: "/application/invoice-details",
   addInvoice: "/add-invoice",
-  notifications:"/notifications",
+  notifications: "/notifications",
 
   //Layout Routes
   layoutDefault: "/layout-default",
@@ -106,6 +106,8 @@ export const all_routes = {
   doctors: "/doctors",
   doctorsList: "/doctors-list",
   doctorsDetails: "/doctor-details/",
+  doctorAppointmentCalendar: '/doctor-appointment-calendar',
+  doctorAppointments: '/doctor-appointment-list',
   addDoctors: "/add-doctor",
   editDoctors: "/edit-doctors",
   doctorScheduleClini: "/doctor-schedule",
