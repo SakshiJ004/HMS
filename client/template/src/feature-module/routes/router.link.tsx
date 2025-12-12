@@ -43,6 +43,7 @@ import AppointmentConsultations from "../components/pages/clinic-modules/appoint
 import Appointments from "../components/pages/clinic-modules/appointments/appointments";
 import Assets from "../components/pages/clinic-modules/assets/assets";
 import CreatePatient from "../components/pages/clinic-modules/create-patient/createPatient";
+import DoctorAppointmentList from "../components/pages/clinic-modules/doctor-appointment-list/doctorAppointments";
 import DoctorAppointmentCalendar from "../components/pages/clinic-modules/doctor-calender/doctorAppointmentCalender";
 import DoctorDetails from "../components/pages/clinic-modules/doctor-details/doctorDetails";
 import DoctorsList from "../components/pages/clinic-modules/doctors-list/doctorsList";
@@ -73,7 +74,6 @@ import Testimonials from "../components/pages/content-modules/testimonials/testi
 import Dashboard from "../components/pages/dashboard/dashboard";
 import DoctorDahboard from "../components/pages/dashboard/doctor-dashboard/doctorDahboard";
 import PatientDashboard from "../components/pages/dashboard/patient-dashboard/patientDashboard";
-import DoctorAppointments from "../components/pages/doctor-modules/doctor-appointments/doctorAppointments";
 import DoctorsAppointmentDetails from "../components/pages/doctor-modules/doctors-appointment-details/doctorsAppointmentDetails";
 import DoctorsLeaves from "../components/pages/doctor-modules/doctors-leaves/doctorsLeaves";
 import DoctorsNotificationSettings from "../components/pages/doctor-modules/doctors-notification-settings/doctorsNotificationSettings";
@@ -281,11 +281,6 @@ export const publicRoutes = [
     route: Route,
   },
   {
-    path: routes.doctorsappointments,
-    element: <DoctorAppointments />,
-    route: Route,
-  },
-  {
     path: routes.doctorsappointmentdetails,
     element: <DoctorsAppointmentDetails />,
     route: Route,
@@ -296,7 +291,7 @@ export const publicRoutes = [
   },
   {
     path: '/doctor-appointments',
-    element: <DoctorAppointments />
+    element: <DoctorAppointmentList />
   },
   {
     path: routes.onlineconsultations,
