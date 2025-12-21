@@ -937,6 +937,13 @@ const AddDoctor = () => {
     alert(`${dayName}'s schedule applied to all days successfully!`);
   };
 
+  const isValidIndianPhone = (phone?: string) => {
+    if (!phone) return false;
+    const digits = phone.replace(/\D/g, ""); // remove + and non-numbers
+    return digits.length === 10;
+  };
+
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -945,9 +952,28 @@ const AddDoctor = () => {
 
     try {
       // Validate required fields
-      if (!firstName || !lastName || !username || !email || !phone || !dob || !yearOfExperience ||
-        !medicalLicenseNumber || !address1 || !city || !state || !pincode) {
+      if (
+        !firstName ||
+        !lastName ||
+        !username ||
+        !email ||
+        !phone ||
+        !dob ||
+        !yearOfExperience ||
+        !medicalLicenseNumber ||
+        !address1 ||
+        !city ||
+        !state ||
+        !pincode
+      ) {
         setError("Please fill in all required fields");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Phone number validation (ONLY 10 digits)
+      if (!isValidIndianPhone(phone)) {
+        setError("Phone number must contain exactly 10 digits");
         setLoading(false);
         return;
       }
