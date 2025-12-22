@@ -964,13 +964,6 @@
 
 
 import { DatePicker, Select } from "antd";
-import {
-  Amount,
-  Department,
-  Designation,
-  Doctor,
-  Status,
-} from "../../../../../core/common/selectOption";
 import { Link } from "react-router";
 import { all_routes } from "../../../../routes/all_routes";
 import { useEffect, useState } from "react";
@@ -1046,6 +1039,39 @@ const DoctorsList = () => {
       setLoading(false);
     }
   };
+
+  // Generate dynamic filter options from real data
+  const doctorOptions = doctors.map(doc => ({
+    label: doc.fullName,
+    value: doc.fullName
+  }));
+
+  const departmentOptions = [...new Set(doctors.map(doc => doc.department))]
+    .filter(Boolean)
+    .map(dept => ({
+      label: dept,
+      value: dept
+    }));
+
+  const designationOptions = [...new Set(doctors.map(doc => doc.designation))]
+    .filter(Boolean)
+    .map(desig => ({
+      label: desig,
+      value: desig
+    }));
+
+  const statusOptions = [...new Set(doctors.map(doc => doc.status || "Available"))]
+    .map(status => ({
+      label: status,
+      value: status
+    }));
+
+  const amountOptions = [
+    { label: "$0-$100", value: "$0-$100" },
+    { label: "$100-$500", value: "$100-$500" },
+    { label: "$500-$1000", value: "$500-$1000" },
+    { label: "$1000+", value: "$1000+" }
+  ];
 
   // Apply filters and sorting
   const applyFiltersAndSort = () => {
@@ -1516,7 +1542,7 @@ const DoctorsList = () => {
                           placeholder="Please select"
                           value={filterDoctor}
                           onChange={setFilterDoctor}
-                          options={Doctor}
+                          options={doctorOptions}
                         />
                       </div>
                       <div className="mb-3">
@@ -1533,7 +1559,7 @@ const DoctorsList = () => {
                           placeholder="Please select"
                           value={filterDesignation}
                           onChange={setFilterDesignation}
-                          options={Designation}
+                          options={designationOptions}
                         />
                       </div>
                       <div className="mb-3">
@@ -1550,7 +1576,7 @@ const DoctorsList = () => {
                           placeholder="Please select"
                           value={filterDepartment}
                           onChange={setFilterDepartment}
-                          options={Department}
+                          options={departmentOptions}
                         />
                       </div>
                       <div className="mb-3">
@@ -1570,9 +1596,14 @@ const DoctorsList = () => {
                             placeholder="DD-MM-YYYY"
                             suffixIcon={null}
                           />
-                          <span className="input-icon-addon">
+                          {/* <span className="input-icon-addon">
                             <i className="ti ti-calendar" />
-                          </span>
+                          </span> */}
+                          <div className="action-item me-2">
+                            <Link to={all_routes.appointmentCalendar}>
+                              <i className="ti ti-calendar-cog" />
+                            </Link>
+                          </div>
                         </div>
                       </div>
                       <div className="mb-3">
@@ -1589,7 +1620,7 @@ const DoctorsList = () => {
                           placeholder="Please select"
                           value={filterAmount}
                           onChange={setFilterAmount}
-                          options={Amount}
+                          options={amountOptions}
                         />
                       </div>
                       <div className="mb-3">
@@ -1606,7 +1637,7 @@ const DoctorsList = () => {
                           placeholder="Please select"
                           value={filterStatus}
                           onChange={setFilterStatus}
-                          options={Status}
+                          options={statusOptions}
                         />
                       </div>
                     </div>
