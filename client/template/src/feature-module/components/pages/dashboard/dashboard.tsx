@@ -3384,10 +3384,15 @@ const Dashboard = () => {
                               )}
                               {doctor.profilePicture ? (
                                 <img
-                                  src={`${API_URL}${doctor.profilePicture}`}
+                                  src={doctor.profilePicture.startsWith('http') || doctor.profilePicture.startsWith('data:')
+                                    ? doctor.profilePicture
+                                    : `${API_URL}${doctor.profilePicture}`}
                                   alt={doctor.name}
                                   className="rounded-circle"
                                   style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                  onError={(e) => {
+                                    e.currentTarget.src = `assets/img/doctors/doctor-0${index + 1}.jpg`;
+                                  }}
                                 />
                               ) : (
                                 <ImageWithBasePath
@@ -3625,10 +3630,15 @@ const Dashboard = () => {
                           >
                             {doctor.profileImage ? (
                               <img
-                                src={`${API_URL}${doctor.profileImage}`}
+                                src={doctor.profileImage.startsWith('http') || doctor.profileImage.startsWith('data:')
+                                  ? doctor.profileImage
+                                  : `${API_URL}${doctor.profileImage}`}
                                 className="rounded-circle"
                                 alt={doctor.fullName}
                                 style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                onError={(e) => {
+                                  e.currentTarget.src = `assets/img/doctors/doctor-0${index + 2}.jpg`;
+                                }}
                               />
                             ) : (
                               <ImageWithBasePath
@@ -3645,13 +3655,13 @@ const Dashboard = () => {
                                   Dr. {doctor.fullName}
                                 </Link>
                               </h6>
-                              <p className="fs-13">{doctor.specialization}</p>
+                              <p className="fs-13 mb-0">{doctor.specialization}</p>
                             </div>
                           </div>
                         </div>
                         <div className="flex-shrink-0 ms-2">
                           <Link
-                            to="#"
+                            to={all_routes.newAppointment}
                             className="btn btn-primary btn-sm py-1 flex-shrink-0"
                           >
                             Book Now
@@ -3782,9 +3792,14 @@ const Dashboard = () => {
                                 >
                                   {appointment.doctor.profilePicture ? (
                                     <img
-                                      src={`${API_URL}${appointment.doctor.profilePicture}`}
+                                      src={appointment.doctor.profilePicture.startsWith('http') || appointment.doctor.profilePicture.startsWith('data:')
+                                        ? appointment.doctor.profilePicture
+                                        : `${API_URL}${appointment.doctor.profilePicture}`}
                                       alt="img"
                                       className="rounded-circle"
+                                      onError={(e) => {
+                                        e.currentTarget.src = 'assets/img/doctors/doctor-06.jpg';
+                                      }}
                                     />
                                   ) : (
                                     <ImageWithBasePath
