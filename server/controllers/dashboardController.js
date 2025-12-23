@@ -261,7 +261,203 @@ const getAppointmentStats = async (req, res) => {
     }
 };
 
+/**
+ * Get top doctors by appointment count
+ * @route   GET /api/dashboard/top-doctors
+ * @access  Private (Admin only)
+ */
+const getTopDoctors = async (req, res) => {
+    try {
+        const { period = 'weekly' } = req.query;
+
+        // Calculate date range based on period
+        let startDate;
+        const today = new Date();
+
+        if (period === 'weekly') {
+            startDate = new Date(today.setDate(today.getDate() - 7));
+        } else if (period === 'monthly') {
+            startDate = new Date(today.setMonth(today.getMonth() - 1));
+        } else if (period === 'yearly') {
+            startDate = new Date(today.setFullYear(today.getFullYear() - 1));
+        }
+
+        // Get appointments grouped by doctor
+        const topDoctors = await Appointment.aggregate([
+            {
+                $match: {
+                    appointmentDate: { $gte: startDate }
+                }
+            },
+            {
+                $group: {
+                    _id: '$doctor',
+                    bookingsCount: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { bookingsCount: -1 }
+            },
+            {
+                $limit: 3
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'doctorInfo'
+                }
+            },
+            {
+                $unwind: '$doctorInfo'
+            },
+            {
+                $project: {
+                    _id: '$doctorInfo._id',
+                    name: '$doctorInfo.fullName',
+                    specialization: '$doctorInfo.specialization',
+                    profilePicture: '$doctorInfo.profileImage',
+                    bookingsCount: 1,
+                    status: '$doctorInfo.status'
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: topDoctors
+        });
+    } catch (error) {
+        console.error('Get top doctors error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching top doctors',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * Get department statistics
+ * @route   GET /api/dashboard/department-stats
+ * @access  Private (Admin only)
+ */
+const getDepartmentStats = async (req, res) => {
+    try {
+        const { period = 'weekly' } = req.query;
+
+        // Calculate date range
+        let startDate;
+        const today = new Date();
+
+        if (period === 'weekly') {
+            startDate = new Date(today.setDate(today.getDate() - 7));
+        } else if (period === 'monthly') {
+            startDate = new Date(today.setMonth(today.getMonth() - 1));
+        } else if (period === 'yearly') {
+            startDate = new Date(today.setFullYear(today.getFullYear() - 1));
+        }
+
+        // Get appointments grouped by department
+        const departmentStats = await Appointment.aggregate([
+            {
+                $match: {
+                    appointmentDate: { $gte: startDate }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'doctor',
+                    foreignField: '_id',
+                    as: 'doctorInfo'
+                }
+            },
+            {
+                $unwind: '$doctorInfo'
+            },
+            {
+                $group: {
+                    _id: '$doctorInfo.department',
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { count: -1 }
+            },
+            {
+                $limit: 3
+            },
+            {
+                $project: {
+                    department: '$_id',
+                    count: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: departmentStats
+        });
+    } catch (error) {
+        console.error('Get department stats error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching department statistics',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * Get doctors with availability status
+ * @route   GET /api/dashboard/doctors-schedule
+ * @access  Private (Admin only)
+ */
+const getDoctorsSchedule = async (req, res) => {
+    try {
+        // Get all doctors with their basic info
+        const doctors = await User.find(
+            { role: 'doctor' },
+            'fullName specialization profileImage status'
+        )
+            .limit(4)
+            .lean();
+
+        // Count availability statuses
+        const available = await User.countDocuments({ role: 'doctor', status: 'Available' });
+        const unavailable = await User.countDocuments({ role: 'doctor', status: 'Unavailable' });
+        const onLeave = await User.countDocuments({ role: 'doctor', status: 'On Leave' });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                doctors,
+                counts: {
+                    available,
+                    unavailable,
+                    onLeave
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Get doctors schedule error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching doctors schedule',
+            error: error.message,
+        });
+    }
+};
+
+// UPDATE module.exports to include new functions
 module.exports = {
     getDashboardStats,
     getAppointmentStats,
+    getTopDoctors,
+    getDepartmentStats,
+    getDoctorsSchedule,
 };

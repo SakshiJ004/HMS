@@ -49,6 +49,37 @@ export interface AppointmentStatsResponse {
     };
 }
 
+export interface TopDoctor {
+    _id: string;
+    name: string;
+    specialization: string;
+    profilePicture?: string;
+    bookingsCount: number;
+    status?: string;
+}
+
+export interface DepartmentStat {
+    department: string;
+    count: number;
+}
+
+export interface DoctorSchedule {
+    _id: string;
+    fullName: string;
+    specialization: string;
+    profileImage?: string;
+    status?: string;
+}
+
+export interface DoctorsScheduleResponse {
+    doctors: DoctorSchedule[];
+    counts: {
+        available: number;
+        unavailable: number;
+        onLeave: number;
+    };
+}
+
 // Get dashboard statistics
 export const getDashboardStats = async () => {
     try {
@@ -74,5 +105,47 @@ export const getAppointmentStats = async (period: 'monthly' | 'weekly' | 'yearly
     } catch (error: any) {
         console.error('Get appointment stats error:', error);
         throw new Error(error.response?.data?.message || 'Failed to fetch appointment statistics');
+    }
+};
+
+// Get top doctors
+export const getTopDoctors = async (period: 'weekly' | 'monthly' | 'yearly' = 'weekly') => {
+    try {
+        const response = await axios.get<{ success: boolean; data: TopDoctor[] }>(
+            `${API_URL}/api/dashboard/top-doctors?period=${period}`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get top doctors error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch top doctors');
+    }
+};
+
+// Get department statistics
+export const getDepartmentStats = async (period: 'weekly' | 'monthly' | 'yearly' = 'weekly') => {
+    try {
+        const response = await axios.get<{ success: boolean; data: DepartmentStat[] }>(
+            `${API_URL}/api/dashboard/department-stats?period=${period}`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get department stats error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch department statistics');
+    }
+};
+
+// Get doctors schedule
+export const getDoctorsSchedule = async () => {
+    try {
+        const response = await axios.get<{ success: boolean; data: DoctorsScheduleResponse }>(
+            `${API_URL}/api/dashboard/doctors-schedule`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get doctors schedule error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch doctors schedule');
     }
 };

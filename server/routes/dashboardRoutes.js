@@ -56,7 +56,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
-const { getDashboardStats, getAppointmentStats } = require('../controllers/dashboardController');
+const { getDashboardStats, getAppointmentStats, getTopDoctors, getDepartmentStats, getDoctorsSchedule } = require('../controllers/dashboardController');
 
 
 
@@ -111,5 +111,20 @@ router.get('/stats', protect, authorize('admin'), getDashboardStats);
 // @desc    Get appointment statistics with chart data
 // @access  Private (Admin only)
 router.get('/appointment-stats', protect, authorize('admin'), getAppointmentStats);
+
+// @route   GET /api/dashboard/top-doctors
+// @desc    Get top doctors by booking count
+// @access  Private (Admin only)
+router.get('/top-doctors', protect, authorize('admin'), getTopDoctors);
+
+// @route   GET /api/dashboard/department-stats
+// @desc    Get department statistics
+// @access  Private (Admin only)
+router.get('/department-stats', protect, authorize('admin'), getDepartmentStats);
+
+// @route   GET /api/dashboard/doctors-schedule
+// @desc    Get doctors with schedule availability
+// @access  Private (Admin only)
+router.get('/doctors-schedule', protect, authorize('admin'), getDoctorsSchedule);
 
 module.exports = router;
