@@ -2683,6 +2683,7 @@
 
 
 
+
 import { Link } from "react-router-dom";
 import ImageWithBasePath from "../../../../core/imageWithBasePath";
 import { all_routes } from "../../../routes/all_routes";
@@ -2695,7 +2696,7 @@ import CircleChart from "./chats/circleChart";
 import { Calendar, type CalendarProps } from "antd";
 import type { Dayjs } from "dayjs";
 import Chart from "react-apexcharts";
-import { getDashboardStats, getAppointmentStats, getTopDoctors, getDepartmentStats, getDoctorsSchedule, type DashboardStats, type AppointmentStatsResponse, type TopDoctor, type DepartmentStat, type DoctorsScheduleResponse } from "../../../../api/dashboardService";
+import { getDashboardStats, getAppointmentStats, type DashboardStats, type AppointmentStatsResponse } from "../../../../api/dashboardService";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
@@ -2744,16 +2745,6 @@ const Dashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [selectedAppointmentType, setSelectedAppointmentType] = useState<string>('All Type');
-
-  const [topDoctors, setTopDoctors] = useState<TopDoctor[]>([]);
-  const [topDoctorsPeriod, setTopDoctorsPeriod] = useState<'weekly' | 'monthly' | 'yearly'>('weekly');
-  const [departmentStats, setDepartmentStats] = useState<DepartmentStat[]>([]);
-  const [departmentPeriod, setDepartmentPeriod] = useState<'weekly' | 'monthly' | 'yearly'>('weekly');
-  const [doctorsSchedule, setDoctorsSchedule] = useState<DoctorsScheduleResponse>({
-    doctors: [],
-    counts: { available: 0, unavailable: 0, onLeave: 0 }
-  });
-
   // const [_loading, setLoading] = useState(true);
 
   // Chart configuration for small cards
@@ -2870,23 +2861,17 @@ const Dashboard = () => {
         const token = localStorage.getItem('token');
 
         // Fetch all data in parallel for instant loading
-        const [statsResponse, appointmentStatsResponse, appointmentsResponse, topDoctorsResponse, departmentStatsResponse, doctorsScheduleResponse] = await Promise.all([
+        const [statsResponse, appointmentStatsResponse, appointmentsResponse] = await Promise.all([
           getDashboardStats(),
           getAppointmentStats('monthly'),
           axios.get(`${API_URL}/api/appointments`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          getTopDoctors('weekly'),
-          getDepartmentStats('weekly'),
-          getDoctorsSchedule()
         ]);
 
         // Set all data immediately
         setDashboardStats(statsResponse.data);
         setAppointmentStats(appointmentStatsResponse.data);
-        setTopDoctors(topDoctorsResponse.data);
-        setDepartmentStats(departmentStatsResponse.data);
-        setDoctorsSchedule(doctorsScheduleResponse.data);
 
         if (appointmentsResponse.data.success) {
           setAppointments(appointmentsResponse.data.data);
@@ -2899,42 +2884,6 @@ const Dashboard = () => {
 
     fetchAllDashboardData();
   }, []);
-
-  // Fetch top doctors when period changes
-  useEffect(() => {
-    if (topDoctorsPeriod === 'weekly' && topDoctors.length > 0) {
-      return; // Skip initial load
-    }
-
-    const fetchTopDoctors = async () => {
-      try {
-        const response = await getTopDoctors(topDoctorsPeriod);
-        setTopDoctors(response.data);
-      } catch (error) {
-        console.error("Error fetching top doctors:", error);
-      }
-    };
-
-    fetchTopDoctors();
-  }, [topDoctorsPeriod]);
-
-  // Fetch department stats when period changes
-  useEffect(() => {
-    if (departmentPeriod === 'weekly' && departmentStats.length > 0) {
-      return; // Skip initial load
-    }
-
-    const fetchDepartmentStats = async () => {
-      try {
-        const response = await getDepartmentStats(departmentPeriod);
-        setDepartmentStats(response.data);
-      } catch (error) {
-        console.error("Error fetching department stats:", error);
-      }
-    };
-
-    fetchDepartmentStats();
-  }, [departmentPeriod]);
 
   // Fetch only appointment stats when period changes (not on initial load)
   useEffect(() => {
@@ -3346,21 +3295,21 @@ const Dashboard = () => {
                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      {topDoctorsPeriod.charAt(0).toUpperCase() + topDoctorsPeriod.slice(1)} <i className="ti ti-chevron-down ms-1" />
+                      Weekly <i className="ti ti-chevron-down ms-1" />
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setTopDoctorsPeriod('monthly')}>
+                        <Link className="dropdown-item" to="#">
                           Monthly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setTopDoctorsPeriod('weekly')}>
+                        <Link className="dropdown-item" to="#">
                           Weekly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setTopDoctorsPeriod('yearly')}>
+                        <Link className="dropdown-item" to="#">
                           Yearly
                         </Link>
                       </li>
@@ -3369,58 +3318,105 @@ const Dashboard = () => {
                 </div>
                 <div className="card-body">
                   <div className="row row-gap-3">
-                    {topDoctors.slice(0, 3).map((doctor, index) => (
-                      <div key={doctor._id} className="col-md-4">
-                        <div className="border shadow-sm p-3 rounded-2">
-                          <div className="d-flex align-items-center mb-3">
-                            <Link
-                              to={`${all_routes.doctordetails}?id=${doctor._id}`}
-                              className="avatar me-2 flex-shrink-0 position-relative"
-                            >
-                              {doctor.status === 'Available' && (
-                                <span className="online text-success position-absolute end-0 bottom-0 pe-1">
-                                  <i className="ti ti-circle-filled d-flex bg-white fs-6 rounded-circle border border-1 border-white" />
-                                </span>
-                              )}
-                              {doctor.profilePicture ? (
-                                <img
-                                  src={`${API_URL}${doctor.profilePicture}`}
-                                  alt={doctor.name}
-                                  className="rounded-circle"
-                                  style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                                />
-                              ) : (
-                                <ImageWithBasePath
-                                  src={`assets/img/doctors/doctor-0${index + 1}.jpg`}
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              )}
-                            </Link>
-                            <div>
-                              <h6 className="fs-14 mb-1 text-truncate">
-                                <Link
-                                  to={`${all_routes.doctordetails}?id=${doctor._id}`}
-                                  className="fw-semibold"
-                                >
-                                  Dr. {doctor.name}
-                                </Link>
-                              </h6>
-                              <p className="mb-0 fs-13">{doctor.specialization}</p>
-                            </div>
+                    <div className="col-md-4">
+                      <div className="border shadow-sm p-3 rounded-2">
+                        <div className="d-flex align-items-center mb-3">
+                          <Link
+                            to={all_routes.doctordetails}
+                            className="avatar me-2 flex-shrink-0 position-relative"
+                          >
+                            <span className="online text-success position-absolute end-0 bottom-0 pe-1">
+                              <i className="ti ti-circle-filled d-flex bg-white fs-6 rounded-circle border border-1 border-white" />
+                            </span>
+                            <ImageWithBasePath
+                              src="assets/img/doctors/doctor-01.jpg"
+                              alt="img"
+                              className="rounded-circle"
+                            />
+                          </Link>
+                          <div>
+                            <h6 className="fs-14 mb-1 text-truncate">
+                              <Link
+                                to={all_routes.doctordetails}
+                                className="fw-semibold"
+                              >
+                                Dr. Alex Morgan
+                              </Link>
+                            </h6>
+                            <p className="mb-0 fs-13">Cardiologist</p>
                           </div>
-                          <p className="mb-0">
-                            <span className="text-dark fw-semibold">{doctor.bookingsCount}</span> Bookings
-                          </p>
                         </div>
+                        <p className="mb-0">
+                          <span className="text-dark fw-semibold">258</span>
+                          Bookings
+                        </p>
                       </div>
-                    ))}
-
-                    {topDoctors.length === 0 && (
-                      <div className="col-12 text-center py-3">
-                        <p className="text-muted">No data available</p>
+                    </div>
+                    <div className="col-md-4">
+                      <div className="border shadow-sm p-3 rounded-2">
+                        <div className="d-flex align-items-center mb-3">
+                          <Link
+                            to={all_routes.doctordetails}
+                            className="avatar me-2 flex-shrink-0 position-relative"
+                          >
+                            <span className="online text-success position-absolute end-0 bottom-0 pe-1">
+                              <i className="ti ti-circle-filled d-flex bg-white fs-6 rounded-circle border border-1 border-white" />
+                            </span>
+                            <ImageWithBasePath
+                              src="assets/img/doctors/doctor-03.jpg"
+                              alt="img"
+                              className="rounded-circle"
+                            />
+                          </Link>
+                          <div>
+                            <h6 className="fs-14 mb-1 text-truncate">
+                              <Link
+                                to={all_routes.doctordetails}
+                                className="fw-semibold"
+                              >
+                                Dr. Emily Carter
+                              </Link>
+                            </h6>
+                            <p className="mb-0 fs-13">Pediatrician</p>
+                          </div>
+                        </div>
+                        <p className="mb-0">
+                          <span className="text-dark fw-semibold">125</span>
+                          Bookings
+                        </p>
                       </div>
-                    )}
+                    </div>
+                    <div className="col-md-4">
+                      <div className="border shadow-sm p-3 rounded-2">
+                        <div className="d-flex align-items-center mb-3">
+                          <Link
+                            to={all_routes.doctordetails}
+                            className="avatar me-2 flex-shrink-0 position-relative"
+                          >
+                            <ImageWithBasePath
+                              src="assets/img/doctors/doctor-04.jpg"
+                              alt="img"
+                              className="rounded-circle"
+                            />
+                          </Link>
+                          <div>
+                            <h6 className="fs-14 mb-1 text-truncate">
+                              <Link
+                                to={all_routes.doctordetails}
+                                className="fw-semibold"
+                              >
+                                Dr. David Lee
+                              </Link>
+                            </h6>
+                            <p className="mb-0 fs-13">Gynecologist</p>
+                          </div>
+                        </div>
+                        <p className="mb-0">
+                          <span className="text-dark fw-semibold">115</span>
+                          Bookings
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3538,21 +3534,21 @@ const Dashboard = () => {
                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      {departmentPeriod.charAt(0).toUpperCase() + departmentPeriod.slice(1)} <i className="ti ti-chevron-down ms-1" />
+                      Weekly <i className="ti ti-chevron-down ms-1" />
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setDepartmentPeriod('monthly')}>
+                        <Link className="dropdown-item" to="#">
                           Monthly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setDepartmentPeriod('weekly')}>
+                        <Link className="dropdown-item" to="#">
                           Weekly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setDepartmentPeriod('yearly')}>
+                        <Link className="dropdown-item" to="#">
                           Yearly
                         </Link>
                       </li>
@@ -3561,23 +3557,24 @@ const Dashboard = () => {
                 </div>
                 <div className="card-body">
                   <div id="circle-chart" className="chart-set">
-                    <CircleChart data={departmentStats} />
+                    <CircleChart />
                   </div>
                   <div className="d-flex align-items-center flex-wrap justify-content-center gap-2 mt-3">
-                    {departmentStats.map((dept, index) => {
-                      const colors = ['text-info', 'text-purple', 'text-primary'];
-                      return (
-                        <p key={index} className="d-flex align-items-center mb-0 fs-13">
-                          <i className={`ti ti-circle-filled ${colors[index]} fs-10 me-1`} />
-                          <span className="text-dark fw-semibold me-1">{dept.count}</span>
-                          {dept.department}
-                        </p>
-                      );
-                    })}
-
-                    {departmentStats.length === 0 && (
-                      <p className="text-muted mb-0">No data available</p>
-                    )}
+                    <p className="d-flex align-items-center mb-0 fs-13">
+                      <i className="ti ti-circle-filled text-info fs-10 me-1" />
+                      <span className="text-dark fw-semibold me-1">214</span>
+                      Cardiology
+                    </p>
+                    <p className="d-flex align-items-center mb-0 fs-13">
+                      <i className="ti ti-circle-filled text-purple fs-10 me-1" />
+                      <span className="text-dark fw-semibold me-1">150</span>
+                      Dental
+                    </p>
+                    <p className="d-flex align-items-center mb-0 fs-13">
+                      <i className="ti ti-circle-filled text-primary fs-10 me-1" />
+                      <span className="text-dark fw-semibold me-1">121</span>
+                      Neurolgy
+                    </p>
                   </div>
                 </div>
               </div>
@@ -3599,72 +3596,142 @@ const Dashboard = () => {
                     <div className="col d-flex border-end">
                       <div className="text-center flex-fill">
                         <p className="mb-1">Available</p>
-                        <h3 className="fw-bold mb-0">{doctorsSchedule.counts.available}</h3>
+                        <h3 className="fw-bold mb-0">48</h3>
                       </div>
                     </div>
                     <div className="col d-flex border-end">
                       <div className="text-center flex-fill">
                         <p className="mb-1">Unavailable</p>
-                        <h3 className="fw-bold mb-0">{doctorsSchedule.counts.unavailable}</h3>
+                        <h3 className="fw-bold mb-0">28</h3>
                       </div>
                     </div>
                     <div className="col d-flex">
                       <div className="text-center flex-fill">
                         <p className="mb-1">Leave</p>
-                        <h3 className="fw-bold mb-0">{doctorsSchedule.counts.onLeave}</h3>
+                        <h3 className="fw-bold mb-0">12</h3>
                       </div>
                     </div>
                   </div>
                   <div className="overflow-auto">
-                    {doctorsSchedule.doctors.map((doctor, index) => (
-                      <div key={doctor._id} className={`d-flex justify-content-between align-items-center ${index < doctorsSchedule.doctors.length - 1 ? 'mb-3' : 'mb-0'}`}>
-                        <div className="d-flex align-items-center flex-shrink-0">
-                          <Link
-                            to={`${all_routes.doctordetails}?id=${doctor._id}`}
-                            className="avatar flex-shrink-0"
-                          >
-                            {doctor.profileImage ? (
-                              <img
-                                src={`${API_URL}${doctor.profileImage}`}
-                                className="rounded-circle"
-                                alt={doctor.fullName}
-                                style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                              />
-                            ) : (
-                              <ImageWithBasePath
-                                src={`assets/img/doctors/doctor-0${index + 2}.jpg`}
-                                className="rounded-circle"
-                                alt="img"
-                              />
-                            )}
-                          </Link>
-                          <div className="ms-2 flex-shrink-0">
-                            <div>
-                              <h6 className="fw-semibold fs-14 text-truncate mb-1">
-                                <Link to={`${all_routes.doctordetails}?id=${doctor._id}`}>
-                                  Dr. {doctor.fullName}
-                                </Link>
-                              </h6>
-                              <p className="fs-13">{doctor.specialization}</p>
-                            </div>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <div className="d-flex align-items-center flex-shrink-0">
+                        <Link
+                          to={all_routes.doctordetails}
+                          className="avatar flex-shrink-0"
+                        >
+                          <ImageWithBasePath
+                            src="assets/img/doctors/doctor-02.jpg"
+                            className="rounded-circle"
+                            alt="img"
+                          />
+                        </Link>
+                        <div className="ms-2 flex-shrink-0">
+                          <div>
+                            <h6 className="fw-semibold fs-14 text-truncate mb-1">
+                              <Link to={all_routes.doctordetails}>
+                                Dr. Sarah Johnson
+                              </Link>
+                            </h6>
+                            <p className="fs-13">Orthopedic Surgeon</p>
                           </div>
                         </div>
-                        <div className="flex-shrink-0 ms-2">
-                          <Link
-                            to="#"
-                            className="btn btn-primary btn-sm py-1 flex-shrink-0"
-                          >
-                            Book Now
-                          </Link>
+                      </div>
+                      <div className="flex-shrink-0 ms-2">
+                        <Link
+                          to="#"
+                          className="btn btn-primary btn-sm py-1 flex-shrink-0"
+                        >
+                          Book Now
+                        </Link>
+                      </div>
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <div className="d-flex align-items-center flex-shrink-0">
+                        <Link
+                          to={all_routes.doctordetails}
+                          className="avatar flex-shrink-0"
+                        >
+                          <ImageWithBasePath
+                            src="assets/img/doctors/doctor-03.jpg"
+                            className="rounded-circle"
+                            alt="img"
+                          />
+                        </Link>
+                        <div className="ms-2 flex-shrink-0">
+                          <div>
+                            <h6 className="fw-semibold fs-14 text-truncate mb-1">
+                              <Link to={all_routes.doctordetails}>
+                                Dr. Emily Carter
+                              </Link>
+                            </h6>
+                            <p className="fs-13">Pediatrician</p>
+                          </div>
                         </div>
                       </div>
-                    ))}
-
-                    {doctorsSchedule.doctors.length === 0 && (
-                      <div className="text-center py-3">
-                        <p className="text-muted mb-0">No doctors available</p>
+                      <div className="flex-shrink-0 ms-2">
+                        <Link to="#" className="btn btn-primary btn-sm py-1">
+                          Book Now
+                        </Link>
                       </div>
-                    )}
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <div className="d-flex align-items-center flex-shrink-0">
+                        <Link
+                          to={all_routes.doctordetails}
+                          className="avatar flex-shrink-0"
+                        >
+                          <ImageWithBasePath
+                            src="assets/img/doctors/doctor-04.jpg"
+                            className="rounded-circle"
+                            alt="img"
+                          />
+                        </Link>
+                        <div className="ms-2 flex-shrink-0">
+                          <div>
+                            <h6 className="fw-semibold fs-14 text-truncate mb-1">
+                              <Link to={all_routes.doctordetails}>
+                                Dr. David Lee
+                              </Link>
+                            </h6>
+                            <p className="fs-13">Gynecologist</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0 ms-2">
+                        <Link to="#" className="btn btn-primary btn-sm py-1">
+                          Book Now
+                        </Link>
+                      </div>
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center mb-0">
+                      <div className="d-flex align-items-center flex-shrink-0">
+                        <Link
+                          to={all_routes.doctordetails}
+                          className="avatar flex-shrink-0"
+                        >
+                          <ImageWithBasePath
+                            src="assets/img/doctors/doctor-14.jpg"
+                            className="rounded-circle"
+                            alt="img"
+                          />
+                        </Link>
+                        <div className="ms-2 flex-shrink-0">
+                          <div>
+                            <h6 className="fw-semibold fs-14 text-truncate mb-1">
+                              <Link to={all_routes.doctordetails}>
+                                Dr. Michael Smith
+                              </Link>
+                            </h6>
+                            <p className="fs-13">Cardiologist</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0 ms-2">
+                        <Link to="#" className="btn btn-primary btn-sm py-1">
+                          Book Now
+                        </Link>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
