@@ -9,6 +9,11 @@ const {
     getDoctor,
     updateDoctor,
     deleteDoctor,
+    getDashboardStats,
+    getAppointmentStats,
+    getTopDoctors,
+    getDepartmentStats,
+    getDoctorsSchedule,
 } = require('../controllers/doctorController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -36,5 +41,20 @@ router.put('/:id', protect, authorize('admin'), updateDoctor);
 // @desc    Delete doctor
 // @access  Private (Admin only)
 router.delete('/:id', protect, authorize('admin'), deleteDoctor);
+
+// @route   GET /api/dashboard/top-doctors
+// @desc    Get top doctors by booking count
+// @access  Private (Admin only)
+router.get('/top-doctors', protect, authorize('admin'), getTopDoctors);
+
+// @route   GET /api/dashboard/department-stats
+// @desc    Get department statistics
+// @access  Private (Admin only)
+router.get('/department-stats', protect, authorize('admin'), getDepartmentStats);
+
+// @route   GET /api/dashboard/doctors-schedule
+// @desc    Get doctors with schedule availability
+// @access  Private (Admin only)
+router.get('/doctors-schedule', protect, authorize('admin'), getDoctorsSchedule);
 
 module.exports = router;
