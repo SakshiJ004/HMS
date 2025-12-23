@@ -934,13 +934,13 @@ const getDoctorsSchedule = async (req, res) => {
 
 module.exports = {
     createDoctor,
-    getDoctors,
     getDoctor,
     updateDoctor,
     deleteDoctor,
     getDashboardStats,
     getAppointmentStats,
     getDoctors,
+    getTopDoctors,
     getDepartmentStats,
     getDoctorsSchedule,
 };
