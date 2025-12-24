@@ -6,6 +6,66 @@ import SCol5Chart from "./charts/scol5";
 import SCol6Chart from "./charts/scol6";
 import SCol7Chart from "./charts/scol7";
 import CircleChart2 from "./charts/circleChart2";
+import { useEffect, useState } from "react";
+import dayjs from "dayjs";
+import {
+  getDoctorStats,
+  getDoctorAppointmentChart,
+  getUpcomingAppointment,
+  getRecentAppointments,
+  type DoctorStats,
+  type UpcomingAppointmentData,
+  type RecentAppointment,
+} from "../../../../../api/doctorDashboardService";
+
+
+const [stats, setStats] = useState<DoctorStats>({
+  totalAppointments: 0,
+  onlineConsultations: 0,
+  cancelledAppointments: 0,
+  totalAppointmentsChange: 0,
+  onlineConsultationsChange: 0,
+  cancelledAppointmentsChange: 0,
+});
+const [chartPeriod, setChartPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
+const [chartData, setChartData] = useState<any[]>([]);
+const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointmentData | null>(null);
+const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
+
+useEffect(() => {
+  fetchAllData();
+}, []);
+
+useEffect(() => {
+  fetchChartData();
+}, [chartPeriod]);
+
+const fetchAllData = async () => {
+  try {
+    const [statsRes, chartRes, upcomingRes, recentRes] = await Promise.all([
+      getDoctorStats(),
+      getDoctorAppointmentChart(chartPeriod),
+      getUpcomingAppointment(),
+      getRecentAppointments(),
+    ]);
+
+    if (statsRes.success) setStats(statsRes.data);
+    if (chartRes.success) setChartData(chartRes.data);
+    if (upcomingRes.success) setUpcomingAppointment(upcomingRes.data);
+    if (recentRes.success) setRecentAppointments(recentRes.data);
+  } catch (error: any) {
+    console.error('Error fetching dashboard data:', error);
+  }
+};
+
+const fetchChartData = async () => {
+  try {
+    const chartRes = await getDoctorAppointmentChart(chartPeriod);
+    if (chartRes.success) setChartData(chartRes.data);
+  } catch (error: any) {
+    console.error('Error fetching chart data:', error);
+  }
+};
 
 const DoctorDahboard = () => {
   return (
@@ -51,9 +111,9 @@ const DoctorDahboard = () => {
                     <div>
                       <p className="mb-1">Total Appointments</p>
                       <div className="d-flex align-items-center gap-1">
-                        <h3 className="fw-bold mb-0">658</h3>
+                        <h3 className="fw-bold mb-0">{stats.totalAppointments}</h3>
                         <span className="badge fw-medium bg-success flex-shrink-0">
-                          +95%
+                          +{stats.totalAppointmentsChange}%
                         </span>
                       </div>
                     </div>
@@ -80,9 +140,9 @@ const DoctorDahboard = () => {
                     <div>
                       <p className="mb-1">Online Consultations</p>
                       <div className="d-flex align-items-center gap-1">
-                        <h3 className="fw-bold mb-0">125</h3>
+                        <h3 className="fw-bold mb-0">{stats.onlineConsultations}</h3>
                         <span className="badge fw-medium bg-danger flex-shrink-0">
-                          -15%
+                          {stats.onlineConsultationsChange > 0 ? '+' : ''}{stats.onlineConsultationsChange}%
                         </span>
                       </div>
                     </div>
@@ -109,9 +169,9 @@ const DoctorDahboard = () => {
                     <div>
                       <p className="mb-1">Cancelled Appointments</p>
                       <div className="d-flex align-items-center gap-1">
-                        <h3 className="fw-bold mb-0">35</h3>
+                        <h3 className="fw-bold mb-0">{stats.cancelledAppointments}</h3>
                         <span className="badge fw-medium bg-success flex-shrink-0">
-                          +45%
+                          +{stats.cancelledAppointmentsChange}%
                         </span>
                       </div>
                     </div>
@@ -169,61 +229,56 @@ const DoctorDahboard = () => {
                     </ul>
                   </div>
                 </div>
-                <div className="card-body">
-                  <div className="d-flex align-items-center mb-3">
-                    <Link to="#" className="avatar me-2 flex-shrink-0">
-                      <ImageWithBasePath
-                        src="assets/img/doctors/doctor-01.jpg"
-                        alt="img"
-                        className="rounded-circle"
-                      />
-                    </Link>
-                    <div>
-                      <h6 className="fs-14 mb-1 text-truncate">
-                        <Link to="#" className="fw-semibold">
-                          Andrew Billard
-                        </Link>
-                      </h6>
-                      <p className="mb-0 fs-13 text-truncate">#AP455698</p>
+                {upcomingAppointment ? (
+                  <>
+                    <div className="d-flex align-items-center mb-3">
+                      <Link to="#" className="avatar me-2 flex-shrink-0">
+                        {upcomingAppointment.patient.profileImage ? (
+                          <img
+                            src={upcomingAppointment.patient.profileImage}
+                            alt={upcomingAppointment.patient.fullName}
+                            className="rounded-circle"
+                          />
+                        ) : (
+                          <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                            {upcomingAppointment.patient.fullName.charAt(0)}
+                          </div>
+                        )}
+                      </Link>
+                      <div>
+                        <h6 className="fs-14 mb-1 text-truncate">
+                          <Link to="#" className="fw-semibold">
+                            {upcomingAppointment.patient.fullName}
+                          </Link>
+                        </h6>
+                        <p className="mb-0 fs-13 text-truncate">#{upcomingAppointment.appointmentId}</p>
+                      </div>
                     </div>
-                  </div>
-                  <h6 className="fs-14 fw-semibold mb-1">General Visit</h6>
-                  <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
-                    <p className="mb-0 d-inline-flex align-items-center">
-                      <i className="ti ti-calendar-time text-dark me-1" />
-                      Monday, 31 Mar 2025
-                    </p>
-                    <p className="mb-0 d-inline-flex align-items-center">
-                      <i className="ti ti-clock text-dark me-1" />
-                      06:30 PM
-                    </p>
-                  </div>
-                  <div className="row">
-                    <div className="col">
-                      <h6 className="fs-13 fw-semibold mb-1">Department</h6>
-                      <p>Cardiology</p>
+                    <h6 className="fs-14 fw-semibold mb-1">{upcomingAppointment.reason || 'General Visit'}</h6>
+                    <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
+                      <p className="mb-0 d-inline-flex align-items-center">
+                        <i className="ti ti-calendar-time text-dark me-1" />
+                        {dayjs(upcomingAppointment.appointmentDate).format('dddd, DD MMM YYYY')}
+                      </p>
+                      <p className="mb-0 d-inline-flex align-items-center">
+                        <i className="ti ti-clock text-dark me-1" />
+                        {upcomingAppointment.appointmentTime}
+                      </p>
                     </div>
-                    <div className="col">
-                      <h6 className="fs-13 fw-semibold mb-1">Type</h6>
-                      <p className="text-truncate">Online Consultation</p>
+                    <div className="row">
+                      <div className="col">
+                        <h6 className="fs-13 fw-semibold mb-1">Department</h6>
+                        <p>{upcomingAppointment.department}</p>
+                      </div>
+                      <div className="col">
+                        <h6 className="fs-13 fw-semibold mb-1">Type</h6>
+                        <p className="text-truncate">{upcomingAppointment.appointmentType}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="my-3 border-bottom pb-3">
-                    <Link to="#" className="btn btn-primary w-100">
-                      Start Appointment
-                    </Link>
-                  </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <Link to="#" className="btn btn-dark w-100">
-                      <i className="ti ti-brand-hipchat me-1" />
-                      Chat Now
-                    </Link>
-                    <Link to="#" className="btn btn-outline-white w-100">
-                      <i className="ti ti-video me-1" />
-                      Video Consutation
-                    </Link>
-                  </div>
-                </div>
+                  </>
+                ) : (
+                  <p className="text-center text-muted">No upcoming appointments</p>
+                )}
               </div>
               {/* card end */}
             </div>
@@ -240,21 +295,22 @@ const DoctorDahboard = () => {
                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Monthly <i className="ti ti-chevron-down ms-1" />
+                      {chartPeriod === 'monthly' ? 'Monthly' : chartPeriod === 'weekly' ? 'Weekly' : 'Yearly'}
+                      <i className="ti ti-chevron-down ms-1" />
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setChartPeriod('monthly')}>
                           Monthly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setChartPeriod('weekly')}>
                           Weekly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setChartPeriod('yearly')}>
                           Yearly
                         </Link>
                       </li>
@@ -427,7 +483,7 @@ const DoctorDahboard = () => {
                           <th />
                         </tr>
                       </thead>
-                      <tbody>
+                      {/* <tbody>
                         <tr>
                           <td>
                             <div className="d-flex align-items-center">
@@ -768,6 +824,53 @@ const DoctorDahboard = () => {
                             </ul>
                           </td>
                         </tr>
+                      </tbody> */}
+
+                      <tbody>
+                        {recentAppointments.map((apt) => (
+                          <tr key={apt._id}>
+                            <td>
+                              <div className="d-flex align-items-center">
+                                <Link to="#" className="avatar me-2">
+                                  {apt.patient.profileImage ? (
+                                    <img
+                                      src={apt.patient.profileImage}
+                                      alt={apt.patient.fullName}
+                                      className="rounded-circle"
+                                    />
+                                  ) : (
+                                    <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                      {apt.patient.fullName.charAt(0)}
+                                    </div>
+                                  )}
+                                </Link>
+                                <div>
+                                  <h6 className="fs-14 mb-1">
+                                    <Link to="#" className="fw-medium">
+                                      {apt.patient.fullName}
+                                    </Link>
+                                  </h6>
+                                  <p className="mb-0 fs-13">{apt.patient.phone || apt.patient.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td>{dayjs(apt.appointmentDate).format('DD MMM YYYY')} - {apt.appointmentTime}</td>
+                            <td>{apt.appointmentType}</td>
+                            <td>
+                              <span className={`badge fw-medium ${apt.status === 'Checked Out' ? 'bg-success' :
+                                  apt.status === 'Checked In' ? 'bg-warning' :
+                                    apt.status === 'Cancelled' ? 'bg-danger' :
+                                      'bg-info'
+                                }`}>
+                                {apt.status}
+                              </span>
+                            </td>
+                            <td className="fw-semibold text-dark">${apt.consultationCharge || 0}</td>
+                            <td>
+                              {/* Action buttons - keep existing */}
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
