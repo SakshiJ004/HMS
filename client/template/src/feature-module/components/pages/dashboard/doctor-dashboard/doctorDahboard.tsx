@@ -28,7 +28,7 @@ const [stats, setStats] = useState<DoctorStats>({
   cancelledAppointmentsChange: 0,
 });
 const [chartPeriod, setChartPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
-const [chartData, setChartData] = useState<any[]>([]);
+const [_chartData, setChartData] = useState<any[]>([]);
 const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointmentData | null>(null);
 const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
 
