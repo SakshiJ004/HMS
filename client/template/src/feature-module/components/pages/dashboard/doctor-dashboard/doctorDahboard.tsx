@@ -19,55 +19,54 @@ import {
 } from "../../../../../api/doctorDashboardService";
 
 
-const [stats, setStats] = useState<DoctorStats>({
-  totalAppointments: 0,
-  onlineConsultations: 0,
-  cancelledAppointments: 0,
-  totalAppointmentsChange: 0,
-  onlineConsultationsChange: 0,
-  cancelledAppointmentsChange: 0,
-});
-const [chartPeriod, setChartPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
-const [_chartData, setChartData] = useState<any[]>([]);
-const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointmentData | null>(null);
-const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
-
-useEffect(() => {
-  fetchAllData();
-}, []);
-
-useEffect(() => {
-  fetchChartData();
-}, [chartPeriod]);
-
-const fetchAllData = async () => {
-  try {
-    const [statsRes, chartRes, upcomingRes, recentRes] = await Promise.all([
-      getDoctorStats(),
-      getDoctorAppointmentChart(chartPeriod),
-      getUpcomingAppointment(),
-      getRecentAppointments(),
-    ]);
-
-    if (statsRes.success) setStats(statsRes.data);
-    if (chartRes.success) setChartData(chartRes.data);
-    if (upcomingRes.success) setUpcomingAppointment(upcomingRes.data);
-    if (recentRes.success) setRecentAppointments(recentRes.data);
-  } catch (error: any) {
-    console.error('Error fetching dashboard data:', error);
-  }
-};
-
-const fetchChartData = async () => {
-  try {
-    const chartRes = await getDoctorAppointmentChart(chartPeriod);
-    if (chartRes.success) setChartData(chartRes.data);
-  } catch (error: any) {
-    console.error('Error fetching chart data:', error);
-  }
-};
-
 const DoctorDahboard = () => {
+  const [stats, setStats] = useState<DoctorStats>({
+    totalAppointments: 0,
+    onlineConsultations: 0,
+    cancelledAppointments: 0,
+    totalAppointmentsChange: 0,
+    onlineConsultationsChange: 0,
+    cancelledAppointmentsChange: 0,
+  });
+  const [chartPeriod, setChartPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
+  const [_chartData, setChartData] = useState<any[]>([]);
+  const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointmentData | null>(null);
+  const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  useEffect(() => {
+    fetchChartData();
+  }, [chartPeriod]);
+
+  const fetchAllData = async () => {
+    try {
+      const [statsRes, chartRes, upcomingRes, recentRes] = await Promise.all([
+        getDoctorStats(),
+        getDoctorAppointmentChart(chartPeriod),
+        getUpcomingAppointment(),
+        getRecentAppointments(),
+      ]);
+
+      if (statsRes.success) setStats(statsRes.data);
+      if (chartRes.success) setChartData(chartRes.data);
+      if (upcomingRes.success) setUpcomingAppointment(upcomingRes.data);
+      if (recentRes.success) setRecentAppointments(recentRes.data);
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
+
+  const fetchChartData = async () => {
+    try {
+      const chartRes = await getDoctorAppointmentChart(chartPeriod);
+      if (chartRes.success) setChartData(chartRes.data);
+    } catch (error: any) {
+      console.error('Error fetching chart data:', error);
+    }
+  };
   return (
     <>
       {/* ========================
@@ -858,9 +857,9 @@ const DoctorDahboard = () => {
                             <td>{apt.appointmentType}</td>
                             <td>
                               <span className={`badge fw-medium ${apt.status === 'Checked Out' ? 'bg-success' :
-                                  apt.status === 'Checked In' ? 'bg-warning' :
-                                    apt.status === 'Cancelled' ? 'bg-danger' :
-                                      'bg-info'
+                                apt.status === 'Checked In' ? 'bg-warning' :
+                                  apt.status === 'Cancelled' ? 'bg-danger' :
+                                    'bg-info'
                                 }`}>
                                 {apt.status}
                               </span>
