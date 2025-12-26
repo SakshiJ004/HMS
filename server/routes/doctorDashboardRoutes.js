@@ -12,5 +12,6 @@ router.get('/stats', protect, authorize('doctor'), getDoctorStats);
 router.get('/chart', protect, authorize('doctor'), getAppointmentChart);
 router.get('/upcoming', protect, authorize('doctor'), getUpcomingAppointment);
 router.get('/recent', protect, authorize('doctor'), getRecentAppointments);
+router.get('/additional-stats', protect, authorize('doctor'), getAdditionalStats);
 
 module.exports = router;

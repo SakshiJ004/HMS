@@ -181,10 +181,130 @@ const getRecentAppointments = async (req, res) => {
         });
     }
 };
+/**
+ * Get additional dashboard stats
+ */
+const getAdditionalStats = async (req, res) => {
+    try {
+        const doctorId = new mongoose.Types.ObjectId(req.user._id);
+        const now = new Date();
+        const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        // Total unique patients
+        const totalPatients = await Appointment.distinct('patient', { doctor: doctorId });
+        const lastWeekPatients = await Appointment.distinct('patient', {
+            doctor: doctorId,
+            createdAt: { $gte: lastWeek },
+        });
+        const patientsChange = totalPatients.length > 0
+            ? Math.round((lastWeekPatients.length / totalPatients.length) * 100)
+            : 0;
+
+        // Video consultations
+        const videoConsultations = await Appointment.countDocuments({
+            doctor: doctorId,
+            appointmentType: 'Online Consultation',
+        });
+        const lastWeekVideo = await Appointment.countDocuments({
+            doctor: doctorId,
+            appointmentType: 'Online Consultation',
+            createdAt: { $gte: lastWeek },
+        });
+        const videoChange = videoConsultations > 0
+            ? Math.round((lastWeekVideo / videoConsultations) * 100)
+            : 0;
+
+        // Rescheduled appointments
+        const rescheduled = await Appointment.countDocuments({
+            doctor: doctorId,
+            status: 'Rescheduled',
+        });
+        const lastWeekRescheduled = await Appointment.countDocuments({
+            doctor: doctorId,
+            status: 'Rescheduled',
+            createdAt: { $gte: lastWeek },
+        });
+        const rescheduledChange = rescheduled > 0
+            ? Math.round((lastWeekRescheduled / rescheduled) * 100)
+            : 0;
+
+        // Pre-visit bookings (scheduled appointments)
+        const preVisit = await Appointment.countDocuments({
+            doctor: doctorId,
+            status: { $in: ['Scheduled', 'Confirmed'] },
+        });
+        const lastWeekPreVisit = await Appointment.countDocuments({
+            doctor: doctorId,
+            status: { $in: ['Scheduled', 'Confirmed'] },
+            createdAt: { $gte: lastWeek },
+        });
+        const preVisitChange = preVisit > 0
+            ? Math.round((lastWeekPreVisit / preVisit) * 100)
+            : 0;
+
+        // Walk-in bookings (appointments created on same day as appointment date)
+        const walkIn = await Appointment.countDocuments({
+            doctor: doctorId,
+            $expr: {
+                $eq: [
+                    { $dateToString: { format: '%Y-%m-%d', date: '$appointmentDate' } },
+                    { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
+                ]
+            }
+        });
+        const lastWeekWalkIn = await Appointment.countDocuments({
+            doctor: doctorId,
+            createdAt: { $gte: lastWeek },
+            $expr: {
+                $eq: [
+                    { $dateToString: { format: '%Y-%m-%d', date: '$appointmentDate' } },
+                    { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
+                ]
+            }
+        });
+        const walkInChange = walkIn > 0
+            ? Math.round((lastWeekWalkIn / walkIn) * 100)
+            : 0;
+
+        // Follow-ups (repeat patients - patients with more than 1 appointment)
+        const followUps = await Appointment.aggregate([
+            { $match: { doctor: doctorId } },
+            { $group: { _id: '$patient', count: { $sum: 1 } } },
+            { $match: { count: { $gt: 1 } } },
+            { $count: 'total' }
+        ]);
+        const followUpsCount = followUps.length > 0 ? followUps[0].total : 0;
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalPatients: totalPatients.length,
+                patientsChange,
+                videoConsultations,
+                videoChange,
+                rescheduled,
+                rescheduledChange,
+                preVisit,
+                preVisitChange,
+                walkIn,
+                walkInChange,
+                followUps: followUpsCount,
+            },
+        });
+    } catch (error) {
+        console.error('Get additional stats error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching additional stats',
+            error: error.message,
+        });
+    }
+};
 
 module.exports = {
     getDoctorStats,
     getAppointmentChart,
     getUpcomingAppointment,
     getRecentAppointments,
+    getAdditionalStats,
 };

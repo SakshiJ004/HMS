@@ -65,6 +65,20 @@ export interface RecentAppointment {
     consultationCharge?: number;
 }
 
+export interface AdditionalStats {
+    totalPatients: number;
+    patientsChange: number;
+    videoConsultations: number;
+    videoChange: number;
+    rescheduled: number;
+    rescheduledChange: number;
+    preVisit: number;
+    preVisitChange: number;
+    walkIn: number;
+    walkInChange: number;
+    followUps: number;
+}
+
 export const getDoctorStats = async () => {
     try {
         const response = await axios.get<{ success: boolean; data: DoctorStats }>(
@@ -114,5 +128,17 @@ export const getRecentAppointments = async () => {
     } catch (error: any) {
         console.error('Get recent appointments error:', error);
         throw new Error(error.response?.data?.message || 'Failed to fetch recent appointments');
+    }
+};
+export const getAdditionalStats = async () => {
+    try {
+        const response = await axios.get<{ success: boolean; data: AdditionalStats }>(
+            `${API_URL}/api/doctor/dashboard/additional-stats`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get additional stats error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch additional stats');
     }
 };

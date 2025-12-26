@@ -13,10 +13,12 @@ import {
   getDoctorAppointmentChart,
   getUpcomingAppointment,
   getRecentAppointments,
+  getAdditionalStats,
   type DoctorStats,
   type UpcomingAppointmentData,
   type RecentAppointment,
 } from "../../../../../api/doctorDashboardService";
+import { getDoctor } from "../../../../../api/doctorService";
 
 
 const DoctorDahboard = () => {
@@ -33,6 +35,20 @@ const DoctorDahboard = () => {
   const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointmentData | null>(null);
   const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
 
+  const [additionalStats, setAdditionalStats] = useState<any>({
+    totalPatients: 0,
+    videoConsultations: 0,
+    rescheduled: 0,
+    preVisit: 0,
+    walkIn: 0,
+    followUps: 0,
+  });
+
+  const [doctorSchedules, setDoctorSchedules] = useState<Array<{
+    day: string;
+    timeSlots: Array<{ startTime: string; endTime: string }>;
+  }>>([]);
+
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -43,17 +59,24 @@ const DoctorDahboard = () => {
 
   const fetchAllData = async () => {
     try {
-      const [statsRes, chartRes, upcomingRes, recentRes] = await Promise.all([
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}')
+      const doctorId = userData._id;
+
+      const [statsRes, chartRes, upcomingRes, recentRes, doctorRes, additionalRes] = await Promise.all([
         getDoctorStats(),
         getDoctorAppointmentChart(chartPeriod),
         getUpcomingAppointment(),
         getRecentAppointments(),
+        getDoctor(doctorId),
+        getAdditionalStats(),
       ]);
 
       if (statsRes.success) setStats(statsRes.data);
       if (chartRes.success) setChartData(chartRes.data);
       if (upcomingRes.success) setUpcomingAppointment(upcomingRes.data);
       if (recentRes.success) setRecentAppointments(recentRes.data);
+      if (doctorRes.success) setDoctorSchedules(doctorRes.data.schedules || []);
+      if (additionalRes.success) setAdditionalStats(additionalRes.data);
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
     }
@@ -228,58 +251,64 @@ const DoctorDahboard = () => {
                     </ul>
                   </div>
                 </div>
-                {upcomingAppointment ? (
-                  <>
-                    <div className="d-flex align-items-center mb-3">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        {upcomingAppointment.patient.profileImage ? (
-                          <img
-                            src={upcomingAppointment.patient.profileImage}
-                            alt={upcomingAppointment.patient.fullName}
-                            className="rounded-circle"
-                          />
-                        ) : (
-                          <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                            {upcomingAppointment.patient.fullName.charAt(0)}
-                          </div>
-                        )}
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-semibold">
-                            {upcomingAppointment.patient.fullName}
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">#{upcomingAppointment.appointmentId}</p>
+                <div className="card-body">
+                  {upcomingAppointment ? (
+                    <>
+                      <div className="d-flex align-items-center mb-3">
+                        <Link to="#" className="avatar me-2 flex-shrink-0">
+                          {upcomingAppointment.patient.profileImage ? (
+                            <img
+                              src={upcomingAppointment.patient.profileImage}
+                              alt={upcomingAppointment.patient.fullName}
+                              className="rounded-circle"
+                              style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                              {upcomingAppointment.patient.fullName.charAt(0)}
+                            </div>
+                          )}
+                        </Link>
+                        <div>
+                          <h6 className="fs-14 mb-1 text-truncate">
+                            <Link to="#" className="fw-semibold">
+                              {upcomingAppointment.patient.fullName}
+                            </Link>
+                          </h6>
+                          <p className="mb-0 fs-13 text-truncate">#{upcomingAppointment.appointmentId}</p>
+                        </div>
                       </div>
-                    </div>
-                    <h6 className="fs-14 fw-semibold mb-1">{upcomingAppointment.reason || 'General Visit'}</h6>
-                    <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
-                      <p className="mb-0 d-inline-flex align-items-center">
-                        <i className="ti ti-calendar-time text-dark me-1" />
-                        {dayjs(upcomingAppointment.appointmentDate).format('dddd, DD MMM YYYY')}
-                      </p>
-                      <p className="mb-0 d-inline-flex align-items-center">
-                        <i className="ti ti-clock text-dark me-1" />
-                        {upcomingAppointment.appointmentTime}
-                      </p>
-                    </div>
-                    <div className="row">
-                      <div className="col">
-                        <h6 className="fs-13 fw-semibold mb-1">Department</h6>
-                        <p>{upcomingAppointment.department}</p>
+                      <h6 className="fs-14 fw-semibold mb-1">{upcomingAppointment.reason || 'General Visit'}</h6>
+                      <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
+                        <p className="mb-0 d-inline-flex align-items-center">
+                          <i className="ti ti-calendar-time text-dark me-1" />
+                          {dayjs(upcomingAppointment.appointmentDate).format('dddd, DD MMM YYYY')}
+                        </p>
+                        <p className="mb-0 d-inline-flex align-items-center">
+                          <i className="ti ti-clock text-dark me-1" />
+                          {upcomingAppointment.appointmentTime}
+                        </p>
                       </div>
-                      <div className="col">
-                        <h6 className="fs-13 fw-semibold mb-1">Type</h6>
-                        <p className="text-truncate">{upcomingAppointment.appointmentType}</p>
+                      <div className="row">
+                        <div className="col">
+                          <h6 className="fs-13 fw-semibold mb-1">Department</h6>
+                          <p>{upcomingAppointment.department}</p>
+                        </div>
+                        <div className="col">
+                          <h6 className="fs-13 fw-semibold mb-1">Type</h6>
+                          <p className="text-truncate">{upcomingAppointment.appointmentType}</p>
+                        </div>
                       </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-5">
+                      <i className="ti ti-calendar-x fs-1 text-muted mb-3"></i>
+                      <p className="text-muted">No upcoming appointments</p>
                     </div>
-                  </>
-                ) : (
-                  <p className="text-center text-muted">No upcoming appointments</p>
-                )}
+                  )}
+                </div>
+                {/* card end */}
               </div>
-              {/* card end */}
             </div>
             {/* col end */}
             {/* col start */}
@@ -345,9 +374,9 @@ const DoctorDahboard = () => {
                     <i className="ti ti-user" />
                   </span>
                   <p className="mb-1 text-truncate">Total Patient</p>
-                  <h3 className="fw-bold mb-2">658</h3>
+                  <h3 className="fw-bold mb-2">{additionalStats.totalPatients}</h3>
                   <p className="mb-0 text-success text-truncate">
-                    +31% Last Week
+                    +{additionalStats.patientsChange}% Last Week
                   </p>
                 </div>
               </div>
@@ -361,9 +390,9 @@ const DoctorDahboard = () => {
                     <i className="ti ti-video" />
                   </span>
                   <p className="mb-1 text-truncate">Video Consultation</p>
-                  <h3 className="fw-bold mb-2">256</h3>
-                  <p className="mb-0 text-danger text-truncate">
-                    -21% Last Week
+                  <h3 className="fw-bold mb-2">{additionalStats.videoConsultations}</h3>
+                  <p className={`mb-0 ${additionalStats.videoChange >= 0 ? 'text-success' : 'text-danger'} text-truncate`}>
+                    {additionalStats.videoChange >= 0 ? '+' : ''}{additionalStats.videoChange}% Last Week
                   </p>
                 </div>
               </div>
@@ -377,9 +406,9 @@ const DoctorDahboard = () => {
                     <i className="ti ti-calendar-up" />
                   </span>
                   <p className="mb-1 text-truncate">Rescheduled</p>
-                  <h3 className="fw-bold mb-2">141</h3>
+                  <h3 className="fw-bold mb-2">{additionalStats.rescheduled}</h3>
                   <p className="mb-0 text-success text-truncate">
-                    +64% Last Week
+                    +{additionalStats.rescheduledChange}% Last Week
                   </p>
                 </div>
               </div>
@@ -393,9 +422,9 @@ const DoctorDahboard = () => {
                     <i className="ti ti-checklist" />
                   </span>
                   <p className="mb-1 text-truncate">Pre Visit Bookings</p>
-                  <h3 className="fw-bold mb-2">524</h3>
+                  <h3 className="fw-bold mb-2">{additionalStats.preVisit}</h3>
                   <p className="mb-0 text-success text-truncate">
-                    +38% Last Week
+                    +{additionalStats.preVisitChange}% Last Week
                   </p>
                 </div>
               </div>
@@ -409,9 +438,9 @@ const DoctorDahboard = () => {
                     <i className="ti ti-calendar-share" />
                   </span>
                   <p className="mb-1 text-truncate">Walkin Bookings</p>
-                  <h3 className="fw-bold mb-2">21</h3>
+                  <h3 className="fw-bold mb-2">{additionalStats.walkIn}</h3>
                   <p className="mb-0 text-success text-truncate">
-                    +95% Last Week
+                    +{additionalStats.walkInChange}% Last Week
                   </p>
                 </div>
               </div>
@@ -425,9 +454,10 @@ const DoctorDahboard = () => {
                     <i className="ti ti-carousel-vertical" />
                   </span>
                   <p className="mb-1 text-truncate">Follow Ups</p>
-                  <h3 className="fw-bold mb-2">451</h3>
+                  <h3 className="fw-bold mb-2">{additionalStats.followUps}</h3>
                   <p className="mb-0 text-success text-truncate">
-                    +76% Last Week
+                    {/* Follow ups percentage - you can add this in backend if needed */}
+                    +0% Last Week
                   </p>
                 </div>
               </div>
@@ -918,56 +948,84 @@ const DoctorDahboard = () => {
                     </ul>
                   </div>
                 </div>
+                {/* <div className="card-body">
+                    <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
+                      <p className="text-dark fw-semibold mb-0">Mon</p>
+                      <p className="mb-0 d-inline-flex align-items-center">
+                        <i className="ti ti-clock me-1" />
+                        11:00 PM - 12:30 PM
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
+                      <p className="text-dark fw-semibold mb-0">Tue</p>
+                      <p className="mb-0 d-inline-flex align-items-center">
+                        <i className="ti ti-clock me-1" />
+                        11:00 PM - 12:30 PM
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
+                      <p className="text-dark fw-semibold mb-0">Wed</p>
+                      <p className="mb-0 d-inline-flex align-items-center">
+                        <i className="ti ti-clock me-1" />
+                        11:00 PM - 12:30 PM
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
+                      <p className="text-dark fw-semibold mb-0">Thu</p>
+                      <p className="mb-0 d-inline-flex align-items-center">
+                        <i className="ti ti-clock me-1" />
+                        11:00 PM - 12:30 PM
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
+                      <p className="text-dark fw-semibold mb-0">Fri</p>
+                      <p className="mb-0 d-inline-flex align-items-center">
+                        <i className="ti ti-clock me-1" />
+                        11:00 PM - 12:30 PM
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
+                      <p className="text-dark fw-semibold mb-0">Sat</p>
+                      <p className="mb-0 d-inline-flex align-items-center">
+                        <i className="ti ti-clock me-1" />
+                        11:00 PM - 12:30 PM
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center justify-content-between mb-2 pb-2">
+                      <p className="text-dark fw-semibold mb-0">Sun</p>
+                      <p className="mb-0 d-inline-flex align-items-center text-danger">
+                        <i className="ti ti-clock me-1" />
+                        Closed
+                      </p>
+                    </div>
+                    <Link to="#" className="btn btn-light w-100 mt-2 fs-13">
+                      Edit Availability
+                    </Link>
+                  </div> */}
+
                 <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
-                    <p className="text-dark fw-semibold mb-0">Mon</p>
-                    <p className="mb-0 d-inline-flex align-items-center">
-                      <i className="ti ti-clock me-1" />
-                      11:00 PM - 12:30 PM
-                    </p>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
-                    <p className="text-dark fw-semibold mb-0">Tue</p>
-                    <p className="mb-0 d-inline-flex align-items-center">
-                      <i className="ti ti-clock me-1" />
-                      11:00 PM - 12:30 PM
-                    </p>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
-                    <p className="text-dark fw-semibold mb-0">Wed</p>
-                    <p className="mb-0 d-inline-flex align-items-center">
-                      <i className="ti ti-clock me-1" />
-                      11:00 PM - 12:30 PM
-                    </p>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
-                    <p className="text-dark fw-semibold mb-0">Thu</p>
-                    <p className="mb-0 d-inline-flex align-items-center">
-                      <i className="ti ti-clock me-1" />
-                      11:00 PM - 12:30 PM
-                    </p>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
-                    <p className="text-dark fw-semibold mb-0">Fri</p>
-                    <p className="mb-0 d-inline-flex align-items-center">
-                      <i className="ti ti-clock me-1" />
-                      11:00 PM - 12:30 PM
-                    </p>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
-                    <p className="text-dark fw-semibold mb-0">Sat</p>
-                    <p className="mb-0 d-inline-flex align-items-center">
-                      <i className="ti ti-clock me-1" />
-                      11:00 PM - 12:30 PM
-                    </p>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-2 pb-2">
-                    <p className="text-dark fw-semibold mb-0">Sun</p>
-                    <p className="mb-0 d-inline-flex align-items-center text-danger">
-                      <i className="ti ti-clock me-1" />
-                      Closed
-                    </p>
-                  </div>
+                  {doctorSchedules && doctorSchedules.length > 0 ? (
+                    <>
+                      {doctorSchedules.map((schedule, index) => (
+                        <div key={index} className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
+                          <p className="text-dark fw-semibold mb-0">{schedule.day.slice(0, 3)}</p>
+                          {schedule.timeSlots && schedule.timeSlots.length > 0 ? (
+                            <p className="mb-0 d-inline-flex align-items-center">
+                              <i className="ti ti-clock me-1" />
+                              {schedule.timeSlots[0].startTime.slice(0, 5)} - {schedule.timeSlots[0].endTime.slice(0, 5)}
+                            </p>
+                          ) : (
+                            <p className="mb-0 d-inline-flex align-items-center text-danger">
+                              <i className="ti ti-clock me-1" />
+                              Closed
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <p className="text-center text-muted py-3">No schedule available</p>
+                  )}
                   <Link to="#" className="btn btn-light w-100 mt-2 fs-13">
                     Edit Availability
                   </Link>
