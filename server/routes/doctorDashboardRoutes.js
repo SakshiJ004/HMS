@@ -5,6 +5,7 @@ const {
     getAppointmentChart,
     getUpcomingAppointment,
     getRecentAppointments,
+    getAdditionalStats,
 } = require('../controllers/doctorDashboardController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
