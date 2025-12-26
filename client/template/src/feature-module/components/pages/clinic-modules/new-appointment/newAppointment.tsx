@@ -513,7 +513,7 @@
 
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { all_routes } from "../../../../routes/all_routes";
 import CommonSelect from "../../../../../core/common/common-select/commonSelect";
 import { DatePicker, TimePicker, message } from "antd";
@@ -618,6 +618,35 @@ const NewAppointment = () => {
       message.error(error.message || "Failed to load doctors and patients");
     }
   };
+
+  const location = useLocation();
+
+  // Add this useEffect AFTER fetchDoctorsAndPatients useEffect
+  useEffect(() => {
+    // Read query parameters from URL
+    const searchParams = new URLSearchParams(location.search);
+    const doctorId = searchParams.get('doctorId');
+    const doctorName = searchParams.get('doctorName');
+    const department = searchParams.get('department');
+
+    // Prefill form if doctor info is in URL
+    if (doctorId && doctorName && department) {
+      setFormData(prev => ({
+        ...prev,
+        doctor: doctorId,
+        department: department,
+      }));
+
+      // Clear errors for prefilled fields
+      setErrors(prev => ({
+        ...prev,
+        doctor: "",
+        department: "",
+      }));
+
+      console.log("Prefilled doctor:", doctorName, department);
+    }
+  }, [location.search, doctors]); // Doctors dependency add kela ki doctor options ready aslyavar prefill honar
 
   // Handle when a new patient is added from the modal
   const handlePatientAdded = (newPatient: Patient) => {
@@ -871,6 +900,7 @@ const NewAppointment = () => {
                             options={departmentOptions}
                             className="select"
                             placeholder="Select Department"
+                            value={departmentOptions.find((d: SelectOption) => d.value === formData.department)}
                             onChange={(option: any) => {
                               setFormData(prev => ({ ...prev, department: option?.value || "" }));
                               clearError('department');
@@ -895,6 +925,7 @@ const NewAppointment = () => {
                             options={doctorOptions}
                             className="select"
                             placeholder="Select Doctor"
+                            value={doctorOptions.find((d: SelectOption) => d.value === formData.doctor)}
                             onChange={(option: any) => {
                               setFormData(prev => ({ ...prev, doctor: option?.value || "" }));
                               clearError('doctor');
