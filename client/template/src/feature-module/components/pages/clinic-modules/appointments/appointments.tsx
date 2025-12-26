@@ -1074,39 +1074,60 @@ const Appointments = () => {
     return name.charAt(0).toUpperCase();
   };
 
-  // Render avatar with Google photo support
+  // Render avatar with proper image handling
   const renderAvatar = (image: string | null | undefined, name: string, bgColor: string) => {
-    if (image && (image.includes('googleusercontent.com') || image.startsWith('http'))) {
+    const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
+    // If no image, show initials
+    if (!image) {
       return (
-        <img
-          src={image}
-          alt={name}
-          className="rounded-circle"
-          style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-            const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-            if (nextElement) {
-              nextElement.classList.remove('d-none');
-            }
-          }}
-        />
-      );
-    } else if (image) {
-      return (
-        <ImageWithBasePath
-          src={`assets/img/users/${image}`}
-          alt={name}
-          className="rounded-circle"
-        />
-      );
-    } else {
-      return (
-        <div className={`rounded-circle ${bgColor} text-white d-flex align-items-center justify-content-center`} style={{ width: '40px', height: '40px', fontSize: '16px' }}>
+        <div
+          className={`rounded-circle ${bgColor} text-white d-flex align-items-center justify-content-center`}
+          style={{ width: '40px', height: '40px', fontSize: '16px' }}
+        >
           {getInitials(name)}
         </div>
       );
     }
+
+    // Determine image source
+    let imageSrc = image;
+
+    // If image is relative path (starts with /uploads or uploads)
+    if (image.startsWith('/uploads') || (image.startsWith('uploads') && !image.startsWith('http'))) {
+      imageSrc = `${API_URL}${image.startsWith('/') ? image : '/' + image}`;
+    }
+    // If image is already full URL or data URI, use as is
+    else if (image.startsWith('http') || image.startsWith('data:image')) {
+      imageSrc = image;
+    }
+    // Local asset path
+    else {
+      imageSrc = `assets/img/users/${image}`;
+    }
+
+    return (
+      <img
+        src={imageSrc}
+        alt={name}
+        className="rounded-circle"
+        style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+        onError={(e) => {
+          console.log(`Image failed to load: ${imageSrc}`);
+          // Replace with initials on error
+          const target = e.currentTarget;
+          const parent = target.parentElement;
+          if (parent) {
+            parent.innerHTML = `
+            <div class="rounded-circle ${bgColor} text-white d-flex align-items-center justify-content-center" 
+                  style="width: 40px; height: 40px; font-size: 16px;">
+              ${getInitials(name)}
+            </div>
+          `;
+          }
+        }}
+      />
+    );
   };
 
   // Filter appointments
@@ -1120,7 +1141,10 @@ const Appointments = () => {
   });
 
   // Format data for table
-  const tableData = filteredData.map((appointment) => ({
+  const tableData = filteredData.map((appointment) => {
+    console.log('Doctor image:', appointment.doctor?.profileImage); // ✅ Add this
+    console.log('Patient image:', appointment.patient?.profileImage);
+    return{
     key: appointment._id,
     Date_Time: `${dayjs(appointment.appointmentDate).format("DD MMM YYYY")} - ${appointment.appointmentTime}`,
     Patient: appointment.patient?.fullName || "N/A",
@@ -1133,7 +1157,8 @@ const Appointments = () => {
     Status: appointment.status,
     _id: appointment._id,
     fullData: appointment
-  }));
+    }
+  });
 
   const columns = [
     {
@@ -1466,10 +1491,10 @@ const Appointments = () => {
             <div className="d-flex justify-content-between align-items-center">
               <span className="text-dark fw-semibold">Current Status</span>
               <span className={`badge ${selectedAppointment?.status === "Checked Out" ? "bg-info" :
-                  selectedAppointment?.status === "Checked In" ? "bg-warning" :
-                    selectedAppointment?.status === "Cancelled" ? "bg-danger" :
-                      selectedAppointment?.status === "Scheduled" ? "bg-primary" :
-                        selectedAppointment?.status === "Confirmed" ? "bg-success" : "bg-secondary"
+                selectedAppointment?.status === "Checked In" ? "bg-warning" :
+                  selectedAppointment?.status === "Cancelled" ? "bg-danger" :
+                    selectedAppointment?.status === "Scheduled" ? "bg-primary" :
+                      selectedAppointment?.status === "Confirmed" ? "bg-success" : "bg-secondary"
                 }`}>
                 {selectedAppointment?.status || 'N/A'}
               </span>
