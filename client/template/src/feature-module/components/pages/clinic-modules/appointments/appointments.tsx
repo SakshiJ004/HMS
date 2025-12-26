@@ -1141,10 +1141,7 @@ const Appointments = () => {
   });
 
   // Format data for table
-  const tableData = filteredData.map((appointment) => {
-    console.log('Doctor image:', appointment.doctor?.profileImage); // ✅ Add this
-    console.log('Patient image:', appointment.patient?.profileImage);
-    return{
+  const tableData = filteredData.map((appointment) => ({
     key: appointment._id,
     Date_Time: `${dayjs(appointment.appointmentDate).format("DD MMM YYYY")} - ${appointment.appointmentTime}`,
     Patient: appointment.patient?.fullName || "N/A",
@@ -1157,8 +1154,7 @@ const Appointments = () => {
     Status: appointment.status,
     _id: appointment._id,
     fullData: appointment
-    }
-  });
+  }));
 
   const columns = [
     {
