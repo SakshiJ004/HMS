@@ -48,6 +48,17 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
     reason: "",
     status: "Scheduled",
   });
+  const [editLoading, setEditLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    patient: "",
+    appointmentType: "",
+    appointmentDate: null as any,
+    appointmentTime: null as any,
+    reason: "",
+    status: "Scheduled",
+  });
+  
   const [doctorSchedule, setDoctorSchedule] = useState<Array<{
     day: string;
     timeSlots: Array<{ startTime: string; endTime: string }>;
@@ -66,10 +77,10 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
     fetchDoctorInfo();
   }, []);
 
-  // Update form when selectedAppointment changes
+  // Update EDIT form when selectedAppointment changes
   useEffect(() => {
     if (selectedAppointment) {
-      setFormData({
+      setEditFormData({
         patient: selectedAppointment.patient._id || selectedAppointment.patient,
         appointmentType: selectedAppointment.appointmentType,
         appointmentDate: selectedAppointment.appointmentDate ? dayjs(selectedAppointment.appointmentDate) : null,
@@ -323,6 +334,91 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
       message.error(error.message || "Failed to create appointment");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle edit appointment
+  const handleUpdateAppointment = async () => {
+    if (!selectedAppointment) {
+      message.error("No appointment selected");
+      return;
+    }
+
+    // Validate form
+    if (!editFormData.patient || !editFormData.appointmentType || !editFormData.appointmentDate || !editFormData.appointmentTime) {
+      message.error("Please fill all required fields");
+      return;
+    }
+
+    setEditLoading(true);
+
+    try {
+      const { updateAppointment } = await import("../../../../../../api/appointmentService");
+
+      const appointmentData = {
+        patient: editFormData.patient,
+        doctor: doctorInfo._id,
+        department: doctorInfo.department,
+        appointmentType: editFormData.appointmentType,
+        appointmentDate: editFormData.appointmentDate.format("YYYY-MM-DD"),
+        appointmentTime: editFormData.appointmentTime.format("HH:mm"),
+        reason: editFormData.reason,
+        status: editFormData.status,
+      };
+
+      await updateAppointment(selectedAppointment._id, appointmentData);
+      message.success("Appointment updated successfully!");
+
+      // Close modal
+      const offcanvasElement = document.getElementById('edit_appointment');
+      if (offcanvasElement) {
+        const bsOffcanvas = (window as any).bootstrap?.Offcanvas?.getInstance(offcanvasElement);
+        bsOffcanvas?.hide();
+      }
+
+      // Refresh data
+      if (onAppointmentUpdated) {
+        onAppointmentUpdated();
+      }
+    } catch (error: any) {
+      console.error("Error updating appointment:", error);
+      message.error(error.message || "Failed to update appointment");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // Handle delete appointment
+  const handleDeleteAppointment = async () => {
+    if (!selectedAppointment) {
+      message.error("No appointment selected");
+      return;
+    }
+
+    setDeleteLoading(true);
+
+    try {
+      const { deleteAppointment } = await import("../../../../../../api/appointmentService");
+
+      await deleteAppointment(selectedAppointment._id);
+      message.success("Appointment deleted successfully!");
+
+      // Close modal
+      const modalElement = document.getElementById('delete_modal');
+      if (modalElement) {
+        const bsModal = (window as any).bootstrap?.Modal?.getInstance(modalElement);
+        bsModal?.hide();
+      }
+
+      // Refresh data
+      if (onAppointmentUpdated) {
+        onAppointmentUpdated();
+      }
+    } catch (error: any) {
+      console.error("Error deleting appointment:", error);
+      message.error(error.message || "Failed to delete appointment");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -608,208 +704,90 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
           </div>
         </div>
         <div className="offcanvas-body pt-3">
-          <form action="#">
-            {/* start row*/}
+          <form>
             <div className="row">
+              {/* Appointment ID */}
               <div className="col-lg-12">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
                     Appointment ID <span className="text-danger">*</span>
                   </label>
-                  <div className="input-group">
-                    <input
-                      type="text"
-                      className="form-control rounded bg-light"
-                      defaultValue="AP234354"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    className="form-control rounded bg-light"
+                    value={selectedAppointment?.appointmentId || "N/A"}
+                    readOnly
+                  />
                 </div>
               </div>
-              {/* end col*/}
+
+              {/* Patient */}
               <div className="col-lg-12">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
                     Patient<span className="text-danger">*</span>
                   </label>
-                  <div className="dropdown">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle form-control rounded d-flex align-items-center justify-content-between border"
-                      data-bs-toggle="dropdown"
-                      data-bs-auto-close="outside"
-                      aria-expanded="true"
-                    >
-                      Emily Clark
-                    </Link>
-                    <div className="dropdown-menu shadow-lg w-100 dropdown-info">
-                      <div className="mb-3">
-                        <div className="input-icon-start position-relative">
-                          <span className="input-icon-addon fs-12">
-                            <i className="ti ti-search" />
-                          </span>
-                          <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Search"
-                          />
-                        </div>
-                      </div>
-                      <ul className="mb-3 list-style-none">
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/users/user-02.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            Emily Clark
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-01.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            John Carter
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-16.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            Sophia White
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-15.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            Michael Johnson
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-14.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            Olivia Harris
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-01.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            David Anderson
-                          </label>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                  <CommonSelect
+                    options={patientOptions}
+                    className="select"
+                    placeholder="Select Patient"
+                    value={patientOptions.find((p: any) => p.value === editFormData.patient)}
+                    onChange={(option: any) => {
+                      setEditFormData(prev => ({ ...prev, patient: option?.value || "" }));
+                    }}
+                  />
                 </div>
               </div>
-              {/* end col*/}
+
+              {/* Doctor (Read-only) */}
+              <div className="col-lg-12">
+                <div className="mb-3">
+                  <label className="form-label mb-1 text-dark fs-14 fw-medium">
+                    Doctor<span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control rounded bg-light"
+                    value={doctorInfo?.fullName || "N/A"}
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              {/* Department (Read-only) */}
+              <div className="col-lg-12">
+                <div className="mb-3">
+                  <label className="form-label mb-1 text-dark fs-14 fw-medium">
+                    Department<span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control rounded bg-light"
+                    value={doctorInfo?.department || "N/A"}
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              {/* Appointment Type */}
               <div className="col-lg-12">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
                     Appointment Type <span className="text-danger">*</span>
                   </label>
-                  <div className="dropdown">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle form-control rounded d-flex align-items-center justify-content-between border"
-                      data-bs-toggle="dropdown"
-                      data-bs-auto-close="outside"
-                      aria-expanded="true"
-                    >
-                      In Person
-                    </Link>
-                    <div className="dropdown-menu shadow-lg w-100 dropdown-info">
-                      <div className="mb-3">
-                        <div className="input-icon-start position-relative">
-                          <span className="input-icon-addon fs-12">
-                            <i className="ti ti-search" />
-                          </span>
-                          <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Select"
-                          />
-                        </div>
-                      </div>
-                      <ul className="mb-0 list-style-none">
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            In Person
-                          </label>
-                        </li>
-                        <li className="list-none">
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            Online
-                          </label>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                  <CommonSelect
+                    options={appointmentTypeOptions}
+                    className="select"
+                    placeholder="Select Type"
+                    value={appointmentTypeOptions.find((t: any) => t.value === editFormData.appointmentType)}
+                    onChange={(option: any) => {
+                      setEditFormData(prev => ({ ...prev, appointmentType: option?.value || "" }));
+                    }}
+                  />
                 </div>
               </div>
-              {/* end col*/}
+
+              {/* Date */}
               <div className="col-lg-6">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
@@ -818,12 +796,17 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
                   <div className="input-icon-end position-relative">
                     <DatePicker
                       className="form-control datetimepicker"
-                      format={{
-                        format: "DD-MM-YYYY",
-                        type: "mask",
-                      }}
+                      format="DD-MM-YYYY"
+                      value={editFormData.appointmentDate}
                       getPopupContainer={getModalContainer}
-                      placeholder="dd-mm-yyyy"
+                      placeholder="DD-MM-YYYY"
+                      disabledDate={disabledDate}
+                      onChange={(date) => {
+                        setEditFormData(prev => ({ ...prev, appointmentDate: date }));
+                        if (date && date.isSame(dayjs(), 'day')) {
+                          setEditFormData(prev => ({ ...prev, appointmentTime: null }));
+                        }
+                      }}
                       suffixIcon={null}
                     />
                     <span className="input-icon-addon">
@@ -832,7 +815,8 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
                   </div>
                 </div>
               </div>
-              {/* end col*/}
+
+              {/* Time */}
               <div className="col-lg-6">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
@@ -841,8 +825,15 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
                   <div className="input-icon-end position-relative">
                     <TimePicker
                       className="form-control"
-                      onChange={onChangeTime}
-                      defaultOpenValue={dayjs("00:00:00", "HH:mm:ss")}
+                      format="HH:mm"
+                      value={editFormData.appointmentTime}
+                      onChange={(time) => {
+                        setEditFormData(prev => ({ ...prev, appointmentTime: time }));
+                      }}
+                      disabledTime={disabledTime}
+                      showNow={false}
+                      disabled={!editFormData.appointmentDate}
+                      placeholder="Select time"
                     />
                     <span className="input-icon-addon">
                       <i className="ti ti-clock" />
@@ -850,101 +841,65 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
                   </div>
                 </div>
               </div>
-              {/* end col*/}
+
+              {/* Reason */}
               <div className="col-lg-12">
                 <div className="mb-3">
-                  <div>
-                    <label className="form-label mb-1 text-dark fs-14 fw-medium">
-                      Appointment Reason
-                    </label>
-                    <textarea
-                      rows={4}
-                      className="form-control rounded"
-                      defaultValue={
-                        " An account of the present illness, which includes the circumstances surrounding the onset of recent health changes and the Purpose. "
-                      }
-                    />
-                  </div>
+                  <label className="form-label mb-1 text-dark fs-14 fw-medium">
+                    Appointment Reason
+                  </label>
+                  <textarea
+                    rows={4}
+                    className="form-control rounded"
+                    value={editFormData.reason}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, reason: e.target.value }))}
+                    placeholder="Enter reason for appointment"
+                  />
                 </div>
               </div>
-              {/* end col*/}
+
+              {/* Status */}
               <div className="col-lg-12">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
                     Status<span className="text-danger">*</span>
                   </label>
-                  <div className="dropdown">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle form-control rounded d-flex align-items-center justify-content-between border"
-                      data-bs-toggle="dropdown"
-                      data-bs-auto-close="outside"
-                      aria-expanded="true"
-                    >
-                      Checked Out
-                    </Link>
-                    <div className="dropdown-menu shadow-lg w-100 dropdown-info">
-                      <div className="mb-3">
-                        <div className="input-icon-start position-relative">
-                          <span className="input-icon-addon fs-12">
-                            <i className="ti ti-search" />
-                          </span>
-                          <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Select"
-                          />
-                        </div>
-                      </div>
-                      <ul className="mb-3 list-style-none">
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            Checked Out
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                              defaultChecked
-                            />
-                            Checked In
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            Cancelled
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            Scheduled
-                          </label>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                  <CommonSelect
+                    options={statusOptions}
+                    className="select"
+                    value={statusOptions.find((s: any) => s.value === editFormData.status)}
+                    onChange={(option: any) =>
+                      setEditFormData(prev => ({ ...prev, status: option?.value || "Scheduled" }))
+                    }
+                  />
                 </div>
               </div>
-              {/* end col*/}
             </div>
-            {/* end row*/}
           </form>
         </div>
         <div className="offcanvas-footer mb-1 mt-3 p-3 border-1 border-top">
+          <div className="d-flex justify-content-end gap-2">
+            <Link to="#" className="btn btn-light btm-md" data-bs-dismiss="offcanvas">
+              Cancel
+            </Link>
+            <button
+              type="button"
+              className="btn btn-primary btm-md"
+              onClick={handleUpdateAppointment}
+              disabled={editLoading}
+            >
+              {editLoading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" />
+                  Updating...
+                </>
+              ) : (
+                "Update Appointment"
+              )}
+            </button>
+          </div>
+        </div>
+        {/* <div className="offcanvas-footer mb-1 mt-3 p-3 border-1 border-top">
           <div className=" d-flex justify-content-end gap-2">
             <Link to="#" className="btn btn-light btm-md">
               Cancel
@@ -957,7 +912,7 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
               Create Appointment
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
       {/* End Edit New Appointment*/}
       {/* Start View Details */}
@@ -1154,13 +1109,21 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
                 >
                   Cancel
                 </Link>
-                <Link
-                  to=""
+                <button
+                  type="button"
                   className="btn btn-danger position-relative z-1"
-                  data-bs-dismiss="modal"
+                  onClick={handleDeleteAppointment}
+                  disabled={deleteLoading}
                 >
-                  Yes, Delete
-                </Link>
+                  {deleteLoading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" />
+                      Deleting...
+                    </>
+                  ) : (
+                    "Yes, Delete"
+                  )}
+                </button>
               </div>
             </div>
           </div>
