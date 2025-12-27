@@ -251,7 +251,7 @@ const getUpcomingAppointmentWithFilter = async (req, res) => {
         })
             .populate('patient', 'fullName email phone profileImage')
             .sort({ appointmentDate: 1, appointmentTime: 1 })
-            .limit(3);  // ✅ Changed from .findOne() and limit(1)
+            .limit(2);  // ✅ Changed from .findOne() and limit(1)
 
         res.status(200).json({
             success: true,
