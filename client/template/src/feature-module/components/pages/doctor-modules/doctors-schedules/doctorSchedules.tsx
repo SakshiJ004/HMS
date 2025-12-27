@@ -684,15 +684,20 @@ const DoctorSchedules = () => {
 
     for (const day in schedules) {
       for (const slot of schedules[day]) {
-        // Only validate if BOTH times are filled
+        // Only validate if BOTH times are filled AND not 00:00
         if (slot.from && slot.to) {
-          hasAtLeastOneSlot = true;
-
-          // Get hours and minutes for comparison
           const fromMinutes = slot.from.hour() * 60 + slot.from.minute();
           const toMinutes = slot.to.hour() * 60 + slot.to.minute();
 
           console.log(`${day}: from=${fromMinutes} (${slot.from.format('HH:mm')}), to=${toMinutes} (${slot.to.format('HH:mm')})`);
+
+          // Skip if both are 00:00 (empty/default state)
+          if (fromMinutes === 0 && toMinutes === 0) {
+            console.log(`  ⏭️ Skipping ${day} (both times are 00:00)`);
+            continue;
+          }
+
+          hasAtLeastOneSlot = true;
 
           if (toMinutes <= fromMinutes) {
             message.error(`Invalid time for ${day}: End time must be after start time`);
@@ -787,7 +792,15 @@ const DoctorSchedules = () => {
       const formattedSchedules = Object.keys(schedules).map(day => ({
         day: day.charAt(0).toUpperCase() + day.slice(1),
         timeSlots: schedules[day]
-          .filter(slot => slot.from && slot.to)
+          .filter(slot => {
+            if (!slot.from || !slot.to) return false;
+
+            // Also filter out 00:00 to 00:00 (empty slots)
+            const fromMinutes = slot.from.hour() * 60 + slot.from.minute();
+            const toMinutes = slot.to.hour() * 60 + slot.to.minute();
+
+            return !(fromMinutes === 0 && toMinutes === 0);
+          })
           .map(slot => ({
             startTime: slot.from!.format("HH:mm"),
             endTime: slot.to!.format("HH:mm"),
