@@ -9,6 +9,7 @@ const {
     getDoctor,
     updateDoctor,
     deleteDoctor,
+    updateDoctorSchedule,
 } = require('../controllers/doctorController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -36,5 +37,7 @@ router.put('/:id', protect, authorize('admin'), updateDoctor);
 // @desc    Delete doctor
 // @access  Private (Admin only)
 router.delete('/:id', protect, authorize('admin'), deleteDoctor);
+
+route.put('/:id/schedule', protect, authorize('doctor'), updateDoctorSchedule)
 
 module.exports = router;

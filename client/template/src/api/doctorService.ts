@@ -159,3 +159,18 @@ export const deleteDoctor = async (id: string) => {
         throw new Error(error.response?.data?.message || 'Failed to delete doctor');
     }
 };
+
+// Add this to your doctorService.ts
+export const updateDoctorSchedule = async (doctorId: string, scheduleData: any) => {
+    try {
+        const response = await axios.put(
+            `${API_URL}/api/doctors/${doctorId}/schedule`,
+            scheduleData,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Update doctor schedule error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to update schedule');
+    }
+};

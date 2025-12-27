@@ -738,6 +738,42 @@ const deleteDoctor = async (req, res) => {
         });
     }
 };
+// Add to your doctor controller
+const updateDoctorSchedule = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { schedules, location, fromDate, toDate, recuresEvery } = req.body;
+
+        const doctor = await User.findById(id);
+        if (!doctor || doctor.role !== 'doctor') {
+            return res.status(404).json({
+                success: false,
+                message: 'Doctor not found'
+            });
+        }
+
+        // Update schedules
+        doctor.schedules = schedules;
+
+        // You can store location, dates, etc. in a separate field if needed
+        // doctor.scheduleMetadata = { location, fromDate, toDate, recuresEvery };
+
+        await doctor.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Schedule updated successfully',
+            data: doctor
+        });
+    } catch (error) {
+        console.error('Update schedule error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating schedule',
+            error: error.message
+        });
+    }
+};
 
 module.exports = {
     createDoctor,
@@ -745,4 +781,5 @@ module.exports = {
     getDoctor,
     updateDoctor,
     deleteDoctor,
+    updateDoctorSchedule,
 };
