@@ -51,7 +51,7 @@ const DoctorDahboard = () => {
     day: string;
     timeSlots: Array<{ startTime: string; endTime: string }>;
   }>>([]);
-  const [upcomingFilter, setUpcomingFilter] = useState<'today' | 'week' | 'month'>('today');
+  const [upcomingFilter, setUpcomingFilter] = useState<'today' | 'week' | 'month'>('week');
   const [statisticsPeriod, setStatisticsPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
   const [topPatientsPeriod, setTopPatientsPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('weekly');
   const [appointmentStatistics, setAppointmentStatistics] = useState<any>({
