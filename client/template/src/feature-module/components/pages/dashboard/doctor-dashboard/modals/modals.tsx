@@ -11,6 +11,7 @@ import {
   createAppointment,
   type Patient,
 } from "../../../../../../api/appointmentService";
+import { getDoctor } from "../../../../../../api/doctorService";
 
 interface SelectOption {
   value: string;
@@ -41,6 +42,11 @@ const Modals = () => {
     reason: "",
     status: "Scheduled",
   });
+  const [doctorSchedule, setDoctorSchedule] = useState<Array<{
+    day: string;
+    timeSlots: Array<{ startTime: string; endTime: string }>;
+  }>>([]);
+  const [doctorInfo, setDoctorInfo] = useState<any>(null);
   const [errors, setErrors] = useState({
     patient: "",
     appointmentType: "",
@@ -51,6 +57,7 @@ const Modals = () => {
   // Fetch patients on mount
   useEffect(() => {
     fetchPatients();
+    fetchDoctorInfo();
   }, []);
 
   const fetchPatients = async () => {
@@ -63,16 +70,26 @@ const Modals = () => {
     }
   };
 
-  // Get logged-in doctor info
-  const getDoctorInfo = () => {
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-      return JSON.parse(userData);
-    }
-    return null;
-  };
 
-  const doctorInfo = getDoctorInfo();
+  const fetchDoctorInfo = async () => {
+    try {
+      const userData = localStorage.getItem('userData');
+      if (!userData) return;
+
+      const user = JSON.parse(userData);
+
+      // Import getDoctor from your service
+      const { getDoctor } = await import("../../../../../../api/doctorService");
+      const response = await getDoctor(user._id);
+
+      if (response.success) {
+        setDoctorInfo(response.data);
+        setDoctorSchedule(response.data.schedules || []);
+      }
+    } catch (error: any) {
+      console.error("Error fetching doctor info:", error);
+    }
+  };
 
   // Dropdown options
   const appointmentTypeOptions: SelectOption[] = [
@@ -92,7 +109,23 @@ const Modals = () => {
 
   // Disable past dates
   const disabledDate = (current: any) => {
-    return current && current.isBefore(dayjs().startOf('day'));
+    // Disable past dates
+    if (!current || current.isBefore(dayjs().startOf('day'))) {
+      return true;
+    }
+
+    // If doctor schedule available, only allow doctor's working days
+    if (doctorSchedule && doctorSchedule.length > 0) {
+      const dayName = current.format('dddd'); // Monday, Tuesday, etc.
+      const doctorWorkingDay = doctorSchedule.find(
+        schedule => schedule.day === dayName && schedule.timeSlots.length > 0
+      );
+
+      // If doctor doesn't work on this day, disable it
+      return !doctorWorkingDay;
+    }
+
+    return false;
   };
 
   // Disable past times
@@ -100,28 +133,82 @@ const Modals = () => {
     const now = dayjs();
     const selectedDate = formData.appointmentDate;
 
-    if (!selectedDate || selectedDate.isAfter(now, 'day')) {
+    if (!selectedDate) {
       return {};
     }
 
-    if (selectedDate.isSame(now, 'day')) {
-      const currentHour = now.hour();
-      const currentMinute = now.minute();
+    // Get doctor's schedule for selected day
+    const dayName = selectedDate.format('dddd');
+    const daySchedule = doctorSchedule.find(s => s.day === dayName);
 
+    if (!daySchedule || daySchedule.timeSlots.length === 0) {
+      // If no schedule for this day, disable all hours
       return {
-        disabledHours: () => {
-          return Array.from({ length: currentHour }, (_, i) => i);
-        },
-        disabledMinutes: (selectedHour: number) => {
-          if (selectedHour === currentHour) {
-            return Array.from({ length: currentMinute + 1 }, (_, i) => i);
-          }
-          return [];
-        },
+        disabledHours: () => Array.from({ length: 24 }, (_, i) => i),
       };
     }
 
-    return {};
+    // Get doctor's working hours
+    const timeSlot = daySchedule.timeSlots[0]; // Take first time slot
+    const [startHour, startMinute] = timeSlot.startTime.split(':').map(Number);
+    const [endHour, endMinute] = timeSlot.endTime.split(':').map(Number);
+
+    return {
+      disabledHours: () => {
+        const disabled: number[] = [];
+
+        // Disable hours before doctor's start time
+        for (let i = 0; i < startHour; i++) {
+          disabled.push(i);
+        }
+
+        // Disable hours after doctor's end time
+        for (let i = endHour + 1; i < 24; i++) {
+          disabled.push(i);
+        }
+
+        // If today, also disable past hours
+        if (selectedDate.isSame(now, 'day')) {
+          const currentHour = now.hour();
+          for (let i = 0; i <= currentHour; i++) {
+            if (!disabled.includes(i)) {
+              disabled.push(i);
+            }
+          }
+        }
+
+        return disabled;
+      },
+      disabledMinutes: (selectedHour: number) => {
+        const disabled: number[] = [];
+
+        // If selected hour is start hour, disable minutes before start minute
+        if (selectedHour === startHour) {
+          for (let i = 0; i < startMinute; i++) {
+            disabled.push(i);
+          }
+        }
+
+        // If selected hour is end hour, disable minutes after end minute
+        if (selectedHour === endHour) {
+          for (let i = endMinute; i < 60; i++) {
+            disabled.push(i);
+          }
+        }
+
+        // If today and current hour, disable past minutes
+        if (selectedDate.isSame(now, 'day') && selectedHour === now.hour()) {
+          const currentMinute = now.minute();
+          for (let i = 0; i <= currentMinute; i++) {
+            if (!disabled.includes(i)) {
+              disabled.push(i);
+            }
+          }
+        }
+
+        return disabled;
+      },
+    };
   };
 
   // Validate form
