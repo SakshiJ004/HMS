@@ -79,6 +79,21 @@ export interface AdditionalStats {
     followUps: number;
 }
 
+export interface AppointmentStatistics {
+    completed: number;
+    pending: number;
+    cancelled: number;
+}
+
+export interface TopPatient {
+    _id: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    profileImage?: string;
+    appointmentCount: number;
+}
+
 export const getDoctorStats = async () => {
     try {
         const response = await axios.get<{ success: boolean; data: DoctorStats }>(
@@ -140,5 +155,44 @@ export const getAdditionalStats = async () => {
     } catch (error: any) {
         console.error('Get additional stats error:', error);
         throw new Error(error.response?.data?.message || 'Failed to fetch additional stats');
+    }
+};
+
+export const getUpcomingAppointmentFiltered = async (filter: 'today' | 'week' | 'month' = 'today') => {
+    try {
+        const response = await axios.get<{ success: boolean; data: UpcomingAppointmentData | null }>(
+            `${API_URL}/api/doctor/dashboard/upcoming-filtered?filter=${filter}`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get upcoming appointment filtered error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch upcoming appointment');
+    }
+};
+
+export const getAppointmentStatistics = async (period: 'monthly' | 'weekly' | 'yearly' = 'monthly') => {
+    try {
+        const response = await axios.get<{ success: boolean; data: AppointmentStatistics }>(
+            `${API_URL}/api/doctor/dashboard/appointment-statistics?period=${period}`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get appointment statistics error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch statistics');
+    }
+};
+
+export const getTopPatients = async (period: 'monthly' | 'weekly' | 'yearly' = 'weekly') => {
+    try {
+        const response = await axios.get<{ success: boolean; data: TopPatient[] }>(
+            `${API_URL}/api/doctor/dashboard/top-patients?period=${period}`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get top patients error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch top patients');
     }
 };

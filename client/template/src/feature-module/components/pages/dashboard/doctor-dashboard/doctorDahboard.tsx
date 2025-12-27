@@ -17,6 +17,9 @@ import {
   type DoctorStats,
   type UpcomingAppointmentData,
   type RecentAppointment,
+  getUpcomingAppointmentFiltered,
+  getAppointmentStatistics,
+  getTopPatients,
 } from "../../../../../api/doctorDashboardService";
 import { getDoctor } from "../../../../../api/doctorService";
 
@@ -48,6 +51,15 @@ const DoctorDahboard = () => {
     day: string;
     timeSlots: Array<{ startTime: string; endTime: string }>;
   }>>([]);
+  const [upcomingFilter, setUpcomingFilter] = useState<'today' | 'week' | 'month'>('today');
+  const [statisticsPeriod, setStatisticsPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
+  const [topPatientsPeriod, setTopPatientsPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('weekly');
+  const [appointmentStatistics, setAppointmentStatistics] = useState<any>({
+    completed: 260,
+    pending: 21,
+    cancelled: 50
+  });
+  const [topPatients, setTopPatients] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAllData();
@@ -57,18 +69,68 @@ const DoctorDahboard = () => {
     fetchChartData();
   }, [chartPeriod]);
 
+  // Refetch upcoming when filter changes
+  useEffect(() => {
+    const fetchUpcoming = async () => {
+      try {
+        const res = await getUpcomingAppointmentFiltered(upcomingFilter);
+        if (res.success) setUpcomingAppointment(res.data);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    fetchUpcoming();
+  }, [upcomingFilter]);
+
+  // Refetch statistics when period changes
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await getAppointmentStatistics(statisticsPeriod);
+        if (res.success) setAppointmentStatistics(res.data);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    fetchStats();
+  }, [statisticsPeriod]);
+
+  // Refetch top patients when period changes
+  useEffect(() => {
+    const fetchTopPatients = async () => {
+      try {
+        const res = await getTopPatients(topPatientsPeriod);
+        if (res.success) setTopPatients(res.data);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    fetchTopPatients();
+  }, [topPatientsPeriod]);
+
   const fetchAllData = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem('userData') || '{}')
       const doctorId = userData._id;
 
-      const [statsRes, chartRes, upcomingRes, recentRes, doctorRes, additionalRes] = await Promise.all([
+      const [
+        statsRes,
+        chartRes,
+        upcomingRes,
+        recentRes,
+        doctorRes,
+        additionalRes,
+        statisticsRes,
+        topPatientsRes
+      ] = await Promise.all([
         getDoctorStats(),
         getDoctorAppointmentChart(chartPeriod),
-        getUpcomingAppointment(),
+        getUpcomingAppointmentFiltered(upcomingFilter),
         getRecentAppointments(),
         getDoctor(doctorId),
         getAdditionalStats(),
+        getAppointmentStatistics(statisticsPeriod),
+        getTopPatients(topPatientsPeriod),
       ]);
 
       if (statsRes.success) setStats(statsRes.data);
@@ -77,6 +139,8 @@ const DoctorDahboard = () => {
       if (recentRes.success) setRecentAppointments(recentRes.data);
       if (doctorRes.success) setDoctorSchedules(doctorRes.data.schedules || []);
       if (additionalRes.success) setAdditionalStats(additionalRes.data);
+      if (statisticsRes.success) setAppointmentStatistics(statisticsRes.data);
+      if (topPatientsRes.success) setTopPatients(topPatientsRes.data);
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
     }
@@ -90,6 +154,7 @@ const DoctorDahboard = () => {
       console.error('Error fetching chart data:', error);
     }
   };
+
   return (
     <>
       {/* ========================
@@ -230,21 +295,21 @@ const DoctorDahboard = () => {
                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Today <i className="ti ti-chevron-down ms-1" />
+                      {upcomingFilter === 'today' ? 'Today' : upcomingFilter === 'week' ? 'This Week' : 'This Month'} <i className="ti ti-chevron-down ms-1" />
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setUpcomingFilter('today')}>
                           Today
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setUpcomingFilter('week')}>
                           This Week
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setUpcomingFilter('month')}>
                           This Month
                         </Link>
                       </li>
@@ -1046,21 +1111,21 @@ const DoctorDahboard = () => {
                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Monthly <i className="ti ti-chevron-down ms-1" />
+                      {statisticsPeriod.charAt(0).toUpperCase() + statisticsPeriod.slice(1)} <i className="ti ti-chevron-down ms-1" />
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setStatisticsPeriod('monthly')}>
                           Monthly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setStatisticsPeriod('weekly')}>
                           Weekly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setStatisticsPeriod('yearly')}>
                           Yearly
                         </Link>
                       </li>
@@ -1068,28 +1133,28 @@ const DoctorDahboard = () => {
                   </div>
                 </div>
                 <div className="card-body">
-                  <CircleChart2 />
+                  <CircleChart2 data={appointmentStatistics}/>
                   <div className="d-flex align-items-center justify-content-center gap-2 mt-3">
                     <div className="text-center">
                       <p className="d-flex align-items-center mb-1 fs-13">
                         <i className="ti ti-circle-filled text-success fs-10 me-1" />
                         Completed
                       </p>
-                      <h5 className="fw-bold mb-0">260</h5>
+                      <h5 className="fw-bold mb-0">{appointmentStatistics.completed}</h5>
                     </div>
                     <div className="text-center">
                       <p className="d-flex align-items-center mb-1 fs-13">
                         <i className="ti ti-circle-filled text-warning fs-10 me-1" />
                         Pending
                       </p>
-                      <h5 className="fw-bold mb-0">21</h5>
+                      <h5 className="fw-bold mb-0">{appointmentStatistics.pending}</h5>
                     </div>
                     <div className="text-center">
                       <p className="d-flex align-items-center mb-1 fs-13">
                         <i className="ti ti-circle-filled text-danger fs-10 me-1" />
                         Cancelled
                       </p>
-                      <h5 className="fw-bold mb-0">50</h5>
+                      <h5 className="fw-bold mb-0">{appointmentStatistics.cancelled}</h5>
                     </div>
                   </div>
                 </div>
@@ -1107,21 +1172,21 @@ const DoctorDahboard = () => {
                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Weekly <i className="ti ti-chevron-down ms-1" />
+                      {topPatientsPeriod.charAt(0).toUpperCase() + topPatientsPeriod.slice(1)} <i className="ti ti-chevron-down ms-1" />
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setTopPatientsPeriod('monthly')}>
                           Monthly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setTopPatientsPeriod('weekly')}>
                           Weekly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setTopPatientsPeriod('yearly')}>
                           Yearly
                         </Link>
                       </li>
@@ -1129,126 +1194,58 @@ const DoctorDahboard = () => {
                   </div>
                 </div>
                 <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between mb-4">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-06.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-medium">
-                            Alberto Ripley
+                  {topPatients.length > 0 ? (
+                    topPatients.map((patient, index) => (
+                      <div key={patient._id} className={`d-flex align-items-center justify-content-between ${index < topPatients.length - 1 ? 'mb-4' : 'mb-0'}`}>
+                        <div className="d-flex align-items-center">
+                          <Link to="#" className="avatar me-2 flex-shrink-0">
+                            {patient.profileImage ? (
+                              <img
+                                src={patient.profileImage.startsWith('http')
+                                  ? patient.profileImage
+                                  : `${import.meta.env.VITE_BACKEND_URL}${patient.profileImage}`}
+                                alt={patient.fullName}
+                                className="rounded-circle"
+                                style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent) {
+                                    const div = document.createElement('div');
+                                    div.className = 'rounded-circle bg-primary text-white';
+                                    div.style.cssText = 'width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 16px;';
+                                    div.textContent = patient.fullName.charAt(0).toUpperCase();
+                                    parent.appendChild(div);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="rounded-circle bg-primary text-white" style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
+                                {patient.fullName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
                           </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          +1 56556 54565
-                        </p>
+                          <div>
+                            <h6 className="fs-14 mb-1 text-truncate">
+                              <Link to="#" className="fw-medium">
+                                {patient.fullName}
+                              </Link>
+                            </h6>
+                            <p className="mb-0 fs-13 text-truncate">
+                              {patient.phone || patient.email}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
+                          {patient.appointmentCount} Appointments
+                        </span>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-muted mb-0">No patient data available</p>
                     </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      20 Appointments
-                    </span>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-4">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-12.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-medium">
-                            Susan Babin
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          +1 65658 95654
-                        </p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      18 Appointments
-                    </span>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-4">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-08.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-medium">
-                            Carol Lam
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          +1 55654 56647
-                        </p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      16 Appointments
-                    </span>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-4">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-22.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-medium">
-                            Marsha Noland
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          +1 65668 54558
-                        </p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      14 Appointments
-                    </span>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-0">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-17.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-medium">
-                            Irma Armstrong
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          +1 45214 66568
-                        </p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      12 Appointments
-                    </span>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>

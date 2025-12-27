@@ -74,41 +74,102 @@ const getAppointmentChart = async (req, res) => {
         const doctorId = new mongoose.Types.ObjectId(req.user._id);
         const { period = 'monthly' } = req.query;
 
-        let groupBy;
-        let dateRange;
         const now = new Date();
+        let chartData = [];
 
         if (period === 'monthly') {
-            groupBy = { month: { $month: '$appointmentDate' } };
-            dateRange = new Date(now.getFullYear(), 0, 1);
-        } else if (period === 'weekly') {
-            groupBy = { week: { $week: '$appointmentDate' } };
-            dateRange = new Date(now.getTime() - 7 * 7 * 24 * 60 * 60 * 1000);
-        } else {
-            groupBy = { year: { $year: '$appointmentDate' } };
-            dateRange = new Date(now.getFullYear() - 5, 0, 1);
-        }
+            // Get data for all 12 months of current year
+            for (let month = 0; month < 12; month++) {
+                const startDate = new Date(now.getFullYear(), month, 1);
+                const endDate = new Date(now.getFullYear(), month + 1, 0);
 
-        const chartData = await Appointment.aggregate([
-            {
-                $match: {
-                    doctor: doctorId,
-                    appointmentDate: { $gte: dateRange },
-                },
-            },
-            {
-                $group: {
-                    _id: groupBy,
-                    total: { $sum: 1 },
-                    completed: {
-                        $sum: {
-                            $cond: [{ $eq: ['$status', 'Checked Out'] }, 1, 0],
-                        },
+                const monthData = await Appointment.aggregate([
+                    {
+                        $match: {
+                            doctor: doctorId,
+                            appointmentDate: { $gte: startDate, $lte: endDate }
+                        }
                     },
-                },
-            },
-            { $sort: { '_id': 1 } },
-        ]);
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: 1 },
+                            completed: {
+                                $sum: { $cond: [{ $eq: ['$status', 'Checked Out'] }, 1, 0] }
+                            }
+                        }
+                    }
+                ]);
+
+                chartData.push({
+                    _id: { month: month + 1 },
+                    total: monthData[0]?.total || 0,
+                    completed: monthData[0]?.completed || 0
+                });
+            }
+        } else if (period === 'weekly') {
+            // Get data for last 7 weeks
+            for (let week = 6; week >= 0; week--) {
+                const startDate = new Date(now.getTime() - (week * 7 * 24 * 60 * 60 * 1000));
+                startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(startDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+
+                const weekData = await Appointment.aggregate([
+                    {
+                        $match: {
+                            doctor: doctorId,
+                            appointmentDate: { $gte: startDate, $lt: endDate }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: 1 },
+                            completed: {
+                                $sum: { $cond: [{ $eq: ['$status', 'Checked Out'] }, 1, 0] }
+                            }
+                        }
+                    }
+                ]);
+
+                chartData.push({
+                    _id: { week: 6 - week },
+                    total: weekData[0]?.total || 0,
+                    completed: weekData[0]?.completed || 0
+                });
+            }
+        } else if (period === 'yearly') {
+            // Get data for last 5 years
+            for (let yearOffset = 4; yearOffset >= 0; yearOffset--) {
+                const year = now.getFullYear() - yearOffset;
+                const startDate = new Date(year, 0, 1);
+                const endDate = new Date(year, 11, 31);
+
+                const yearData = await Appointment.aggregate([
+                    {
+                        $match: {
+                            doctor: doctorId,
+                            appointmentDate: { $gte: startDate, $lte: endDate }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: 1 },
+                            completed: {
+                                $sum: { $cond: [{ $eq: ['$status', 'Checked Out'] }, 1, 0] }
+                            }
+                        }
+                    }
+                ]);
+
+                chartData.push({
+                    _id: { year: year },
+                    total: yearData[0]?.total || 0,
+                    completed: yearData[0]?.completed || 0
+                });
+            }
+        }
 
         res.status(200).json({
             success: true,
@@ -157,6 +218,52 @@ const getUpcomingAppointment = async (req, res) => {
 };
 
 /**
+ * Get upcoming appointment with filter
+ */
+const getUpcomingAppointmentWithFilter = async (req, res) => {
+    try {
+        const doctorId = new mongoose.Types.ObjectId(req.user._id);
+        const { filter = 'today' } = req.query;
+
+        const now = new Date();
+        let startDate = new Date();
+        let endDate = new Date();
+
+        if (filter === 'today') {
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+        } else if (filter === 'week') {
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+        } else if (filter === 'month') {
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        }
+
+        const upcomingAppointment = await Appointment.findOne({
+            doctor: doctorId,
+            appointmentDate: { $gte: startDate, $lte: endDate },
+            status: { $in: ['Scheduled', 'Confirmed'] },
+        })
+            .populate('patient', 'fullName email phone profileImage')
+            .sort({ appointmentDate: 1, appointmentTime: 1 })
+            .limit(1);
+
+        res.status(200).json({
+            success: true,
+            data: upcomingAppointment || null,
+        });
+    } catch (error) {
+        console.error('Get upcoming appointment error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching upcoming appointment',
+            error: error.message,
+        });
+    }
+};
+
+/**
  * Get recent appointments
  */
 const getRecentAppointments = async (req, res) => {
@@ -165,12 +272,19 @@ const getRecentAppointments = async (req, res) => {
 
         const recentAppointments = await Appointment.find({ doctor: doctorId })
             .populate('patient', 'fullName email phone profileImage')
+            .populate('doctor', 'consultationCharge')
             .sort({ appointmentDate: -1 })
             .limit(5);
 
+        // Add consultation charge to each appointment
+        const appointmentsWithFee = recentAppointments.map(apt => ({
+            ...apt.toObject(),
+            consultationCharge: apt.doctor?.consultationCharge || 0
+        }));
+
         res.status(200).json({
             success: true,
-            data: recentAppointments,
+            data: appointmentsWithFee,
         });
     } catch (error) {
         console.error('Get recent appointments error:', error);
@@ -301,10 +415,146 @@ const getAdditionalStats = async (req, res) => {
     }
 };
 
+/**
+ * Get appointment statistics for pie chart
+ */
+const getAppointmentStatistics = async (req, res) => {
+    try {
+        const doctorId = new mongoose.Types.ObjectId(req.user._id);
+        const { period = 'monthly' } = req.query;
+
+        const now = new Date();
+        let startDate;
+
+        if (period === 'monthly') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        } else if (period === 'weekly') {
+            startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        } else if (period === 'yearly') {
+            startDate = new Date(now.getFullYear(), 0, 1);
+        }
+
+        const statistics = await Appointment.aggregate([
+            {
+                $match: {
+                    doctor: doctorId,
+                    appointmentDate: { $gte: startDate }
+                }
+            },
+            {
+                $group: {
+                    _id: '$status',
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Format data for frontend
+        const completed = statistics.find(s => s._id === 'Checked Out')?.count || 0;
+        const pending = statistics.find(s => ['Scheduled', 'Confirmed'].includes(s._id))?.count || 0;
+        const cancelled = statistics.find(s => s._id === 'Cancelled')?.count || 0;
+
+        res.status(200).json({
+            success: true,
+            data: {
+                completed,
+                pending,
+                cancelled
+            }
+        });
+    } catch (error) {
+        console.error('Get appointment statistics error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching statistics',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * Get top patients by appointment count
+ */
+const getTopPatients = async (req, res) => {
+    try {
+        const doctorId = new mongoose.Types.ObjectId(req.user._id);
+        const { period = 'weekly' } = req.query;
+
+        const now = new Date();
+        let startDate;
+
+        if (period === 'monthly') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        } else if (period === 'weekly') {
+            startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        } else if (period === 'yearly') {
+            startDate = new Date(now.getFullYear(), 0, 1);
+        }
+
+        const topPatients = await Appointment.aggregate([
+            {
+                $match: {
+                    doctor: doctorId,
+                    appointmentDate: { $gte: startDate }
+                }
+            },
+            {
+                $group: {
+                    _id: '$patient',
+                    appointmentCount: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { appointmentCount: -1 }
+            },
+            {
+                $limit: 5
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'patientInfo'
+                }
+            },
+            {
+                $unwind: '$patientInfo'
+            },
+            {
+                $project: {
+                    _id: '$patientInfo._id',
+                    fullName: '$patientInfo.fullName',
+                    email: '$patientInfo.email',
+                    phone: '$patientInfo.phone',
+                    profileImage: '$patientInfo.profileImage',
+                    appointmentCount: 1
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: topPatients
+        });
+    } catch (error) {
+        console.error('Get top patients error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching top patients',
+            error: error.message,
+        });
+    }
+};
+
+
 module.exports = {
     getDoctorStats,
     getAppointmentChart,
     getUpcomingAppointment,
+    getUpcomingAppointmentWithFilter,
     getRecentAppointments,
     getAdditionalStats,
+    getAppointmentStatistics,
+    getTopPatients,
 };
