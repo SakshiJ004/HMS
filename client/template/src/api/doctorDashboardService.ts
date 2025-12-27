@@ -160,7 +160,7 @@ export const getAdditionalStats = async () => {
 
 export const getUpcomingAppointmentFiltered = async (filter: 'today' | 'week' | 'month' = 'today') => {
     try {
-        const response = await axios.get<{ success: boolean; data: UpcomingAppointmentData | null }>(
+        const response = await axios.get<{ success: boolean; data: UpcomingAppointmentData[] }>(
             `${API_URL}/api/doctor/dashboard/upcoming-filtered?filter=${filter}`,
             getAuthConfig()
         );

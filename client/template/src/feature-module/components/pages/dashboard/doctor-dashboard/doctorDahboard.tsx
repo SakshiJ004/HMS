@@ -21,6 +21,7 @@ import {
   getTopPatients,
 } from "../../../../../api/doctorDashboardService";
 import { getDoctor } from "../../../../../api/doctorService";
+import { all_routes } from "../../../../routes/all_routes";
 
 
 const DoctorDahboard = () => {
@@ -34,7 +35,7 @@ const DoctorDahboard = () => {
   });
   const [chartPeriod, setChartPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
   const [_chartData, setChartData] = useState<any[]>([]);
-  const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointmentData | null>(null);
+  const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointmentData[]>([]);
   const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
 
   const [additionalStats, setAdditionalStats] = useState<any>({
@@ -316,54 +317,56 @@ const DoctorDahboard = () => {
                   </div>
                 </div>
                 <div className="card-body">
-                  {upcomingAppointment ? (
-                    <>
-                      <div className="d-flex align-items-center mb-3">
-                        <Link to="#" className="avatar me-2 flex-shrink-0">
-                          {upcomingAppointment.patient.profileImage ? (
-                            <img
-                              src={upcomingAppointment.patient.profileImage}
-                              alt={upcomingAppointment.patient.fullName}
-                              className="rounded-circle"
-                              style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                              {upcomingAppointment.patient.fullName.charAt(0)}
-                            </div>
-                          )}
-                        </Link>
-                        <div>
-                          <h6 className="fs-14 mb-1 text-truncate">
-                            <Link to="#" className="fw-semibold">
-                              {upcomingAppointment.patient.fullName}
-                            </Link>
-                          </h6>
-                          <p className="mb-0 fs-13 text-truncate">#{upcomingAppointment.appointmentId}</p>
+                  {upcomingAppointment && upcomingAppointment.length > 0 ? (
+                    upcomingAppointment.map((apt) => (
+                      <div key={apt._id} className="mb-4">
+                        <div className="d-flex align-items-center mb-3">
+                          <Link to="#" className="avatar me-2 flex-shrink-0">
+                            {apt.patient.profileImage ? (
+                              <img
+                                src={apt.patient.profileImage}
+                                alt={apt.patient.fullName}
+                                className="rounded-circle"
+                                style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                {apt.patient.fullName.charAt(0)}
+                              </div>
+                            )}
+                          </Link>
+                          <div>
+                            <h6 className="fs-14 mb-1 text-truncate">
+                              <Link to="#" className="fw-semibold">
+                                {apt.patient.fullName}
+                              </Link>
+                            </h6>
+                            <p className="mb-0 fs-13 text-truncate">#{apt.appointmentId}</p>
+                          </div>
+                        </div>
+                        <h6 className="fs-14 fw-semibold mb-1">{apt.reason || 'General Visit'}</h6>
+                        <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
+                          <p className="mb-0 d-inline-flex align-items-center">
+                            <i className="ti ti-calendar-time text-dark me-1" />
+                            {dayjs(apt.appointmentDate).format('dddd, DD MMM YYYY')}
+                          </p>
+                          <p className="mb-0 d-inline-flex align-items-center">
+                            <i className="ti ti-clock text-dark me-1" />
+                            {apt.appointmentTime}
+                          </p>
+                        </div>
+                        <div className="row">
+                          <div className="col">
+                            <h6 className="fs-13 fw-semibold mb-1">Department</h6>
+                            <p>{apt.department}</p>
+                          </div>
+                          <div className="col">
+                            <h6 className="fs-13 fw-semibold mb-1">Type</h6>
+                            <p className="text-truncate">{apt.appointmentType}</p>
+                          </div>
                         </div>
                       </div>
-                      <h6 className="fs-14 fw-semibold mb-1">{upcomingAppointment.reason || 'General Visit'}</h6>
-                      <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
-                        <p className="mb-0 d-inline-flex align-items-center">
-                          <i className="ti ti-calendar-time text-dark me-1" />
-                          {dayjs(upcomingAppointment.appointmentDate).format('dddd, DD MMM YYYY')}
-                        </p>
-                        <p className="mb-0 d-inline-flex align-items-center">
-                          <i className="ti ti-clock text-dark me-1" />
-                          {upcomingAppointment.appointmentTime}
-                        </p>
-                      </div>
-                      <div className="row">
-                        <div className="col">
-                          <h6 className="fs-13 fw-semibold mb-1">Department</h6>
-                          <p>{upcomingAppointment.department}</p>
-                        </div>
-                        <div className="col">
-                          <h6 className="fs-13 fw-semibold mb-1">Type</h6>
-                          <p className="text-truncate">{upcomingAppointment.appointmentType}</p>
-                        </div>
-                      </div>
-                    </>
+                    ))
                   ) : (
                     <div className="text-center py-5">
                       <i className="ti ti-calendar-x fs-1 text-muted mb-3"></i>
@@ -1090,7 +1093,7 @@ const DoctorDahboard = () => {
                   ) : (
                     <p className="text-center text-muted py-3">No schedule available</p>
                   )}
-                  <Link to="#" className="btn btn-light w-100 mt-2 fs-13">
+                  <Link to={all_routes.doctorschedule} className="btn btn-light w-100 mt-2 fs-13">
                     Edit Availability
                   </Link>
                 </div>
@@ -1132,7 +1135,7 @@ const DoctorDahboard = () => {
                   </div>
                 </div>
                 <div className="card-body">
-                  <CircleChart2 data={appointmentStatistics}/>
+                  <CircleChart2 data={appointmentStatistics} />
                   <div className="d-flex align-items-center justify-content-center gap-2 mt-3">
                     <div className="text-center">
                       <p className="d-flex align-items-center mb-1 fs-13">

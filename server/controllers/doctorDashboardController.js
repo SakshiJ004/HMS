@@ -102,7 +102,8 @@ const getAppointmentChart = async (req, res) => {
                 ]);
 
                 chartData.push({
-                    _id: { month: month + 1 },
+                    _id: month + 1,
+                    month: month + 1,
                     total: monthData[0]?.total || 0,
                     completed: monthData[0]?.completed || 0
                 });
@@ -133,7 +134,8 @@ const getAppointmentChart = async (req, res) => {
                 ]);
 
                 chartData.push({
-                    _id: { week: 6 - week },
+                    _id: 6 - week,
+                    week: 6 - week,
                     total: weekData[0]?.total || 0,
                     completed: weekData[0]?.completed || 0
                 });
@@ -164,7 +166,8 @@ const getAppointmentChart = async (req, res) => {
                 ]);
 
                 chartData.push({
-                    _id: { year: year },
+                    _id: year,
+                    year: year,
                     total: yearData[0]?.total || 0,
                     completed: yearData[0]?.completed || 0
                 });
@@ -240,18 +243,19 @@ const getUpcomingAppointmentWithFilter = async (req, res) => {
             endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         }
 
-        const upcomingAppointment = await Appointment.findOne({
+        // ✅ Changed: Get multiple appointments (limit 3) instead of 1
+        const upcomingAppointments = await Appointment.find({
             doctor: doctorId,
             appointmentDate: { $gte: startDate, $lte: endDate },
             status: { $in: ['Scheduled', 'Confirmed'] },
         })
             .populate('patient', 'fullName email phone profileImage')
             .sort({ appointmentDate: 1, appointmentTime: 1 })
-            .limit(1);
+            .limit(3);  // ✅ Changed from .findOne() and limit(1)
 
         res.status(200).json({
             success: true,
-            data: upcomingAppointment || null,
+            data: upcomingAppointments,  // ✅ Return array instead of single object
         });
     } catch (error) {
         console.error('Get upcoming appointment error:', error);
