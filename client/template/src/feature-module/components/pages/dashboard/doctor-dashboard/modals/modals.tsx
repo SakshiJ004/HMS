@@ -58,7 +58,7 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
     reason: "",
     status: "Scheduled",
   });
-  
+
   const [doctorSchedule, setDoctorSchedule] = useState<Array<{
     day: string;
     timeSlots: Array<{ startTime: string; endTime: string }>;
@@ -428,9 +428,6 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
     return modalElement ? modalElement : document.body;
   };
 
-  const onChangeTime = (time: any, timeString: any) => {
-    console.log(time, timeString);
-  };
   return (
     <>
       {/* Start Add New Appointment */}
