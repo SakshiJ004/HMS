@@ -38,6 +38,6 @@ router.put('/:id', protect, authorize('admin'), updateDoctor);
 // @access  Private (Admin only)
 router.delete('/:id', protect, authorize('admin'), deleteDoctor);
 
-route.put('/:id/schedule', protect, authorize('doctor'), updateDoctorSchedule)
+router.put('/:id/schedule', protect, authorize('doctor'), updateDoctorSchedule)
 
 module.exports = router;
