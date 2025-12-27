@@ -152,7 +152,13 @@ const SCol20Chart = ({ data = [], period = 'monthly' }: SCol20ChartProps) => {
     } else if (period === 'weekly') {
       labels = data.map((_, index) => `Week ${index + 1}`);
     } else if (period === 'yearly') {
-      labels = data.map(item => item._id.year?.toString() || '');
+      labels = data.map(item => {
+        // Handle both {year: 2024} and direct year value (2024)
+        if (typeof item._id === 'object' && item._id.year) {
+          return item._id.year.toString();
+        }
+        return item._id.toString();
+      });
     }
 
     // Extract data

@@ -1,19 +1,234 @@
-import { DatePicker, TimePicker, type TimePickerProps } from "antd";
+import { DatePicker, TimePicker } from "antd";
 import dayjs from "dayjs";
 import ImageWithBasePath from "../../../../../../core/imageWithBasePath";
 import { Link } from "react-router";
-import { all_routes } from "../../../../../routes/all_routes";
+import { all_routes } from "../../../../../routes/all_routes"
+import { useState, useEffect } from "react";
+import { message } from "antd";
+import CommonSelect from "../../../../../../core/common/common-select/commonSelect";
+import {
+  getPatients,
+  createAppointment,
+  type Patient,
+} from "../../../../../../api/appointmentService";
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+// Add this TypeScript declaration for Bootstrap
+declare global {
+  interface Window {
+    bootstrap?: {
+      Offcanvas: {
+        getInstance: (element: HTMLElement | null) => {
+          hide: () => void;
+        } | null;
+      };
+    };
+  }
+}
 
 const Modals = () => {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    patient: "",
+    appointmentType: "",
+    appointmentDate: null as any,
+    appointmentTime: null as any,
+    reason: "",
+    status: "Scheduled",
+  });
+  const [errors, setErrors] = useState({
+    patient: "",
+    appointmentType: "",
+    appointmentDate: "",
+    appointmentTime: "",
+  });
+
+  // Fetch patients on mount
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  const fetchPatients = async () => {
+    try {
+      const response = await getPatients();
+      setPatients(response.data || []);
+    } catch (error: any) {
+      console.error("Error fetching patients:", error);
+      message.error("Failed to load patients");
+    }
+  };
+
+  // Get logged-in doctor info
+  const getDoctorInfo = () => {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      return JSON.parse(userData);
+    }
+    return null;
+  };
+
+  const doctorInfo = getDoctorInfo();
+
+  // Dropdown options
+  const appointmentTypeOptions: SelectOption[] = [
+    { value: "Online Consultation", label: "Online Consultation" },
+    { value: "In-Person Visit", label: "In-Person Visit" },
+  ];
+
+  const statusOptions: SelectOption[] = [
+    { value: "Scheduled", label: "Scheduled" },
+    { value: "Confirmed", label: "Confirmed" },
+  ];
+
+  const patientOptions: SelectOption[] = patients.map((patient) => ({
+    value: patient._id,
+    label: patient.fullName,
+  }));
+
+  // Disable past dates
+  const disabledDate = (current: any) => {
+    return current && current.isBefore(dayjs().startOf('day'));
+  };
+
+  // Disable past times
+  const disabledTime = () => {
+    const now = dayjs();
+    const selectedDate = formData.appointmentDate;
+
+    if (!selectedDate || selectedDate.isAfter(now, 'day')) {
+      return {};
+    }
+
+    if (selectedDate.isSame(now, 'day')) {
+      const currentHour = now.hour();
+      const currentMinute = now.minute();
+
+      return {
+        disabledHours: () => {
+          return Array.from({ length: currentHour }, (_, i) => i);
+        },
+        disabledMinutes: (selectedHour: number) => {
+          if (selectedHour === currentHour) {
+            return Array.from({ length: currentMinute + 1 }, (_, i) => i);
+          }
+          return [];
+        },
+      };
+    }
+
+    return {};
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const newErrors = {
+      patient: "",
+      appointmentType: "",
+      appointmentDate: "",
+      appointmentTime: "",
+    };
+
+    let isValid = true;
+
+    if (!formData.patient) {
+      newErrors.patient = "Please select a patient";
+      isValid = false;
+    }
+
+    if (!formData.appointmentType) {
+      newErrors.appointmentType = "Please select appointment type";
+      isValid = false;
+    }
+
+    if (!formData.appointmentDate) {
+      newErrors.appointmentDate = "Please select appointment date";
+      isValid = false;
+    }
+
+    if (!formData.appointmentTime) {
+      newErrors.appointmentTime = "Please select appointment time";
+      isValid = false;
+    } else {
+      const selectedDateTime = formData.appointmentDate.clone()
+        .hour(formData.appointmentTime.hour())
+        .minute(formData.appointmentTime.minute());
+
+      if (selectedDateTime.isBefore(dayjs())) {
+        newErrors.appointmentTime = "Please select a future time";
+        isValid = false;
+      }
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  // Handle form submission
+  const handleCreateAppointment = async () => {
+    if (!validateForm()) {
+      message.error("Please fill all required fields");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const appointmentData = {
+        patient: formData.patient,
+        doctor: doctorInfo._id,
+        department: doctorInfo.department,
+        appointmentType: formData.appointmentType,
+        appointmentDate: formData.appointmentDate.format("YYYY-MM-DD"),
+        appointmentTime: formData.appointmentTime.format("HH:mm"),
+        reason: formData.reason,
+        status: formData.status,
+      };
+
+      await createAppointment(appointmentData);
+      message.success("Appointment created successfully!");
+
+      // Close modal
+      const offcanvasElement = document.getElementById('new_appointment');
+      const offcanvas = window.bootstrap?.Offcanvas.getInstance(offcanvasElement);
+      offcanvas?.hide();
+
+      // Reset form
+      setFormData({
+        patient: "",
+        appointmentType: "",
+        appointmentDate: null,
+        appointmentTime: null,
+        reason: "",
+        status: "Scheduled",
+      });
+
+      // Reload page to show new appointment
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Error creating appointment:", error);
+      message.error(error.message || "Failed to create appointment");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Keep your existing getModalContainer and onChangeTime functions
   const getModalContainer = () => {
     const modalElement = document.getElementById("modal-datepicker");
-    return modalElement ? modalElement : document.body; // Fallback to document.body if modalElement is null
+    return modalElement ? modalElement : document.body;
   };
-  const onChangeTime: TimePickerProps["onChange"] = (time, timeString) => {
+
+  const onChangeTime = (time: any, timeString: any) => {
     console.log(time, timeString);
   };
   return (
     <>
+      {/* Start Add New Appointment */}
       {/* Start Add New Appointment */}
       <div
         className="offcanvas offcanvas-offset offcanvas-end"
@@ -34,7 +249,7 @@ const Modals = () => {
           </div>
         </div>
         <div className="offcanvas-body pt-3">
-          <form action="#">
+          <form id="newAppointmentForm">
             {/* start row*/}
             <div className="row">
               <div className="col-lg-12">
@@ -46,196 +261,95 @@ const Modals = () => {
                     <input
                       type="text"
                       className="form-control rounded bg-light"
-                      defaultValue="AP234354"
+                      value="Auto-generated"
+                      readOnly
                     />
                   </div>
                 </div>
               </div>
               {/* end col*/}
+
+              {/* Patient Selection */}
               <div className="col-lg-12">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
                     Patient<span className="text-danger">*</span>
                   </label>
-                  <div className="dropdown">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle form-control rounded d-flex align-items-center justify-content-between border"
-                      data-bs-toggle="dropdown"
-                      data-bs-auto-close="outside"
-                      aria-expanded="true"
-                    >
-                      Select
-                    </Link>
-                    <div className="dropdown-menu shadow-lg w-100 dropdown-info">
-                      <div className="mb-3">
-                        <div className="input-icon-start position-relative">
-                          <span className="input-icon-addon fs-12">
-                            <i className="ti ti-search" />
-                          </span>
-                          <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Search"
-                          />
-                        </div>
-                      </div>
-                      <ul className="mb-3 list-style-none">
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/users/user-02.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            Emily Clark
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-01.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            John Carter
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-16.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            Sophia White
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-15.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            Michael Johnson
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-14.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            Olivia Harris
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            <span className="avatar avatar-sm rounded-circle me-2">
-                              <ImageWithBasePath
-                                src="assets/img/profiles/avatar-01.jpg"
-                                className="flex-shrink-0 rounded-circle"
-                                alt="img"
-                              />
-                            </span>
-                            David Anderson
-                          </label>
-                        </li>
-                      </ul>
+                  <CommonSelect
+                    options={patientOptions}
+                    className="select"
+                    placeholder="Select Patient"
+                    onChange={(option: any) => {
+                      setFormData(prev => ({ ...prev, patient: option?.value || "" }));
+                      setErrors(prev => ({ ...prev, patient: "" }));
+                    }}
+                  />
+                  {errors.patient && (
+                    <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                      {errors.patient}
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
               {/* end col*/}
+
+              {/* Doctor Info (Read-only) */}
+              <div className="col-lg-12">
+                <div className="mb-3">
+                  <label className="form-label mb-1 text-dark fs-14 fw-medium">
+                    Doctor<span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control rounded bg-light"
+                    value={doctorInfo?.fullName || "N/A"}
+                    readOnly
+                  />
+                </div>
+              </div>
+              {/* end col*/}
+
+              {/* Department (Read-only) */}
+              <div className="col-lg-12">
+                <div className="mb-3">
+                  <label className="form-label mb-1 text-dark fs-14 fw-medium">
+                    Department<span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control rounded bg-light"
+                    value={doctorInfo?.department || "N/A"}
+                    readOnly
+                  />
+                </div>
+              </div>
+              {/* end col*/}
+
+              {/* Appointment Type */}
               <div className="col-lg-12">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
                     Appointment Type <span className="text-danger">*</span>
                   </label>
-                  <div className="dropdown">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle form-control rounded d-flex align-items-center justify-content-between border"
-                      data-bs-toggle="dropdown"
-                      data-bs-auto-close="outside"
-                      aria-expanded="true"
-                    >
-                      Select
-                    </Link>
-                    <div className="dropdown-menu shadow-lg w-100 dropdown-info">
-                      <div className="mb-3">
-                        <div className="input-icon-start position-relative">
-                          <span className="input-icon-addon fs-12">
-                            <i className="ti ti-search" />
-                          </span>
-                          <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Select"
-                          />
-                        </div>
-                      </div>
-                      <ul className="mb-3 list-style-none">
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            In Person
-                          </label>
-                        </li>
-                        <li className="list-none">
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            Online
-                          </label>
-                        </li>
-                      </ul>
+                  <CommonSelect
+                    options={appointmentTypeOptions}
+                    className="select"
+                    placeholder="Select Type"
+                    onChange={(option: any) => {
+                      setFormData(prev => ({ ...prev, appointmentType: option?.value || "" }));
+                      setErrors(prev => ({ ...prev, appointmentType: "" }));
+                    }}
+                  />
+                  {errors.appointmentType && (
+                    <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                      {errors.appointmentType}
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
               {/* end col*/}
+
+              {/* Date */}
               <div className="col-lg-6">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
@@ -244,21 +358,33 @@ const Modals = () => {
                   <div className="input-icon-end position-relative">
                     <DatePicker
                       className="form-control datetimepicker"
-                      format={{
-                        format: "DD-MM-YYYY",
-                        type: "mask",
-                      }}
+                      format="DD-MM-YYYY"
                       getPopupContainer={getModalContainer}
-                      placeholder="dd-mm-yyyy"
+                      placeholder="DD-MM-YYYY"
+                      disabledDate={disabledDate}
+                      onChange={(date) => {
+                        setFormData(prev => ({ ...prev, appointmentDate: date }));
+                        if (date && date.isSame(dayjs(), 'day')) {
+                          setFormData(prev => ({ ...prev, appointmentTime: null }));
+                        }
+                        setErrors(prev => ({ ...prev, appointmentDate: "" }));
+                      }}
                       suffixIcon={null}
                     />
                     <span className="input-icon-addon">
                       <i className="ti ti-calendar" />
                     </span>
                   </div>
+                  {errors.appointmentDate && (
+                    <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                      {errors.appointmentDate}
+                    </div>
+                  )}
                 </div>
               </div>
               {/* end col*/}
+
+              {/* Time */}
               <div className="col-lg-6">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
@@ -267,96 +393,61 @@ const Modals = () => {
                   <div className="input-icon-end position-relative">
                     <TimePicker
                       className="form-control"
-                      onChange={onChangeTime}
-                      defaultOpenValue={dayjs("00:00:00", "HH:mm:ss")}
+                      format="HH:mm"
+                      value={formData.appointmentTime}
+                      onChange={(time) => {
+                        setFormData(prev => ({ ...prev, appointmentTime: time }));
+                        setErrors(prev => ({ ...prev, appointmentTime: "" }));
+                      }}
+                      disabledTime={disabledTime}
+                      showNow={false}
+                      disabled={!formData.appointmentDate}
+                      placeholder="Select time"
                     />
                     <span className="input-icon-addon">
                       <i className="ti ti-clock" />
                     </span>
                   </div>
+                  {errors.appointmentTime && (
+                    <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                      {errors.appointmentTime}
+                    </div>
+                  )}
                 </div>
               </div>
               {/* end col*/}
+
+              {/* Reason */}
               <div className="col-lg-12">
                 <div className="mb-3">
-                  <div>
-                    <label className="form-label mb-1 text-dark fs-14 fw-medium">
-                      Appointment Reason
-                    </label>
-                    <textarea rows={4} className="form-control rounded" />
-                  </div>
+                  <label className="form-label mb-1 text-dark fs-14 fw-medium">
+                    Appointment Reason
+                  </label>
+                  <textarea
+                    rows={4}
+                    className="form-control rounded"
+                    value={formData.reason}
+                    onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+                    placeholder="Enter reason for appointment"
+                  />
                 </div>
               </div>
               {/* end col*/}
+
+              {/* Status */}
               <div className="col-lg-12">
                 <div className="mb-3">
                   <label className="form-label mb-1 text-dark fs-14 fw-medium">
                     Status<span className="text-danger">*</span>
                   </label>
-                  <div className="dropdown">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle form-control rounded d-flex align-items-center justify-content-between border"
-                      data-bs-toggle="dropdown"
-                      data-bs-auto-close="outside"
-                      aria-expanded="true"
-                    >
-                      Select
-                    </Link>
-                    <div className="dropdown-menu shadow-lg w-100 dropdown-info">
-                      <div className="mb-3">
-                        <div className="input-icon-start position-relative">
-                          <span className="input-icon-addon fs-12">
-                            <i className="ti ti-search" />
-                          </span>
-                          <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Select"
-                          />
-                        </div>
-                      </div>
-                      <ul className="mb-3 list-style-none">
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            Checked Out
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                              defaultChecked
-                            />
-                            Checked In
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            Cancelled
-                          </label>
-                        </li>
-                        <li>
-                          <label className="dropdown-item px-2 d-flex align-items-center text-dark">
-                            <input
-                              className="form-check-input m-0 me-2"
-                              type="checkbox"
-                            />
-                            Scheduled
-                          </label>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                  <CommonSelect
+                    options={statusOptions}
+                    className="select"
+                    defaultValue={statusOptions[0]}
+                    onChange={(option: any) =>
+                      setFormData(prev => ({ ...prev, status: option?.value || "Scheduled" }))
+                    }
+                  />
                 </div>
               </div>
               {/* end col*/}
@@ -365,16 +456,24 @@ const Modals = () => {
           </form>
         </div>
         <div className="offcanvas-footer mb-1 mt-3 p-3 border-1 border-top">
-          <div className=" d-flex justify-content-end gap-2">
-            <Link to="#" className="btn btn-light btm-md">
+          <div className="d-flex justify-content-end gap-2">
+            <Link to="#" className="btn btn-light btm-md" data-bs-dismiss="offcanvas">
               Cancel
             </Link>
             <button
-              data-bs-dismiss="offcanvas"
+              type="button"
               className="btn btn-primary btm-md"
-              id="filter-submit"
+              onClick={handleCreateAppointment}
+              disabled={loading}
             >
-              Create Appointment
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" />
+                  Creating...
+                </>
+              ) : (
+                "Create Appointment"
+              )}
             </button>
           </div>
         </div>

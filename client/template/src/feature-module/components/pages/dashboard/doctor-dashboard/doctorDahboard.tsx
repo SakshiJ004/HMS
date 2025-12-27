@@ -34,7 +34,7 @@ const DoctorDahboard = () => {
     cancelledAppointmentsChange: 0,
   });
   const [chartPeriod, setChartPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
-  const [_chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
   const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointmentData[]>([]);
   const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
 
@@ -423,7 +423,7 @@ const DoctorDahboard = () => {
                       Completed Appointments
                     </p>
                   </div>
-                  <SCol20Chart />
+                  <SCol20Chart data={chartData} period={chartPeriod} />
                 </div>
               </div>
               {/* card end */}
