@@ -31,7 +31,13 @@ declare global {
   }
 }
 
-const Modals = () => {
+// Add interface for props
+interface ModalsProps {
+  selectedAppointment?: any;
+  onAppointmentUpdated?: () => void;
+}
+
+const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -59,6 +65,20 @@ const Modals = () => {
     fetchPatients();
     fetchDoctorInfo();
   }, []);
+
+  // Update form when selectedAppointment changes
+  useEffect(() => {
+    if (selectedAppointment) {
+      setFormData({
+        patient: selectedAppointment.patient._id || selectedAppointment.patient,
+        appointmentType: selectedAppointment.appointmentType,
+        appointmentDate: selectedAppointment.appointmentDate ? dayjs(selectedAppointment.appointmentDate) : null,
+        appointmentTime: selectedAppointment.appointmentTime ? dayjs(selectedAppointment.appointmentTime, "HH:mm") : null,
+        reason: selectedAppointment.reason || "",
+        status: selectedAppointment.status || "Scheduled",
+      });
+    }
+  }, [selectedAppointment]);
 
   const fetchPatients = async () => {
     try {
@@ -294,8 +314,10 @@ const Modals = () => {
         status: "Scheduled",
       });
 
-      // Reload page to show new appointment
-      window.location.reload();
+      // Refresh data
+      if (onAppointmentUpdated) {
+        onAppointmentUpdated();
+      }
     } catch (error: any) {
       console.error("Error creating appointment:", error);
       message.error(error.message || "Failed to create appointment");

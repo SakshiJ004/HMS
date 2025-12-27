@@ -60,6 +60,7 @@ const DoctorDahboard = () => {
     cancelled: 50
   });
   const [topPatients, setTopPatients] = useState<any[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = useState<RecentAppointment | null>(null);
 
   useEffect(() => {
     fetchAllData();
@@ -923,50 +924,110 @@ const DoctorDahboard = () => {
                       </tbody> */}
 
                       <tbody>
-                        {recentAppointments.map((apt) => (
-                          <tr key={apt._id}>
-                            <td>
-                              <div className="d-flex align-items-center">
-                                <Link to="#" className="avatar me-2">
-                                  {apt.patient.profileImage ? (
-                                    <img
-                                      src={apt.patient.profileImage}
-                                      alt={apt.patient.fullName}
-                                      className="rounded-circle"
-                                    />
-                                  ) : (
-                                    <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                                      {apt.patient.fullName.charAt(0)}
-                                    </div>
-                                  )}
-                                </Link>
-                                <div>
-                                  <h6 className="fs-14 mb-1">
-                                    <Link to="#" className="fw-medium">
-                                      {apt.patient.fullName}
-                                    </Link>
-                                  </h6>
-                                  <p className="mb-0 fs-13">{apt.patient.phone || apt.patient.email}</p>
+                        {recentAppointments && recentAppointments.length > 0 ? (
+                          recentAppointments.map((apt) => (
+                            <tr key={apt._id}>
+                              <td>
+                                <div className="d-flex align-items-center">
+                                  <Link to="#" className="avatar me-2">
+                                    {apt.patient.profileImage ? (
+                                      <img
+                                        src={apt.patient.profileImage}
+                                        alt={apt.patient.fullName}
+                                        className="rounded-circle"
+                                        style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                      />
+                                    ) : (
+                                      <div
+                                        className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                        style={{ width: '40px', height: '40px' }}
+                                      >
+                                        {apt.patient.fullName.charAt(0).toUpperCase()}
+                                      </div>
+                                    )}
+                                  </Link>
+                                  <div>
+                                    <h6 className="fs-14 mb-1">
+                                      <Link to="#" className="fw-medium">
+                                        {apt.patient.fullName}
+                                      </Link>
+                                    </h6>
+                                    <p className="mb-0 fs-13">{apt.patient.phone || apt.patient.email}</p>
+                                  </div>
                                 </div>
+                              </td>
+                              <td>{dayjs(apt.appointmentDate).format('DD MMM YYYY')} - {apt.appointmentTime}</td>
+                              <td>{apt.appointmentType}</td>
+                              <td>
+                                <span className={`badge fw-medium ${apt.status === 'Checked Out' ? 'bg-success' :
+                                  apt.status === 'Checked In' ? 'bg-warning' :
+                                    apt.status === 'Cancelled' ? 'bg-danger' :
+                                      'bg-info'
+                                  }`}>
+                                  {apt.status}
+                                </span>
+                              </td>
+                              <td className="fw-semibold text-dark">${apt.consultationCharge || 0}</td>
+                              <td>
+                                <Link
+                                  to="#"
+                                  className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
+                                  title="Reschedule"
+                                  onClick={() => {
+                                    setSelectedAppointment(apt);
+                                    const editButton = document.querySelector('[data-bs-target="#edit_appointment"]') as HTMLElement;
+                                    editButton?.click();
+                                  }}
+                                >
+                                  <i className="ti ti-calendar-plus" />
+                                </Link>
+                                <Link
+                                  to="#"
+                                  data-bs-toggle="dropdown"
+                                  className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
+                                  title="More options"
+                                >
+                                  <i className="ti ti-dots-vertical" />
+                                </Link>
+                                <ul className="dropdown-menu p-2">
+                                  <li>
+                                    <Link
+                                      to="#"
+                                      className="dropdown-item d-flex align-items-center"
+                                      data-bs-toggle="offcanvas"
+                                      data-bs-target="#edit_appointment"
+                                      onClick={() => setSelectedAppointment(apt)}
+                                    >
+                                      <i className="ti ti-edit me-2" />
+                                      Edit
+                                    </Link>
+                                  </li>
+                                  <li>
+                                    <Link
+                                      to="#"
+                                      className="dropdown-item d-flex align-items-center"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#delete_modal"
+                                      onClick={() => setSelectedAppointment(apt)}
+                                    >
+                                      <i className="ti ti-trash me-2" />
+                                      Delete
+                                    </Link>
+                                  </li>
+                                </ul>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={6} className="text-center py-4">
+                              <div className="d-flex flex-column align-items-center">
+                                <i className="ti ti-calendar-x fs-1 text-muted mb-2"></i>
+                                <p className="text-muted mb-0">No recent appointments found</p>
                               </div>
                             </td>
-                            <td>{dayjs(apt.appointmentDate).format('DD MMM YYYY')} - {apt.appointmentTime}</td>
-                            <td>{apt.appointmentType}</td>
-                            <td>
-                              <span className={`badge fw-medium ${apt.status === 'Checked Out' ? 'bg-success' :
-                                apt.status === 'Checked In' ? 'bg-warning' :
-                                  apt.status === 'Cancelled' ? 'bg-danger' :
-                                    'bg-info'
-                                }`}>
-                                {apt.status}
-                              </span>
-                            </td>
-                            <td className="fw-semibold text-dark">${apt.consultationCharge || 0}</td>
-                            <td>
-                              {/* Action buttons - keep existing */}
-                            </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -1271,7 +1332,10 @@ const DoctorDahboard = () => {
       {/* ========================
 			End Page Content
 		========================= */}
-      <Modals />
+      <Modals
+        selectedAppointment={selectedAppointment}
+        onAppointmentUpdated={fetchAllData}
+      />
     </>
   );
 };
