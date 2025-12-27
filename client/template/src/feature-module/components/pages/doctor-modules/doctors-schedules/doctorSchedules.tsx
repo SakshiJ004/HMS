@@ -677,18 +677,38 @@ const DoctorSchedules = () => {
     }));
   };
 
-  // Validate schedules
   const validateSchedules = () => {
+    console.log('🔍 Starting validation...');
+    console.log('📅 Current schedules:', schedules);
+
+    let hasAtLeastOneSlot = false;
+
     for (const day in schedules) {
+      console.log(`Checking ${day}:`, schedules[day]);
+
       for (const slot of schedules[day]) {
+        console.log(`  Slot:`, { from: slot.from, to: slot.to });
+
         if (slot.from && slot.to) {
+          hasAtLeastOneSlot = true;
+          console.log(`  ✅ Found valid slot in ${day}`);
+
           if (slot.to.isBefore(slot.from) || slot.to.isSame(slot.from)) {
+            console.log(`  ❌ Invalid time range in ${day}`);
             message.error(`Invalid time range for ${day}: End time must be after start time`);
             return false;
           }
         }
       }
     }
+
+    console.log('Has at least one slot:', hasAtLeastOneSlot);
+
+    if (!hasAtLeastOneSlot) {
+      message.error('Please add at least one time slot with both start and end times');
+      return false;
+    }
+
     return true;
   };
 
