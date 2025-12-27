@@ -693,32 +693,89 @@ const DoctorSchedules = () => {
   };
 
   // Save changes handler
+  // const handleSaveChanges = async () => {
+  //   if (!validateSchedules()) {
+  //     return;
+  //   }
+
+  //   setLoading(true);
+
+  //   try {
+  //     const userData = localStorage.getItem('userData');
+  //     if (!userData) {
+  //       message.error('User data not found');
+  //       return;
+  //     }
+
+  //     const user = JSON.parse(userData);
+
+  //     // Format schedules for backend
+  //     const formattedSchedules = Object.keys(schedules).map(day => ({
+  //       day: day.charAt(0).toUpperCase() + day.slice(1), // Capitalize first letter
+  //       timeSlots: schedules[day]
+  //         .filter(slot => slot.from && slot.to) // Only include slots with both times
+  //         .map(slot => ({
+  //           startTime: slot.from!.format("HH:mm"),
+  //           endTime: slot.to!.format("HH:mm"),
+  //         }))
+  //     }));
+
+  //     const scheduleData = {
+  //       schedules: formattedSchedules,
+  //       location: location?.value || location,
+  //       fromDate: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+  //       toDate: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+  //       recuresEvery: recuresEvery?.value || recuresEvery,
+  //     };
+
+  //     await updateDoctorSchedule(user._id, scheduleData);
+  //     message.success("Schedule updated successfully!");
+
+  //     // Refresh doctor info
+  //     await fetchDoctorInfo();
+  //   } catch (error: any) {
+  //     console.error("Error updating schedule:", error);
+  //     message.error(error.message || "Failed to update schedule");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSaveChanges = async () => {
+    console.log('🔵 Save Changes clicked');
+
     if (!validateSchedules()) {
+      console.log('❌ Validation failed');
       return;
     }
 
+    console.log('✅ Validation passed');
     setLoading(true);
 
     try {
       const userData = localStorage.getItem('userData');
+      console.log('👤 User data:', userData);
+
       if (!userData) {
         message.error('User data not found');
         return;
       }
 
       const user = JSON.parse(userData);
+      console.log('👤 Parsed user:', user);
 
       // Format schedules for backend
       const formattedSchedules = Object.keys(schedules).map(day => ({
-        day: day.charAt(0).toUpperCase() + day.slice(1), // Capitalize first letter
+        day: day.charAt(0).toUpperCase() + day.slice(1),
         timeSlots: schedules[day]
-          .filter(slot => slot.from && slot.to) // Only include slots with both times
+          .filter(slot => slot.from && slot.to)
           .map(slot => ({
             startTime: slot.from!.format("HH:mm"),
             endTime: slot.to!.format("HH:mm"),
           }))
       }));
+
+      console.log('📅 Formatted schedules:', formattedSchedules);
 
       const scheduleData = {
         schedules: formattedSchedules,
@@ -728,13 +785,15 @@ const DoctorSchedules = () => {
         recuresEvery: recuresEvery?.value || recuresEvery,
       };
 
-      await updateDoctorSchedule(user._id, scheduleData);
-      message.success("Schedule updated successfully!");
+      console.log('📤 Sending schedule data:', scheduleData);
 
-      // Refresh doctor info
+      const response = await updateDoctorSchedule(user._id, scheduleData);
+      console.log('✅ Response:', response);
+
+      message.success("Schedule updated successfully!");
       await fetchDoctorInfo();
     } catch (error: any) {
-      console.error("Error updating schedule:", error);
+      console.error("❌ Error updating schedule:", error);
       message.error(error.message || "Failed to update schedule");
     } finally {
       setLoading(false);
