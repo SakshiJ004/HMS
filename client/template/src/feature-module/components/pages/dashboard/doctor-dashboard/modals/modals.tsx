@@ -11,7 +11,7 @@ import {
   createAppointment,
   type Patient,
 } from "../../../../../../api/appointmentService";
-import { getDoctor } from "../../../../../../api/doctorService";
+// import { getDoctor } from "../../../../../../api/doctorService";
 
 interface SelectOption {
   value: string;
