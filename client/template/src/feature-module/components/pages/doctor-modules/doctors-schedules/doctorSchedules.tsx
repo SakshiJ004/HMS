@@ -531,6 +531,25 @@ interface DaySchedule {
   [key: string]: TimeSlot[];
 }
 
+interface DoctorScheduleSlot {
+  startTime: string;
+  endTime: string;
+}
+
+interface DoctorDaySchedule {
+  day: string;
+  timeSlots: DoctorScheduleSlot[];
+}
+
+interface DoctorInfo {
+  _id: string;
+  fullName: string;
+  email: string;
+  department?: string;
+  schedules?: DoctorDaySchedule[];
+  [key: string]: any;
+}
+
 const DoctorSchedules = () => {
   const getModalContainer = () => {
     const modalElement = document.getElementById("modal-datepicker");
@@ -543,7 +562,7 @@ const DoctorSchedules = () => {
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [recuresEvery, setRecuresEvery] = useState(Recures_Every[0]);
   const [loading, setLoading] = useState(false);
-  const [doctorInfo, setDoctorInfo] = useState<any>(null);
+  const [_doctorInfo, setDoctorInfo] = useState<DoctorInfo | null>(null);
 
   // Separate state for each day's schedules
   const [schedules, setSchedules] = useState<DaySchedule>({
