@@ -23,6 +23,8 @@ router.post('/', protect, authorize('admin'), createDoctor);
 // @access  Private
 router.get('/', protect, getDoctors);
 
+router.put('/:id/schedule', protect, authorize('doctor'), updateDoctorSchedule)
+
 // @route   GET /api/doctors/:id
 // @desc    Get single doctor
 // @access  Private
@@ -38,6 +40,5 @@ router.put('/:id', protect, authorize('admin'), updateDoctor);
 // @access  Private (Admin only)
 router.delete('/:id', protect, authorize('admin'), deleteDoctor);
 
-router.put('/:id/schedule', protect, authorize('doctor'), updateDoctorSchedule)
 
 module.exports = router;
