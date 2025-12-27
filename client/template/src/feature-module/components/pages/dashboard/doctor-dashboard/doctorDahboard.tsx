@@ -1,5 +1,4 @@
 import { Link } from "react-router";
-import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import Modals from "./modals/modals";
 import SCol20Chart from "./charts/scol20";
 import SCol5Chart from "./charts/scol5";
@@ -11,7 +10,7 @@ import dayjs from "dayjs";
 import {
   getDoctorStats,
   getDoctorAppointmentChart,
-  getUpcomingAppointment,
+  // getUpcomingAppointment,
   getRecentAppointments,
   getAdditionalStats,
   type DoctorStats,
