@@ -679,36 +679,35 @@ const DoctorSchedules = () => {
 
   const validateSchedules = () => {
     console.log('🔍 Starting validation...');
-    console.log('📅 Current schedules:', schedules);
 
     let hasAtLeastOneSlot = false;
 
     for (const day in schedules) {
-      console.log(`Checking ${day}:`, schedules[day]);
-
       for (const slot of schedules[day]) {
-        console.log(`  Slot:`, { from: slot.from, to: slot.to });
-
+        // Only validate if BOTH times are filled
         if (slot.from && slot.to) {
           hasAtLeastOneSlot = true;
-          console.log(`  ✅ Found valid slot in ${day}`);
 
-          if (slot.to.isBefore(slot.from) || slot.to.isSame(slot.from)) {
-            console.log(`  ❌ Invalid time range in ${day}`);
-            message.error(`Invalid time range for ${day}: End time must be after start time`);
+          // Get hours and minutes for comparison
+          const fromMinutes = slot.from.hour() * 60 + slot.from.minute();
+          const toMinutes = slot.to.hour() * 60 + slot.to.minute();
+
+          console.log(`${day}: from=${fromMinutes} (${slot.from.format('HH:mm')}), to=${toMinutes} (${slot.to.format('HH:mm')})`);
+
+          if (toMinutes <= fromMinutes) {
+            message.error(`Invalid time for ${day}: End time must be after start time`);
             return false;
           }
         }
       }
     }
 
-    console.log('Has at least one slot:', hasAtLeastOneSlot);
-
     if (!hasAtLeastOneSlot) {
-      message.error('Please add at least one time slot with both start and end times');
+      message.error('Please add at least one time slot');
       return false;
     }
 
+    console.log('✅ Validation passed');
     return true;
   };
 
