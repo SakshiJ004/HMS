@@ -180,7 +180,7 @@ const DoctorDahboard = () => {
                 New Appointment
               </Link>
               <Link
-                to="#"
+                to={all_routes.doctorschedule}
                 className="btn btn-outline-white bg-white d-inline-flex align-items-center"
               >
                 <i className="ti ti-calendar-time me-1" />
@@ -580,349 +580,6 @@ const DoctorDahboard = () => {
                           <th />
                         </tr>
                       </thead>
-                      {/* <tbody>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/profiles/avatar-06.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-medium">
-                                    Alberto Ripley
-                                  </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">+1 56556 54565</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>27 May 2025 - 09:30 AM</td>
-                          <td>Online</td>
-                          <td>
-                            <span className="badge bg-success fw-medium">
-                              Checked Out
-                            </span>
-                          </td>
-                          <td className="fw-semibold text-dark">$400</td>
-                          <td>
-                            <Link
-                              to="#"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                            >
-                              <i className="ti ti-calendar-plus" />
-                            </Link>
-                            <Link
-                              to="#"
-                              data-bs-toggle="dropdown"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                            >
-                              <i className="ti ti-dots-vertical" />
-                            </Link>
-                            <ul className="dropdown-menu p-2">
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="offcanvas"
-                                  data-bs-target="#edit_appointment"
-                                >
-                                  <i className="ti ti-edit me-2" />
-                                  Edit
-                                </Link>
-                              </li>
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#delete_modal"
-                                >
-                                  <i className="ti ti-trash me-2" />
-                                  Delete
-                                </Link>
-                              </li>
-                            </ul>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/profiles/avatar-12.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-medium">
-                                    Susan Babin
-                                  </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">+1 65658 95654</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>26 May 2025 - 10:15 AM</td>
-                          <td>Online</td>
-                          <td>
-                            <span className="badge bg-warning fw-medium">
-                              Checked in
-                            </span>
-                          </td>
-                          <td className="fw-semibold text-dark">$370</td>
-                          <td>
-                            <Link
-                              to="#"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                            >
-                              <i className="ti ti-calendar-plus" />
-                            </Link>
-                            <Link
-                              to="#"
-                              data-bs-toggle="dropdown"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                            >
-                              <i className="ti ti-dots-vertical" />
-                            </Link>
-                            <ul className="dropdown-menu p-2">
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="offcanvas"
-                                  data-bs-target="#edit_appointment"
-                                >
-                                  <i className="ti ti-edit me-2" />
-                                  Edit
-                                </Link>
-                              </li>
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#delete_modal"
-                                >
-                                  <i className="ti ti-trash me-2" />
-                                  Delete
-                                </Link>
-                              </li>
-                            </ul>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/profiles/avatar-08.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-medium">
-                                    Carol Lam
-                                  </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">+1 55654 56647</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>25 May 2025 - 02:40 PM</td>
-                          <td>In-Person</td>
-                          <td>
-                            <span className="badge bg-danger fw-medium">
-                              Cancelled
-                            </span>
-                          </td>
-                          <td className="fw-semibold text-dark">$450</td>
-                          <td>
-                            <Link
-                              to="#"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                            >
-                              <i className="ti ti-calendar-plus" />
-                            </Link>
-                            <Link
-                              to="#"
-                              data-bs-toggle="dropdown"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                            >
-                              <i className="ti ti-dots-vertical" />
-                            </Link>
-                            <ul className="dropdown-menu p-2">
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="offcanvas"
-                                  data-bs-target="#edit_appointment"
-                                >
-                                  <i className="ti ti-edit me-2" />
-                                  Edit
-                                </Link>
-                              </li>
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#delete_modal"
-                                >
-                                  <i className="ti ti-trash me-2" />
-                                  Delete
-                                </Link>
-                              </li>
-                            </ul>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/profiles/avatar-22.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-medium">
-                                    Marsha Noland
-                                  </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">+1 65668 54558</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>24 May 2025 - 11:30 AM</td>
-                          <td>In-Person</td>
-                          <td>
-                            <span className="badge bg-info fw-medium">
-                              Schedule
-                            </span>
-                          </td>
-                          <td className="fw-semibold text-dark">$310</td>
-                          <td>
-                            <Link
-                              to="#"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                            >
-                              <i className="ti ti-calendar-plus" />
-                            </Link>
-                            <Link
-                              to="#"
-                              data-bs-toggle="dropdown"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                            >
-                              <i className="ti ti-dots-vertical" />
-                            </Link>
-                            <ul className="dropdown-menu p-2">
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="offcanvas"
-                                  data-bs-target="#edit_appointment"
-                                >
-                                  <i className="ti ti-edit me-2" />
-                                  Edit
-                                </Link>
-                              </li>
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#delete_modal"
-                                >
-                                  <i className="ti ti-trash me-2" />
-                                  Delete
-                                </Link>
-                              </li>
-                            </ul>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/profiles/avatar-25.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-medium">
-                                    John Elsass
-                                  </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">47851263</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>23 May 2025 - 04:10 PM</td>
-                          <td>Online</td>
-                          <td>
-                            <span className="badge bg-info fw-medium">
-                              Schedule
-                            </span>
-                          </td>
-                          <td className="fw-semibold text-dark">$400</td>
-                          <td>
-                            <Link
-                              to="#"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                            >
-                              <i className="ti ti-calendar-plus" />
-                            </Link>
-                            <Link
-                              to="#"
-                              data-bs-toggle="dropdown"
-                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                            >
-                              <i className="ti ti-dots-vertical" />
-                            </Link>
-                            <ul className="dropdown-menu p-2">
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="offcanvas"
-                                  data-bs-target="#edit_appointment"
-                                >
-                                  <i className="ti ti-edit me-2" />
-                                  Edit
-                                </Link>
-                              </li>
-                              <li>
-                                <Link
-                                  to="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#delete_modal"
-                                >
-                                  <i className="ti ti-trash me-2" />
-                                  Delete
-                                </Link>
-                              </li>
-                            </ul>
-                          </td>
-                        </tr>
-                      </tbody> */}
-
                       <tbody>
                         {recentAppointments && recentAppointments.length > 0 ? (
                           recentAppointments.map((apt) => (
@@ -990,6 +647,18 @@ const DoctorDahboard = () => {
                                   <i className="ti ti-dots-vertical" />
                                 </Link>
                                 <ul className="dropdown-menu p-2">
+                                  <li>
+                                    <Link
+                                      to="#"
+                                      className="dropdown-item d-flex align-items-center"
+                                      data-bs-toggle="offcanvas"
+                                      data-bs-target="#view_details"
+                                      onClick={() => setSelectedAppointment(apt)}
+                                    >
+                                      <i className="ti ti-eye me-2" />
+                                      View
+                                    </Link>
+                                  </li>
                                   <li>
                                     <Link
                                       to="#"
@@ -1135,15 +804,17 @@ const DoctorDahboard = () => {
                   {doctorSchedules && doctorSchedules.length > 0 ? (
                     <>
                       {doctorSchedules.map((schedule, index) => (
-                        <div key={index} className="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
-                          <p className="text-dark fw-semibold mb-0">{schedule.day.slice(0, 3)}</p>
+                        <div key={index} className="mb-2 border-bottom pb-2">
+                          <p className="text-dark fw-semibold mb-1">{schedule.day.slice(0, 3)}</p>
                           {schedule.timeSlots && schedule.timeSlots.length > 0 ? (
-                            <p className="mb-0 d-inline-flex align-items-center">
-                              <i className="ti ti-clock me-1" />
-                              {schedule.timeSlots[0].startTime.slice(0, 5)} - {schedule.timeSlots[0].endTime.slice(0, 5)}
-                            </p>
+                            schedule.timeSlots.map((slot, slotIndex) => (
+                              <p key={slotIndex} className="mb-1 d-inline-flex align-items-center ps-3">
+                                <i className="ti ti-clock me-1" />
+                                {slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}
+                              </p>
+                            ))
                           ) : (
-                            <p className="mb-0 d-inline-flex align-items-center text-danger">
+                            <p className="mb-0 d-inline-flex align-items-center text-danger ps-3">
                               <i className="ti ti-clock me-1" />
                               Closed
                             </p>

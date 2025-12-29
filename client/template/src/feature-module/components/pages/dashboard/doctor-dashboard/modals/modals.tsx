@@ -126,11 +126,17 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
   const appointmentTypeOptions: SelectOption[] = [
     { value: "Online Consultation", label: "Online Consultation" },
     { value: "In-Person Visit", label: "In-Person Visit" },
+    { value: "Follow Up", label: "Follow Up" },
+    { value: "Emergency", label: "Emergency" },
   ];
 
   const statusOptions: SelectOption[] = [
     { value: "Scheduled", label: "Scheduled" },
     { value: "Confirmed", label: "Confirmed" },
+    { value: "Completed", label: "Completed" },
+    { value: "Checked In", label: "Checked In" },
+    { value: "Checked Out", label: "Checked Out" },
+    { value: "Cancelled", label: "Cancelled" },
   ];
 
   const patientOptions: SelectOption[] = patients.map((patient) => ({
@@ -310,10 +316,9 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
       await createAppointment(appointmentData);
       message.success("Appointment created successfully!");
 
-      // Close modal
-      const offcanvasElement = document.getElementById('new_appointment');
-      const offcanvas = window.bootstrap?.Offcanvas.getInstance(offcanvasElement);
-      offcanvas?.hide();
+      // Close via button click (most reliable)
+      const closeButton = document.querySelector('#new_appointment .btn-close') as HTMLElement;
+      closeButton?.click();
 
       // Reset form
       setFormData({
@@ -370,11 +375,8 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
       message.success("Appointment updated successfully!");
 
       // Close modal
-      const offcanvasElement = document.getElementById('edit_appointment');
-      if (offcanvasElement) {
-        const bsOffcanvas = (window as any).bootstrap?.Offcanvas?.getInstance(offcanvasElement);
-        bsOffcanvas?.hide();
-      }
+      const closeButton = document.querySelector('#edit_appointment .btn-close') as HTMLElement;
+      closeButton?.click();
 
       // Refresh data
       if (onAppointmentUpdated) {
@@ -681,6 +683,97 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
         </div>
       </div>
       {/* End Add New Appointment*/}
+      {/* Start view Appointment */}
+      <div
+        className="offcanvas offcanvas-offset offcanvas-end"
+        tabIndex={-1}
+        id="view_details"
+      >
+        <div className="offcanvas-header d-block pb-0 px-0">
+          <div className="border-bottom d-flex align-items-center justify-content-between pb-3 px-3">
+            <h5 className="offcanvas-title fs-18 fw-bold">
+              Appointment Details
+              <span className="badge badge-soft-primary border pt-1 px-2 border-primary fw-medium ms-2">
+                #{selectedAppointment?.appointmentId || 'N/A'}
+              </span>
+            </h5>
+            <button
+              type="button"
+              className="btn-close custom-btn-close opacity-100"
+              data-bs-dismiss="offcanvas"
+              aria-label="Close"
+            >
+              <i className="ti ti-x bg-white fs-16 text-dark" />
+            </button>
+          </div>
+        </div>
+        <div className="offcanvas-body pt-0 px-0">
+          <h6 className="bg-light py-2 px-3 text-dark fw-bold">
+            When &amp; Where
+          </h6>
+          <div className="px-3 my-4">
+            <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+              Appointment On
+              <span className="text-body fw-normal">
+                {selectedAppointment ? dayjs(selectedAppointment.appointmentDate).format('dddd, DD MMM YYYY') : 'N/A'}
+              </span>
+            </p>
+            <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+              Time
+              <span className="text-body fw-normal">
+                {selectedAppointment?.appointmentTime || 'N/A'}
+              </span>
+            </p>
+            <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+              Appointment Type
+              <span className="text-body fw-normal">{selectedAppointment?.appointmentType || 'N/A'}</span>
+            </p>
+            <div className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+              Patient Details
+              <div className="text-body fw-normal d-flex align-items-center">
+                <span className="avatar avatar-sm me-2">
+                  {selectedAppointment?.patient?.profileImage ? (
+                    <img
+                      src={selectedAppointment.patient.profileImage}
+                      alt={selectedAppointment.patient.fullName}
+                      className="rounded-circle"
+                    />
+                  ) : (
+                    <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+                      {selectedAppointment?.patient?.fullName?.charAt(0) || 'P'}
+                    </div>
+                  )}
+                </span>
+                {selectedAppointment?.patient?.fullName || 'N/A'}
+              </div>
+            </div>
+          </div>
+          <h6 className="bg-light py-2 px-3 text-dark fw-bold">
+            Appointment Details
+          </h6>
+          <div className="px-3 my-4">
+            <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+              Status
+              <span className={`badge fw-medium ${selectedAppointment?.status === 'Checked Out' ? 'bg-success' :
+                selectedAppointment?.status === 'Checked In' ? 'bg-warning' :
+                  selectedAppointment?.status === 'Cancelled' ? 'bg-danger' :
+                    'bg-info'
+                }`}>
+                {selectedAppointment?.status || 'N/A'}
+              </span>
+            </p>
+            <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+              Reason
+              <span className="text-body fw-normal">{selectedAppointment?.reason || 'N/A'}</span>
+            </p>
+            <p className="text-dark mb-3 fw-semibold d-flex align-items-center justify-content-between">
+              Consultation Fees
+              <span className="text-body fw-normal">${selectedAppointment?.consultationCharge || 0}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      {/* End view Appointment */}
       {/* Start Edit New Appointment */}
       <div
         className="offcanvas offcanvas-offset offcanvas-end"
