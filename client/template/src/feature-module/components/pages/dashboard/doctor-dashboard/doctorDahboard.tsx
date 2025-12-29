@@ -630,11 +630,9 @@ const DoctorDahboard = () => {
                                   to="#"
                                   className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
                                   title="Reschedule"
-                                  onClick={() => {
-                                    setSelectedAppointment(apt);
-                                    const editButton = document.querySelector('[data-bs-target="#edit_appointment"]') as HTMLElement;
-                                    editButton?.click();
-                                  }}
+                                  data-bs-toggle="offcanvas"
+                                  data-bs-target="#edit_appointment"
+                                  onClick={() => setSelectedAppointment(apt)}
                                 >
                                   <i className="ti ti-calendar-plus" />
                                 </Link>
