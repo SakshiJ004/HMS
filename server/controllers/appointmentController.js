@@ -323,18 +323,47 @@ const getAppointment = async (req, res) => {
 /**
  * Update appointment
  */
+// const updateAppointment = async (req, res) => {
+//     try {
+//         const appointment = await Appointment.findByIdAndUpdate(
+//             req.params.id,
+//             req.body,
+//             {
+//                 new: true,
+//                 runValidators: true,
+//             }
+//         )
+//             .populate('patient', 'fullName email profileImage')
+//             .populate('doctor', 'fullName email profileImage');
+
+//         if (!appointment) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: 'Appointment not found',
+//             });
+//         }
+
+//         res.status(200).json({
+//             success: true,
+//             message: 'Appointment updated successfully',
+//             data: appointment,
+//         });
+//     } catch (error) {
+//         console.error('Update appointment error:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error updating appointment',
+//             error: error.message,
+//         });
+//     }
+// };
+
 const updateAppointment = async (req, res) => {
     try {
-        const appointment = await Appointment.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            {
-                new: true,
-                runValidators: true,
-            }
-        )
-            .populate('patient', 'fullName email profileImage')
-            .populate('doctor', 'fullName email profileImage');
+        console.log('🔍 Updating appointment:', req.params.id);
+        console.log('🔍 With data:', req.body);
+
+        const appointment = await Appointment.findById(req.params.id);
 
         if (!appointment) {
             return res.status(404).json({
@@ -343,17 +372,32 @@ const updateAppointment = async (req, res) => {
             });
         }
 
+        // Update only the fields that are provided
+        Object.keys(req.body).forEach(key => {
+            if (req.body[key] !== undefined) {
+                appointment[key] = req.body[key];
+            }
+        });
+
+        await appointment.save();
+
+        await appointment.populate([
+            { path: 'patient', select: 'fullName email profileImage' },
+            { path: 'doctor', select: 'fullName email profileImage' },
+        ]);
+
         res.status(200).json({
             success: true,
             message: 'Appointment updated successfully',
             data: appointment,
         });
     } catch (error) {
-        console.error('Update appointment error:', error);
+        console.error('❌ Full error:', error);
         res.status(500).json({
             success: false,
             message: 'Error updating appointment',
             error: error.message,
+            stack: error.stack, // Include for debugging
         });
     }
 };
