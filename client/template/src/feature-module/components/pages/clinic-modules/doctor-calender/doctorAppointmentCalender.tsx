@@ -265,6 +265,7 @@ const DoctorAppointmentCalendar = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const doctorId = searchParams.get("doctorId");
+    const isAllDoctors = !doctorId; // Check if viewing all doctors
 
     const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
     const [doctor, setDoctor] = useState<any>(null);
@@ -274,33 +275,59 @@ const DoctorAppointmentCalendar = () => {
     // Filter states
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
     const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
+    const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
 
     const statuses = ["Checked Out", "Checked In", "Cancelled", "Scheduled", "Confirmed"];
 
     useEffect(() => {
-        if (!doctorId) {
-            message.error("No doctor ID provided");
-            navigate(all_routes.doctors);
-            return;
-        }
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [doctorId]);
+
+    // const fetchData = async () => {
+    //     try {
+    //         setLoading(true);
+
+    //         // Fetch doctor details
+    //         const doctorResponse = await getDoctor(doctorId!);
+    //         setDoctor(doctorResponse.data);
+
+    //         // Fetch all appointments and filter by doctor
+    //         const appointmentsResponse = await getAppointments();
+    //         const doctorAppointments = (appointmentsResponse.data || []).filter(
+    //             (app: AppointmentResponse) => app.doctor?._id === doctorId
+    //         );
+    //         setAppointments(doctorAppointments);
+    //     } catch (error: any) {
+    //         console.error("Error fetching data:", error);
+    //         message.error(error.message || "Failed to load data");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     const fetchData = async () => {
         try {
             setLoading(true);
 
-            // Fetch doctor details
-            const doctorResponse = await getDoctor(doctorId!);
-            setDoctor(doctorResponse.data);
-
-            // Fetch all appointments and filter by doctor
+            // Fetch appointments
             const appointmentsResponse = await getAppointments();
-            const doctorAppointments = (appointmentsResponse.data || []).filter(
-                (app: AppointmentResponse) => app.doctor?._id === doctorId
-            );
-            setAppointments(doctorAppointments);
+
+            if (isAllDoctors) {
+                // Show all appointments from all doctors
+                setAppointments(appointmentsResponse.data || []);
+                setDoctor(null); // No specific doctor
+            } else {
+                // Fetch specific doctor details
+                const doctorResponse = await getDoctor(doctorId!);
+                setDoctor(doctorResponse.data);
+
+                // Filter appointments by doctor
+                const doctorAppointments = (appointmentsResponse.data || []).filter(
+                    (app: AppointmentResponse) => app.doctor?._id === doctorId
+                );
+                setAppointments(doctorAppointments);
+            }
         } catch (error: any) {
             console.error("Error fetching data:", error);
             message.error(error.message || "Failed to load data");
@@ -312,6 +339,13 @@ const DoctorAppointmentCalendar = () => {
     // Filter appointments based on selected filters
     const getFilteredAppointments = () => {
         let filtered = [...appointments];
+
+        // Filter by doctor (only in all doctors view)
+        if (isAllDoctors && selectedDoctors.length > 0) {
+            filtered = filtered.filter(app =>
+                app.doctor && selectedDoctors.includes(app.doctor._id)
+            );
+        }
 
         // Filter by status
         if (selectedStatuses.length > 0) {
@@ -347,7 +381,10 @@ const DoctorAppointmentCalendar = () => {
             <div
                 onClick={() => {
                     if (dayAppointments.length > 0) {
-                        navigate(`${all_routes.doctorAppointments}?doctorId=${doctorId}&date=${value.format('YYYY-MM-DD')}`);
+                        const baseUrl = isAllDoctors
+                            ? all_routes.doctorAppointments
+                            : `${all_routes.doctorAppointments}?doctorId=${doctorId}`;
+                        navigate(`${baseUrl}${isAllDoctors ? '?' : '&'}date=${value.format('YYYY-MM-DD')}`);
                     }
                 }}
                 style={{
@@ -355,8 +392,8 @@ const DoctorAppointmentCalendar = () => {
                     minHeight: '80px',
                     padding: '4px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    flexDirection: 'column',
+                    gap: '4px'
                 }}
             >
                 {dayAppointments.length > 0 && (
@@ -365,6 +402,13 @@ const DoctorAppointmentCalendar = () => {
                         style={{ fontSize: '12px', fontWeight: 'bold' }}
                     >
                         {dayAppointments.length} Appointment{dayAppointments.length > 1 ? 's' : ''}
+                        {isAllDoctors && dayAppointments.length <= 3 && (
+                            <div style={{ fontSize: '10px', marginTop: '4px' }}>
+                                {dayAppointments.slice(0, 3).map((apt, idx) => (
+                                    <div key={idx}>{apt.doctor?.fullName || 'N/A'}</div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -383,6 +427,7 @@ const DoctorAppointmentCalendar = () => {
     // Clear all filters
     const clearAllFilters = () => {
         setSelectedStatuses([]);
+        setSelectedDoctors([]);
     };
 
     // Export to PDF
@@ -454,7 +499,10 @@ const DoctorAppointmentCalendar = () => {
                                 </Link>
                             </h6>
                             <h4 className="fw-semibold mb-0 mt-2">
-                                {doctor ? `Dr. ${doctor.fullName}'s Appointment Calendar` : 'Appointment Calendar'}
+                                {isAllDoctors
+                                    ? 'All Doctors Appointment Calendar'
+                                    : `Dr. ${doctor?.fullName}'s Appointment Calendar`
+                                }
                                 <span className="badge badge-soft-primary fs-13 fw-medium ms-2">
                                     Total Appointments: {appointments.length}
                                 </span>
@@ -487,14 +535,20 @@ const DoctorAppointmentCalendar = () => {
                             {/* View toggle */}
                             <div className="bg-white border rounded px-1 pb-0 text-center d-flex align-items-center shadow-sm justify-content-center">
                                 <Link
-                                    to={`${all_routes.doctorAppointments}?doctorId=${doctorId}`}
+                                    to={isAllDoctors
+                                        ? all_routes.doctorAppointments
+                                        : `${all_routes.doctorAppointments}?doctorId=${doctorId}`
+                                    }
                                     className="bg-white rounded p-1 d-flex align-items-center justify-content-center"
                                     title="List View"
                                 >
                                     <i className="ti ti-list fs-14 text-body" />
                                 </Link>
                                 <Link
-                                    to={`${all_routes.doctorAppointmentCalendar}?doctorId=${doctorId}`}
+                                    to={isAllDoctors
+                                        ? all_routes.doctorAppointmentCalendar
+                                        : `${all_routes.doctorAppointmentCalendar}?doctorId=${doctorId}`
+                                    }
                                     className="bg-light rounded p-1 d-flex align-items-center justify-content-center"
                                     title="Calendar View"
                                 >
@@ -582,6 +636,57 @@ const DoctorAppointmentCalendar = () => {
                                                             : 'Select'}
                                                         <i className="ti ti-chevron-down ms-auto" />
                                                     </Link>
+                                                    {/* Doctor Filter - Only show in All Doctors view */}
+                                                    {isAllDoctors && (
+                                                        <div className="mb-3">
+                                                            <div className="d-flex align-items-center justify-content-between">
+                                                                <label className="form-label">Doctors</label>
+                                                                <Link
+                                                                    to="#"
+                                                                    className="link-primary mb-1"
+                                                                    onClick={() => setSelectedDoctors([])}
+                                                                >
+                                                                    Reset
+                                                                </Link>
+                                                            </div>
+                                                            <div className="dropdown">
+                                                                <Link
+                                                                    to="#"
+                                                                    className="dropdown-toggle btn bg-white d-flex align-items-center justify-content-start fs-13 p-2 fw-normal border"
+                                                                    data-bs-toggle="dropdown"
+                                                                    data-bs-auto-close="outside"
+                                                                >
+                                                                    {selectedDoctors.length > 0
+                                                                        ? `${selectedDoctors.length} selected`
+                                                                        : 'All Doctors'}
+                                                                    <i className="ti ti-chevron-down ms-auto" />
+                                                                </Link>
+                                                                <div className="dropdown-menu shadow-lg w-100 dropdown-info p-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                                                    <ul className="mb-3">
+                                                                        {Array.from(new Set(appointments.map(app => app.doctor?._id)))
+                                                                            .filter(id => id)
+                                                                            .map((doctorId) => {
+                                                                                const doc = appointments.find(app => app.doctor?._id === doctorId)?.doctor;
+                                                                                if (!doc) return null;
+                                                                                return (
+                                                                                    <li key={doctorId} className="mb-1">
+                                                                                        <label className="dropdown-item px-2 d-flex align-items-center text-dark">
+                                                                                            <input
+                                                                                                className="form-check-input m-0 me-2"
+                                                                                                type="checkbox"
+                                                                                                checked={selectedDoctors.includes(doctorId!)}
+                                                                                                onChange={() => toggleSelection(selectedDoctors, setSelectedDoctors, doctorId!)}
+                                                                                            />
+                                                                                            Dr. {doc.fullName}
+                                                                                        </label>
+                                                                                    </li>
+                                                                                );
+                                                                            })}
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     <div className="dropdown-menu shadow-lg w-100 dropdown-info p-3">
                                                         <ul className="mb-3">
                                                             {statuses.map((status) => (

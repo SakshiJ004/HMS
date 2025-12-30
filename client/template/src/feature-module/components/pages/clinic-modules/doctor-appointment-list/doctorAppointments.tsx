@@ -16,6 +16,7 @@ import dayjs from "dayjs";
 const DoctorAppointmentList = () => {
     const [searchParams] = useSearchParams();
     const doctorId = searchParams.get("doctorId");
+    const isAllDoctors = !doctorId; // Check if viewing all doctors
     const filterDate = searchParams.get("date");
 
     const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
@@ -27,36 +28,62 @@ const DoctorAppointmentList = () => {
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
     useEffect(() => {
-        if (!doctorId) {
-            message.error("No doctor ID provided");
-            return;
-        }
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [doctorId, filterDate]);
+
+    // const fetchData = async () => {
+    //     try {
+    //         setLoading(true);
+
+    //         // Fetch doctor details
+    //         const doctorResponse = await getDoctor(doctorId!);
+    //         setDoctor(doctorResponse.data);
+
+    //         // Fetch appointments
+    //         const appointmentsResponse = await getAppointments();
+    //         let doctorAppointments = (appointmentsResponse.data || []).filter(
+    //             (app: AppointmentResponse) => app.doctor?._id === doctorId
+    //         );
+
+    //         // Filter by date if provided
+    //         if (filterDate) {
+    //             doctorAppointments = doctorAppointments.filter((app: AppointmentResponse) =>
+    //                 dayjs(app.appointmentDate).format('YYYY-MM-DD') === filterDate
+    //             );
+    //         }
+
+    //         setAppointments(doctorAppointments);
+    //     } catch (error: any) {
+    //         console.error("Error fetching data:", error);
+    //         message.error(error.message || "Failed to load data");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     const fetchData = async () => {
         try {
             setLoading(true);
 
-            // Fetch doctor details
-            const doctorResponse = await getDoctor(doctorId!);
-            setDoctor(doctorResponse.data);
-
             // Fetch appointments
             const appointmentsResponse = await getAppointments();
-            let doctorAppointments = (appointmentsResponse.data || []).filter(
-                (app: AppointmentResponse) => app.doctor?._id === doctorId
-            );
 
-            // Filter by date if provided
-            if (filterDate) {
-                doctorAppointments = doctorAppointments.filter((app: AppointmentResponse) =>
-                    dayjs(app.appointmentDate).format('YYYY-MM-DD') === filterDate
+            if (isAllDoctors) {
+                // Show all appointments from all doctors
+                setAppointments(appointmentsResponse.data || []);
+                setDoctor(null); // No specific doctor
+            } else {
+                // Fetch specific doctor details
+                const doctorResponse = await getDoctor(doctorId!);
+                setDoctor(doctorResponse.data);
+
+                // Filter appointments by doctor
+                const doctorAppointments = (appointmentsResponse.data || []).filter(
+                    (app: AppointmentResponse) => app.doctor?._id === doctorId
                 );
+                setAppointments(doctorAppointments);
             }
-
-            setAppointments(doctorAppointments);
         } catch (error: any) {
             console.error("Error fetching data:", error);
             message.error(error.message || "Failed to load data");
@@ -180,10 +207,10 @@ const DoctorAppointmentList = () => {
             render: (text: string) => (
                 <span
                     className={`fs-13 badge ${text === "Checked Out" ? "badge-soft-info text-info" :
-                            text === "Checked In" ? "badge-soft-warning text-warning" :
-                                text === "Cancelled" ? "badge-soft-danger text-danger" :
-                                    text === "Scheduled" ? "badge-soft-primary text-primary" :
-                                        text === "Confirmed" ? "badge-soft-success text-success" : "badge-soft-secondary text-secondary"
+                        text === "Checked In" ? "badge-soft-warning text-warning" :
+                            text === "Cancelled" ? "badge-soft-danger text-danger" :
+                                text === "Scheduled" ? "badge-soft-primary text-primary" :
+                                    text === "Confirmed" ? "badge-soft-success text-success" : "badge-soft-secondary text-secondary"
                         } rounded fw-medium`}
                 >
                     {text}
@@ -361,10 +388,10 @@ const DoctorAppointmentList = () => {
                         <div className="d-flex justify-content-between align-items-center">
                             <span className="text-dark fw-semibold">Current Status</span>
                             <span className={`badge ${selectedAppointment?.status === "Checked Out" ? "bg-info" :
-                                    selectedAppointment?.status === "Checked In" ? "bg-warning" :
-                                        selectedAppointment?.status === "Cancelled" ? "bg-danger" :
-                                            selectedAppointment?.status === "Scheduled" ? "bg-primary" :
-                                                selectedAppointment?.status === "Confirmed" ? "bg-success" : "bg-secondary"
+                                selectedAppointment?.status === "Checked In" ? "bg-warning" :
+                                    selectedAppointment?.status === "Cancelled" ? "bg-danger" :
+                                        selectedAppointment?.status === "Scheduled" ? "bg-primary" :
+                                            selectedAppointment?.status === "Confirmed" ? "bg-success" : "bg-secondary"
                                 }`}>
                                 {selectedAppointment?.status || 'N/A'}
                             </span>
