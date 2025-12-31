@@ -636,6 +636,14 @@ const DoctorDahboard = () => {
                                 >
                                   <i className="ti ti-calendar-plus" />
                                 </Link>
+                                <Link
+                                  to="#"
+                                  data-bs-toggle="dropdown"
+                                  className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
+                                  title="More options"
+                                >
+                                  <i className="ti ti-dots-vertical" />
+                                </Link>
                                 <ul className="dropdown-menu p-2">
                                   <li>
                                     <Link
