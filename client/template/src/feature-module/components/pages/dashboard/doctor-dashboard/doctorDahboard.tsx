@@ -170,7 +170,7 @@ const DoctorDahboard = () => {
               <h4 className="fw-bold mb-0">Doctor Dashboard</h4>
             </div>
             <div className="d-flex align-items-center flex-wrap gap-2">
-              <Link
+              {/* <Link
                 to="#"
                 className="btn btn-primary d-inline-flex align-items-center"
                 data-bs-toggle="offcanvas"
@@ -178,7 +178,7 @@ const DoctorDahboard = () => {
               >
                 <i className="ti ti-plus me-1" />
                 New Appointment
-              </Link>
+              </Link> */}
               <Link
                 to={all_routes.doctorschedule}
                 className="btn btn-outline-white bg-white d-inline-flex align-items-center"
@@ -655,30 +655,6 @@ const DoctorDahboard = () => {
                                     >
                                       <i className="ti ti-eye me-2" />
                                       View
-                                    </Link>
-                                  </li>
-                                  <li>
-                                    <Link
-                                      to="#"
-                                      className="dropdown-item d-flex align-items-center"
-                                      data-bs-toggle="offcanvas"
-                                      data-bs-target="#edit_appointment"
-                                      onClick={() => setSelectedAppointment(apt)}
-                                    >
-                                      <i className="ti ti-edit me-2" />
-                                      Edit
-                                    </Link>
-                                  </li>
-                                  <li>
-                                    <Link
-                                      to="#"
-                                      className="dropdown-item d-flex align-items-center"
-                                      data-bs-toggle="modal"
-                                      data-bs-target="#delete_modal"
-                                      onClick={() => setSelectedAppointment(apt)}
-                                    >
-                                      <i className="ti ti-trash me-2" />
-                                      Delete
                                     </Link>
                                   </li>
                                 </ul>
