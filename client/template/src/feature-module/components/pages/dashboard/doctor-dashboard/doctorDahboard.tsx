@@ -628,16 +628,6 @@ const DoctorDahboard = () => {
                               <td>
                                 <Link
                                   to="#"
-                                  className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                                  title="Reschedule"
-                                  data-bs-toggle="offcanvas"
-                                  data-bs-target="#edit_appointment"
-                                  onClick={() => setSelectedAppointment(apt)}
-                                >
-                                  <i className="ti ti-calendar-plus" />
-                                </Link>
-                                <Link
-                                  to="#"
                                   data-bs-toggle="dropdown"
                                   className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
                                   title="More options"
