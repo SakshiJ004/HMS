@@ -676,15 +676,26 @@ const DoctorAppointmentList = () => {
     const [viewDrawerVisible, setViewDrawerVisible] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+    const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
     const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
 
+
     const statuses = ["Checked Out", "Checked In", "Cancelled", "Scheduled", "Confirmed", "Completed"];
+    const uniqueDoctors = Array.from(new Set(appointments.map(app => app.doctor?.fullName).filter(Boolean))) as string[];
 
     const toggleStatusFilter = (status: string) => {
         if (selectedStatuses.includes(status)) {
             setSelectedStatuses(selectedStatuses.filter(s => s !== status));
         } else {
             setSelectedStatuses([...selectedStatuses, status]);
+        }
+    };
+
+    const toggleDoctorFilter = (doctor: string) => {
+        if (selectedDoctors.includes(doctor)) {
+            setSelectedDoctors(selectedDoctors.filter(d => d !== doctor));
+        } else {
+            setSelectedDoctors([...selectedDoctors, doctor]);
         }
     };
 
@@ -768,16 +779,26 @@ const DoctorAppointmentList = () => {
 
     const filteredData = appointments
         .filter(app => {
+            // Date filter - IMPORTANT: Filter by specific date if provided
+            const matchesDate = !filterDate ||
+                dayjs(app.appointmentDate).format('YYYY-MM-DD') === filterDate;
+
             // Search filter
             const searchLower = searchText.toLowerCase();
             const matchesSearch = app.patient?.fullName?.toLowerCase().includes(searchLower) ||
-                app.department?.toLowerCase().includes(searchLower);
+                app.department?.toLowerCase().includes(searchLower) ||
+                app.doctor?.fullName?.toLowerCase().includes(searchLower);
 
             // Status filter
             const matchesStatus = selectedStatuses.length === 0 ||
                 selectedStatuses.includes(app.status);
+            return matchesDate && matchesSearch && matchesStatus;
 
-            return matchesSearch && matchesStatus;
+
+            const matchesDoctor = selectedDoctors.length === 0 ||
+                selectedDoctors.includes(app.doctor?.fullName || "");
+            return matchesDate && matchesSearch && matchesStatus && matchesDoctor;
+
         })
         .sort((a, b) => {
             const dateA = dayjs(`${a.appointmentDate} ${a.appointmentTime}`).valueOf();
@@ -791,6 +812,8 @@ const DoctorAppointmentList = () => {
         Patient: appointment.patient?.fullName || "N/A",
         Patient_Image: appointment.patient?.profileImage || null,
         Phone: appointment.patient?.email || "N/A",
+        Doctor: appointment.doctor?.fullName || "N/A",
+        Doctor_Image: appointment.doctor?.profileImage || null,
         Department: appointment.department,
         Mode: appointment.appointmentType,
         Status: appointment.status,
@@ -827,6 +850,19 @@ const DoctorAppointmentList = () => {
                 </div>
             ),
             sorter: (a: any, b: any) => a.Patient.localeCompare(b.Patient),
+        },
+        {
+            title: "Doctor",
+            dataIndex: "Doctor",
+            render: (text: any, record: any) => (
+                <div className="d-flex align-items-center">
+                    <div className="avatar avatar-md me-2">
+                        {renderAvatar(record.Doctor_Image, text, 'bg-success')}
+                    </div>
+                    <span className="text-dark fw-semibold">{text}</span>
+                </div>
+            ),
+            sorter: (a: any, b: any) => a.Doctor.localeCompare(b.Doctor),
         },
         {
             title: "Department",
@@ -974,8 +1010,19 @@ const DoctorAppointmentList = () => {
                                 )}
                             </h4>
                             <p className="text-muted mb-0 mt-1">
-                                Total Appointments in {dayjs(filterDate || new Date()).format('MMMM YYYY')}:
-                                <strong className="ms-1">{appointments.length}</strong>
+                                {filterDate ? (
+                                    <>
+                                        Appointments on {dayjs(filterDate).format('DD MMM YYYY')}:
+                                        <strong className="ms-1">{filteredData.length}</strong>
+                                    </>
+                                ) : (
+                                    <>
+                                        Total Appointments in {dayjs().format('MMMM YYYY')}:
+                                        <strong className="ms-1">{appointments.filter(app =>
+                                            dayjs(app.appointmentDate).format('YYYY-MM') === dayjs().format('YYYY-MM')
+                                        ).length}</strong>
+                                    </>
+                                )}
                             </p>
                         </div>
                         <div className="text-end d-flex">
@@ -1063,16 +1110,88 @@ const DoctorAppointmentList = () => {
                                             {status}
                                         </label>
                                     ))}
-                                    <div className="d-flex gap-2 mt-3">
+                                    <div className="d-flex gap-2 mt-3 pt-3 border-top">
                                         <button
-                                            className="btn btn-sm btn-light"
-                                            onClick={() => setSelectedStatuses([])}
+                                            className="btn btn-sm btn-light flex-fill"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setSelectedStatuses([]);
+                                                const dropdown = (e.target as HTMLElement).closest('.dropdown');
+                                                dropdown?.classList.remove('show');
+                                                dropdown?.querySelector('.dropdown-menu')?.classList.remove('show');
+                                            }}
                                         >
                                             Clear
                                         </button>
                                         <button
-                                            className="btn btn-sm btn-primary"
-                                            onClick={() => message.success('Filters applied')}
+                                            className="btn btn-sm btn-primary flex-fill"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                message.success(`${selectedStatuses.length} status(es) selected`);
+                                                const dropdown = (e.target as HTMLElement).closest('.dropdown');
+                                                dropdown?.classList.remove('show');
+                                                dropdown?.querySelector('.dropdown-menu')?.classList.remove('show');
+                                            }}
+                                        >
+                                            Apply
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Doctor Filter */}
+                            <div className="dropdown me-2">
+                                <Link
+                                    to="#"
+                                    className="bg-white border rounded btn btn-md text-dark fs-14 py-1 align-items-center d-flex fw-normal"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
+                                >
+                                    <i className="ti ti-user-doctor text-gray-5 me-1" />
+                                    Doctor
+                                    {selectedDoctors.length > 0 && (
+                                        <span className="badge bg-success ms-2">
+                                            {selectedDoctors.length}
+                                        </span>
+                                    )}
+                                </Link>
+                                <div className="dropdown-menu dropdown-menu-end p-3" style={{ minWidth: '250px' }}>
+                                    <h6 className="mb-2 fw-bold">Filter by Doctor</h6>
+                                    <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                        {uniqueDoctors.map((doctor) => (
+                                            <label key={doctor} className="d-flex align-items-center mb-2 cursor-pointer">
+                                                <input
+                                                    className="form-check-input m-0 me-2"
+                                                    type="checkbox"
+                                                    checked={selectedDoctors.includes(doctor)}
+                                                    onChange={() => toggleDoctorFilter(doctor)}
+                                                />
+                                                <span className="text-truncate">{doctor}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <div className="d-flex gap-2 mt-3 pt-3 border-top">
+                                        <button
+                                            className="btn btn-sm btn-light flex-fill"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setSelectedDoctors([]);
+                                                const dropdown = (e.target as HTMLElement).closest('.dropdown');
+                                                dropdown?.classList.remove('show');
+                                                dropdown?.querySelector('.dropdown-menu')?.classList.remove('show');
+                                            }}
+                                        >
+                                            Clear
+                                        </button>
+                                        <button
+                                            className="btn btn-sm btn-primary flex-fill"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                message.success(`${selectedDoctors.length} doctor(s) selected`);
+                                                const dropdown = (e.target as HTMLElement).closest('.dropdown');
+                                                dropdown?.classList.remove('show');
+                                                dropdown?.querySelector('.dropdown-menu')?.classList.remove('show');
+                                            }}
                                         >
                                             Apply
                                         </button>
@@ -1095,7 +1214,10 @@ const DoctorAppointmentList = () => {
                                         <Link
                                             to="#"
                                             className="dropdown-item rounded-1"
-                                            onClick={() => setSortOrder('recent')}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setSortOrder('recent');
+                                            }}
                                         >
                                             Recent
                                         </Link>
@@ -1104,7 +1226,10 @@ const DoctorAppointmentList = () => {
                                         <Link
                                             to="#"
                                             className="dropdown-item rounded-1"
-                                            onClick={() => setSortOrder('oldest')}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setSortOrder('oldest');
+                                            }}
                                         >
                                             Oldest
                                         </Link>

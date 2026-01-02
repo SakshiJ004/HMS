@@ -527,7 +527,9 @@ const DoctorAppointmentCalendar = () => {
                             <h4 className="fw-semibold mb-0 mt-2">
                                 All Doctors Appointment Calendar
                                 <span className="badge badge-soft-primary fs-13 fw-medium ms-2">
-                                    Total Appointments: {appointments.length}
+                                    Total Appointments in {selectedDate.format('MMMM YYYY')}: {appointments.filter(app =>
+                                        dayjs(app.appointmentDate).format('YYYY-MM') === selectedDate.format('YYYY-MM')
+                                    ).length}
                                 </span>
                             </h4>
                         </div>
