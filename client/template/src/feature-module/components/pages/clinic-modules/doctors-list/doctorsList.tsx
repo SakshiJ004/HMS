@@ -1291,54 +1291,66 @@ const DoctorsList = () => {
     Email: doctor.email,
     Fees: `$${doctor.consultationCharge || 0}`,
     Status: doctor.status || "Available",
-    img: doctor.profileImage,
+    profileImage: doctor.profileImage,
     _id: doctor._id,
+    fullData: doctor,
   }));
 
   const columns = [
     {
       title: "Name & Designation",
       dataIndex: "Name_Designation",
-      render: (text: any, record: any) => (
-        <div className="d-flex align-items-center">
-          <Link
-            to={`/doctor-details?id=${record._id}`}
-            className="avatar me-2"
-            style={{ width: '40px', height: '40px', flexShrink: 0 }}
-          >
-            {getProfileImage(record) ? (
-              <img
-                src={getProfileImage(record)!}
-                alt={text}
-                className="rounded-circle"
-                style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                onError={(e) => {
-                  // Fallback to initials if image fails
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${getInitials(text)}</div>`;
-                  }
-                }}
-              />
-            ) : (
-              <div
-                className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
-                style={{ width: '40px', height: '40px', fontSize: '14px' }}
-              >
-                {getInitials(text)}
-              </div>
-            )}
-          </Link>
-          <div>
-            <h6 className="mb-1 fs-14 fw-semibold">
-              <Link to={`/doctor-details?id=${record._id}`}>Dr. {text}</Link>
-            </h6>
-            <span className="fs-13 d-block">{record.Department}</span>
+      render: (text: any, record: any) => {
+        // Get image directly from profileImage field
+        const hasValidImage = record.profileImage && (
+          record.profileImage.includes('googleusercontent.com') ||
+          record.profileImage.startsWith('http://') ||
+          record.profileImage.startsWith('https://') ||
+          record.profileImage.startsWith('data:image') ||
+          record.profileImage.startsWith('/')
+        );
+
+        return (
+          <div className="d-flex align-items-center">
+            <Link
+              to={`/doctor-details?id=${record._id}`}
+              className="avatar me-2"
+              style={{ width: '40px', height: '40px', flexShrink: 0 }}
+            >
+              {hasValidImage ? (
+                <img
+                  src={record.profileImage}
+                  alt={text}
+                  className="rounded-circle"
+                  style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                  onError={(e) => {
+                    // Fallback to initials if image fails
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${getInitials(text)}</div>`;
+                    }
+                  }}
+                />
+              ) : (
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                  style={{ width: '40px', height: '40px', fontSize: '14px' }}
+                >
+                  {getInitials(text)}
+                </div>
+              )}
+            </Link>
+            <div>
+              <h6 className="mb-1 fs-14 fw-semibold">
+                <Link to={`/doctor-details?id=${record._id}`}>Dr. {text}</Link>
+              </h6>
+              <span className="fs-13 d-block">{record.Department}</span>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
       sorter: (a: any, b: any) =>
         a.Name_Designation.localeCompare(b.Name_Designation),
     },
