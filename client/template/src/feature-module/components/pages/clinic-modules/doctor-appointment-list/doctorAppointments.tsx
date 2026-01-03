@@ -792,13 +792,12 @@ const DoctorAppointmentList = () => {
             // Status filter
             const matchesStatus = selectedStatuses.length === 0 ||
                 selectedStatuses.includes(app.status);
-            return matchesDate && matchesSearch && matchesStatus;
 
-
+            // Doctor filter
             const matchesDoctor = selectedDoctors.length === 0 ||
                 selectedDoctors.includes(app.doctor?.fullName || "");
-            return matchesDate && matchesSearch && matchesStatus && matchesDoctor;
 
+            return matchesDate && matchesSearch && matchesStatus && matchesDoctor;
         })
         .sort((a, b) => {
             const dateA = dayjs(`${a.appointmentDate} ${a.appointmentTime}`).valueOf();
