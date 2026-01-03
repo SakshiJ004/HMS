@@ -754,27 +754,51 @@ const DoctorAppointmentList = () => {
 
     const getInitials = (name: string) => {
         if (!name) return "?";
-        return name.charAt(0).toUpperCase();
+        const nameParts = name.trim().split(' ');
+        if (nameParts.length >= 2) {
+            return nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
+        }
+        return nameParts[0].charAt(0).toUpperCase();
     };
 
     const renderAvatar = (image: string | null | undefined, name: string, bgColor: string) => {
-        if (image && (image.includes('googleusercontent.com') || image.startsWith('http'))) {
+        // Check if valid image URL exists
+        const hasValidImage = image && (
+            image.includes('googleusercontent.com') ||
+            image.startsWith('http://') ||
+            image.startsWith('https://') ||
+            image.startsWith('data:image') ||
+            image.startsWith('/') // relative path
+        );
+
+        if (hasValidImage) {
             return (
                 <img
                     src={image}
                     alt={name}
                     className="rounded-circle"
                     style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                    onError={(e) => {
+                        // Fallback to initials if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        if (target.nextSibling) {
+                            (target.nextSibling as HTMLElement).style.display = 'flex';
+                        }
+                    }}
                 />
             );
-        } else {
-            return (
-                <div className={`rounded-circle ${bgColor} text-white d-flex align-items-center justify-content-center`}
-                    style={{ width: '40px', height: '40px', fontSize: '16px' }}>
-                    {getInitials(name)}
-                </div>
-            );
         }
+
+        // Show initials by default
+        return (
+            <div
+                className={`rounded-circle ${bgColor} text-white d-flex align-items-center justify-content-center`}
+                style={{ width: '40px', height: '40px', fontSize: '16px', fontWeight: 'bold' }}
+            >
+                {getInitials(name)}
+            </div>
+        );
     };
 
     const filteredData = appointments

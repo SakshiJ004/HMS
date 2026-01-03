@@ -1259,10 +1259,16 @@ const DoctorsList = () => {
 
   // Get profile image or initials
   const getProfileImage = (doctor: DoctorData) => {
-    if (doctor.profileImage) {
-      if (doctor.profileImage.startsWith('data:image') || doctor.profileImage.startsWith('http')) {
-        return doctor.profileImage;
-      }
+    const img = doctor.profileImage;
+    // Check if valid image exists
+    if (img && (
+      img.includes('googleusercontent.com') ||
+      img.startsWith('http://') ||
+      img.startsWith('https://') ||
+      img.startsWith('data:image') ||
+      img.startsWith('/') // relative path
+    )) {
+      return img;
     }
     return null;
   };
@@ -1306,6 +1312,15 @@ const DoctorsList = () => {
                 alt={text}
                 className="rounded-circle"
                 style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                onError={(e) => {
+                  // Fallback to initials if image fails
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${getInitials(text)}</div>`;
+                  }
+                }}
               />
             ) : (
               <div
