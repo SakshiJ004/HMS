@@ -1258,20 +1258,20 @@ const DoctorsList = () => {
   };
 
   // Get profile image or initials
-  const getProfileImage = (doctor: DoctorData) => {
-    const img = doctor.profileImage;
-    // Check if valid image exists
-    if (img && (
-      img.includes('googleusercontent.com') ||
-      img.startsWith('http://') ||
-      img.startsWith('https://') ||
-      img.startsWith('data:image') ||
-      img.startsWith('/') // relative path
-    )) {
-      return img;
-    }
-    return null;
-  };
+  // const getProfileImage = (doctor: DoctorData) => {
+  //   const img = doctor.profileImage;
+  //   // Check if valid image exists
+  //   if (img && (
+  //     img.includes('googleusercontent.com') ||
+  //     img.startsWith('http://') ||
+  //     img.startsWith('https://') ||
+  //     img.startsWith('data:image') ||
+  //     img.startsWith('/') // relative path
+  //   )) {
+  //     return img;
+  //   }
+  //   return null;
+  // };
 
   const getInitials = (fullName: string) => {
     if (!fullName) return "D";
