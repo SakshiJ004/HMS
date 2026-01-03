@@ -56,7 +56,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
-const { getDashboardStats, getAppointmentStats, getTopDoctors, getDepartmentStats, getDoctorsSchedule } = require('../controllers/dashboardController');
+const { getDashboardStats, getAppointmentStats, getTopDoctors, getDepartmentStats, getDoctorsSchedule, getTopPatients } = require('../controllers/dashboardController');
 
 
 
@@ -126,5 +126,7 @@ router.get('/department-stats', protect, authorize('admin'), getDepartmentStats)
 // @desc    Get doctors with schedule availability
 // @access  Private (Admin only)
 router.get('/doctors-schedule', protect, authorize('admin'), getDoctorsSchedule);
+
+router.get('/top-patients', protect, authorize('admin'), getTopPatients)
 
 module.exports = router;

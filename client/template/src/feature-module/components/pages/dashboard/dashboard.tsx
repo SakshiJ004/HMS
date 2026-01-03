@@ -2753,6 +2753,7 @@ const Dashboard = () => {
     doctors: [],
     counts: { available: 0, unavailable: 0, onLeave: 0 }
   });
+  const [topPatients, setTopPatients] = useState<any[]>([]);
 
   // const [_loading, setLoading] = useState(true);
 
@@ -2870,7 +2871,7 @@ const Dashboard = () => {
         const token = localStorage.getItem('token');
 
         // Fetch all data in parallel for instant loading
-        const [statsResponse, appointmentStatsResponse, appointmentsResponse, topDoctorsResponse, departmentStatsResponse, doctorsScheduleResponse] = await Promise.all([
+        const [statsResponse, appointmentStatsResponse, appointmentsResponse, topDoctorsResponse, departmentStatsResponse, doctorsScheduleResponse, topPatientsResponse] = await Promise.all([
           getDashboardStats(),
           getAppointmentStats('monthly'),
           axios.get(`${API_URL}/api/appointments`, {
@@ -2878,7 +2879,10 @@ const Dashboard = () => {
           }),
           getTopDoctors('weekly'),
           getDepartmentStats('weekly'),
-          getDoctorsSchedule()
+          getDoctorsSchedule(),
+          axios.get(`${API_URL}/api/dashboard/top-patients`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
         ]);
 
         // Set all data immediately
@@ -2887,6 +2891,9 @@ const Dashboard = () => {
         setTopDoctors(topDoctorsResponse.data);
         setDepartmentStats(departmentStatsResponse.data);
         setDoctorsSchedule(doctorsScheduleResponse.data);
+        if (topPatientsResponse.data.success) {
+          setTopPatients(topPatientsResponse.data.data);
+        }
 
         if (appointmentsResponse.data.success) {
           setAppointments(appointmentsResponse.data.data);
@@ -3789,24 +3796,39 @@ const Dashboard = () => {
                                 <Link
                                   to={all_routes.doctordetails}
                                   className="avatar me-2"
+                                  style={{ width: '40px', height: '40px', flexShrink: 0 }}
                                 >
                                   {appointment.doctor.profilePicture ? (
                                     <img
-                                      src={appointment.doctor.profilePicture.startsWith('http') || appointment.doctor.profilePicture.startsWith('data:')
-                                        ? appointment.doctor.profilePicture
-                                        : `${API_URL}${appointment.doctor.profilePicture}`}
-                                      alt="img"
+                                      src={
+                                        appointment.doctor.profilePicture.includes('googleusercontent.com') ||
+                                          appointment.doctor.profilePicture.startsWith('http://') ||
+                                          appointment.doctor.profilePicture.startsWith('https://') ||
+                                          appointment.doctor.profilePicture.startsWith('data:')
+                                          ? appointment.doctor.profilePicture
+                                          : appointment.doctor.profilePicture.startsWith('/')
+                                            ? `${API_URL}${appointment.doctor.profilePicture}`
+                                            : `${API_URL}/${appointment.doctor.profilePicture}`
+                                      }
+                                      alt={appointment.doctor.name}
                                       className="rounded-circle"
+                                      style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                                       onError={(e) => {
-                                        e.currentTarget.src = 'assets/img/doctors/doctor-06.jpg';
+                                        e.currentTarget.style.display = 'none';
+                                        const parent = e.currentTarget.parentElement;
+                                        if (parent) {
+                                          const initials = appointment.doctor.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                                          parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>`;
+                                        }
                                       }}
                                     />
                                   ) : (
-                                    <ImageWithBasePath
-                                      src="assets/img/doctors/doctor-06.jpg"
-                                      alt="img"
-                                      className="rounded-circle"
-                                    />
+                                    <div
+                                      className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold"
+                                      style={{ width: '40px', height: '40px', fontSize: '14px' }}
+                                    >
+                                      {appointment.doctor.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                    </div>
                                   )}
                                 </Link>
                                 <div>
@@ -3827,19 +3849,39 @@ const Dashboard = () => {
                                 <Link
                                   to={all_routes.patientDetails}
                                   className="avatar me-2"
+                                  style={{ width: '40px', height: '40px', flexShrink: 0 }}
                                 >
                                   {appointment.patient.profilePicture ? (
                                     <img
-                                      src={`${API_URL}${appointment.patient.profilePicture}`}
-                                      alt="img"
+                                      src={
+                                        appointment.patient.profilePicture.includes('googleusercontent.com') ||
+                                          appointment.patient.profilePicture.startsWith('http://') ||
+                                          appointment.patient.profilePicture.startsWith('https://') ||
+                                          appointment.patient.profilePicture.startsWith('data:')
+                                          ? appointment.patient.profilePicture
+                                          : appointment.patient.profilePicture.startsWith('/')
+                                            ? `${API_URL}${appointment.patient.profilePicture}`
+                                            : `${API_URL}/${appointment.patient.profilePicture}`
+                                      }
+                                      alt={appointment.patient.name}
                                       className="rounded-circle"
+                                      style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        const parent = e.currentTarget.parentElement;
+                                        if (parent) {
+                                          const initials = appointment.patient.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                                          parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>`;
+                                        }
+                                      }}
                                     />
                                   ) : (
-                                    <ImageWithBasePath
-                                      src="assets/img/profiles/avatar-02.jpg"
-                                      alt="img"
-                                      className="rounded-circle"
-                                    />
+                                    <div
+                                      className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                                      style={{ width: '40px', height: '40px', fontSize: '14px' }}
+                                    >
+                                      {appointment.patient.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                    </div>
                                   )}
                                 </Link>
                                 <div>
@@ -3886,156 +3928,75 @@ const Dashboard = () => {
                   </Link>
                 </div>
                 <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar me-2 flex-shrink-0"
+                  {topPatients.length > 0 ? (
+                    topPatients.slice(0, 5).map((patient, index) => (
+                      <div
+                        key={patient._id}
+                        className={`d-flex justify-content-between align-items-center ${index < 4 ? 'mb-3' : 'mb-0'}`}
                       >
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-02.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
+                        <div className="d-flex align-items-center">
                           <Link
-                            to={all_routes.patientDetails}
-                            className="fw-medium"
+                            to={`${all_routes.patientDetails}?id=${patient._id}`}
+                            className="avatar me-2 flex-shrink-0"
+                            style={{ width: '40px', height: '40px' }}
                           >
-                            Jesus Adams
+                            {patient.profileImage ? (
+                              <img
+                                src={
+                                  patient.profileImage.includes('googleusercontent.com') ||
+                                    patient.profileImage.startsWith('http://') ||
+                                    patient.profileImage.startsWith('https://') ||
+                                    patient.profileImage.startsWith('data:')
+                                    ? patient.profileImage
+                                    : patient.profileImage.startsWith('/')
+                                      ? `${API_URL}${patient.profileImage}`
+                                      : `${API_URL}/${patient.profileImage}`
+                                }
+                                alt={patient.fullName}
+                                className="rounded-circle"
+                                style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent) {
+                                    const initials = patient.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                                    parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>`;
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div
+                                className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                                style={{ width: '40px', height: '40px', fontSize: '14px' }}
+                              >
+                                {patient.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+                              </div>
+                            )}
                           </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          Total Paid : $6589
-                        </p>
+                          <div>
+                            <h6 className="fs-14 mb-1 text-truncate">
+                              <Link
+                                to={`${all_routes.patientDetails}?id=${patient._id}`}
+                                className="fw-medium"
+                              >
+                                {patient.fullName}
+                              </Link>
+                            </h6>
+                            <p className="mb-0 fs-13 text-truncate">
+                              Total Paid : ${patient.totalPaid || 0}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
+                          {patient.appointmentsCount || 0} Appointments
+                        </span>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-3">
+                      <p className="text-muted mb-0">No patient data available</p>
                     </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      80 Appointments
-                    </span>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar me-2 flex-shrink-0"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-27.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link
-                            to={all_routes.patientDetails}
-                            className="fw-medium"
-                          >
-                            Ezra Belcher
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          Total Paid : $5632
-                        </p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      60 Appointments
-                    </span>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar me-2 flex-shrink-0"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-20.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link
-                            to={all_routes.patientDetails}
-                            className="fw-medium"
-                          >
-                            Glen Lentz
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          Total Paid : $4125
-                        </p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      40 Appointments
-                    </span>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar me-2 flex-shrink-0"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-06.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link
-                            to={all_routes.patientDetails}
-                            className="fw-medium"
-                          >
-                            Bernard Griffith
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          Total Paid : $3140
-                        </p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      25 Appointments
-                    </span>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center mb-0">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar me-2 flex-shrink-0"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-25.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link
-                            to={all_routes.patientDetails}
-                            className="fw-medium"
-                          >
-                            John Elsass
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          Total Paid : $2654
-                        </p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-primary border border-primary flex-shrink-0">
-                      25 Appointments
-                    </span>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>

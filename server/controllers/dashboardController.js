@@ -452,6 +452,88 @@ const getDoctorsSchedule = async (req, res) => {
         });
     }
 };
+/**
+ * Get top patients by appointment count
+ * @route   GET /api/dashboard/top-patients
+ * @access  Private (Admin only)
+ */
+const getTopPatients = async (req, res) => {
+    try {
+        // Get top 5 patients with most appointments
+        const topPatients = await Appointment.aggregate([
+            {
+                $group: {
+                    _id: '$patient',
+                    appointmentsCount: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { appointmentsCount: -1 }
+            },
+            {
+                $limit: 5
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'patientInfo'
+                }
+            },
+            {
+                $unwind: '$patientInfo'
+            },
+            {
+                $lookup: {
+                    from: 'appointments',
+                    let: { patientId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$patient', '$$patientId'] },
+                                status: 'Checked Out'
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                totalPaid: { $sum: '$consultationFee' }
+                            }
+                        }
+                    ],
+                    as: 'paymentInfo'
+                }
+            },
+            {
+                $project: {
+                    _id: '$patientInfo._id',
+                    fullName: '$patientInfo.fullName',
+                    profileImage: '$patientInfo.profileImage',
+                    appointmentsCount: 1,
+                    totalPaid: {
+                        $ifNull: [
+                            { $arrayElemAt: ['$paymentInfo.totalPaid', 0] },
+                            0
+                        ]
+                    }
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: topPatients
+        });
+    } catch (error) {
+        console.error('Get top patients error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching top patients',
+            error: error.message,
+        });
+    }
+};
 
 // UPDATE module.exports to include new functions
 module.exports = {
@@ -460,4 +542,5 @@ module.exports = {
     getTopDoctors,
     getDepartmentStats,
     getDoctorsSchedule,
+    getTopPatients,
 };

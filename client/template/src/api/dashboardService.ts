@@ -80,6 +80,14 @@ export interface DoctorsScheduleResponse {
     };
 }
 
+export interface TopPatient {
+    _id: string;
+    fullName: string;
+    profileImage?: string;
+    appointmentsCount: number;
+    totalPaid: number;
+}
+
 // Get dashboard statistics
 export const getDashboardStats = async () => {
     try {
@@ -147,5 +155,18 @@ export const getDoctorsSchedule = async () => {
     } catch (error: any) {
         console.error('Get doctors schedule error:', error);
         throw new Error(error.response?.data?.message || 'Failed to fetch doctors schedule');
+    }
+};
+// Get top patients
+export const getTopPatients = async () => {
+    try {
+        const response = await axios.get<{ success: boolean; data: TopPatient[] }>(
+            `${API_URL}/api/dashboard/top-patients`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get top patients error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch top patients');
     }
 };
