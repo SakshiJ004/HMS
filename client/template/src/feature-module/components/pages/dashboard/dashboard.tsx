@@ -3817,7 +3817,7 @@ const Dashboard = () => {
                                         e.currentTarget.style.display = 'none';
                                         const parent = e.currentTarget.parentElement;
                                         if (parent) {
-                                          const initials = appointment.doctor.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                                          const initials = appointment.doctor.name ? appointment.doctor.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'DR';
                                           parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>`;
                                         }
                                       }}
@@ -3827,7 +3827,7 @@ const Dashboard = () => {
                                       className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold"
                                       style={{ width: '40px', height: '40px', fontSize: '14px' }}
                                     >
-                                      {appointment.doctor.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                      {appointment.doctor.name ? appointment.doctor.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'DR'}
                                     </div>
                                   )}
                                 </Link>
@@ -3870,7 +3870,7 @@ const Dashboard = () => {
                                         e.currentTarget.style.display = 'none';
                                         const parent = e.currentTarget.parentElement;
                                         if (parent) {
-                                          const initials = appointment.patient.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                                          const initials = appointment.patient.name ? appointment.patient.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'PT';
                                           parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>`;
                                         }
                                       }}
@@ -3880,7 +3880,7 @@ const Dashboard = () => {
                                       className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
                                       style={{ width: '40px', height: '40px', fontSize: '14px' }}
                                     >
-                                      {appointment.patient.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                      {appointment.patient.name ? appointment.patient.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'PT'}
                                     </div>
                                   )}
                                 </Link>
@@ -3959,7 +3959,7 @@ const Dashboard = () => {
                                   e.currentTarget.style.display = 'none';
                                   const parent = e.currentTarget.parentElement;
                                   if (parent) {
-                                    const initials = patient.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                                    const initials = patient.fullName ? patient.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'PT';
                                     parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>`;
                                   }
                                 }}
@@ -3969,7 +3969,7 @@ const Dashboard = () => {
                                 className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
                                 style={{ width: '40px', height: '40px', fontSize: '14px' }}
                               >
-                                {patient.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+                                {patient.fullName ? patient.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'PT'}
                               </div>
                             )}
                           </Link>
