@@ -273,20 +273,44 @@ const getTopDoctors = async (req, res) => {
         // Calculate date range based on period
         let startDate;
         const today = new Date();
+        today.setHours(23, 59, 59, 999);
 
         if (period === 'weekly') {
-            startDate = new Date(today.setDate(today.getDate() - 7));
+            startDate = new Date();
+            startDate.setDate(today.getDate() - 7);
+            startDate.setHours(0, 0, 0, 0);
         } else if (period === 'monthly') {
-            startDate = new Date(today.setMonth(today.getMonth() - 1));
+            startDate = new Date();
+            startDate.setMonth(today.getMonth() - 1);
+            startDate.setHours(0, 0, 0, 0);
         } else if (period === 'yearly') {
-            startDate = new Date(today.setFullYear(today.getFullYear() - 1));
+            startDate = new Date();
+            startDate.setFullYear(today.getFullYear() - 1);
+            startDate.setHours(0, 0, 0, 0);
         }
+
+        console.log('Top Doctors - Period:', period);
+        console.log('Top Doctors - Date Range:', startDate, 'to', today);
 
         // Get appointments grouped by doctor
         const topDoctors = await Appointment.aggregate([
             {
+                $addFields: {
+                    appointmentDateConverted: {
+                        $cond: {
+                            if: { $eq: [{ $type: "$appointmentDate" }, "string"] },
+                            then: { $toDate: "$appointmentDate" },
+                            else: "$appointmentDate"
+                        }
+                    }
+                }
+            },
+            {
                 $match: {
-                    appointmentDate: { $gte: startDate }
+                    appointmentDateConverted: {
+                        $gte: startDate,
+                        $lte: today
+                    }
                 }
             },
             {
@@ -324,6 +348,8 @@ const getTopDoctors = async (req, res) => {
             }
         ]);
 
+        console.log('Top Doctors Result:', topDoctors);
+
         res.status(200).json({
             success: true,
             data: topDoctors
@@ -350,20 +376,44 @@ const getDepartmentStats = async (req, res) => {
         // Calculate date range
         let startDate;
         const today = new Date();
+        today.setHours(23, 59, 59, 999); // End of today
 
         if (period === 'weekly') {
-            startDate = new Date(today.setDate(today.getDate() - 7));
+            startDate = new Date();
+            startDate.setDate(today.getDate() - 7);
+            startDate.setHours(0, 0, 0, 0);
         } else if (period === 'monthly') {
-            startDate = new Date(today.setMonth(today.getMonth() - 1));
+            startDate = new Date();
+            startDate.setMonth(today.getMonth() - 1);
+            startDate.setHours(0, 0, 0, 0);
         } else if (period === 'yearly') {
-            startDate = new Date(today.setFullYear(today.getFullYear() - 1));
+            startDate = new Date();
+            startDate.setFullYear(today.getFullYear() - 1);
+            startDate.setHours(0, 0, 0, 0);
         }
 
-        // Get appointments grouped by department
+        console.log('Department Stats - Period:', period);
+        console.log('Department Stats - Date Range:', startDate, 'to', today);
+
+        // Get appointments grouped by department with proper counting
         const departmentStats = await Appointment.aggregate([
             {
+                $addFields: {
+                    appointmentDateConverted: {
+                        $cond: {
+                            if: { $eq: [{ $type: "$appointmentDate" }, "string"] },
+                            then: { $toDate: "$appointmentDate" },
+                            else: "$appointmentDate"
+                        }
+                    }
+                }
+            },
+            {
                 $match: {
-                    appointmentDate: { $gte: startDate }
+                    appointmentDateConverted: {
+                        $gte: startDate,
+                        $lte: today
+                    }
                 }
             },
             {
@@ -375,12 +425,24 @@ const getDepartmentStats = async (req, res) => {
                 }
             },
             {
-                $unwind: '$doctorInfo'
+                $unwind: {
+                    path: '$doctorInfo',
+                    preserveNullAndEmptyArrays: false
+                }
             },
             {
                 $group: {
                     _id: '$doctorInfo.department',
-                    count: { $sum: 1 }
+                    count: { $sum: 1 },
+                    patients: { $addToSet: '$patient' } // Count unique patients
+                }
+            },
+            {
+                $project: {
+                    department: '$_id',
+                    count: { $size: '$patients' }, // Use unique patient count
+                    appointmentCount: '$count', // Total appointments
+                    _id: 0
                 }
             },
             {
@@ -388,15 +450,10 @@ const getDepartmentStats = async (req, res) => {
             },
             {
                 $limit: 3
-            },
-            {
-                $project: {
-                    department: '$_id',
-                    count: 1,
-                    _id: 0
-                }
             }
         ]);
+
+        console.log('Department Stats Result:', departmentStats);
 
         res.status(200).json({
             success: true,

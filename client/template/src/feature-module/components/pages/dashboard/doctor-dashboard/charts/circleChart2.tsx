@@ -120,10 +120,13 @@ interface CircleChartProps {
 }
 
 const CircleChart = ({ data }: CircleChartProps) => {
+  console.log('CircleChart received data:', data)
   // Calculate total from real data
   const total = data && data.length > 0
     ? data.reduce((sum, item) => sum + item.count, 0)
     : 0;
+
+    console.log('CircleChart calculated total:', total)
 
   // Calculate percentages for the chart
   const series = data && data.length > 0
