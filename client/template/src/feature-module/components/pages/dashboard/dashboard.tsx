@@ -2926,39 +2926,33 @@ const Dashboard = () => {
 
   // Fetch top doctors when period changes
   useEffect(() => {
-    if (topDoctorsPeriod === 'weekly' && topDoctors.length > 0) {
-      return; // Skip initial load
-    }
-
     const fetchTopDoctors = async () => {
       try {
         const response = await getTopDoctors(topDoctorsPeriod);
         setTopDoctors(response.data);
+        console.log('🔵 Top Doctors fetched for period:', topDoctorsPeriod, response.data);
       } catch (error) {
         console.error("Error fetching top doctors:", error);
       }
     };
 
     fetchTopDoctors();
-  }, [topDoctorsPeriod]);
+  }, [topDoctorsPeriod]); // ✅ Remove the skip logic, always fetch when period changes
 
   // Fetch department stats when period changes
   useEffect(() => {
-    if (departmentPeriod === 'weekly' && departmentStats.length > 0) {
-      return; // Skip initial load
-    }
-
     const fetchDepartmentStats = async () => {
       try {
         const response = await getDepartmentStats(departmentPeriod);
         setDepartmentStats(response.data);
+        console.log('🔵 Department Stats fetched for period:', departmentPeriod, response.data);
       } catch (error) {
         console.error("Error fetching department stats:", error);
       }
     };
 
     fetchDepartmentStats();
-  }, [departmentPeriod]);
+  }, [departmentPeriod]); // ✅ Remove the skip logic, always fetch when period changes
 
   // Fetch only appointment stats when period changes (not on initial load)
   useEffect(() => {
@@ -3822,7 +3816,10 @@ const Dashboard = () => {
                                   style={{ width: '40px', height: '40px', flexShrink: 0 }}
                                 >
                                   {(() => {
-                                    const doctorImage = appointment.doctor.profilePicture;
+                                    // Handle both possible field names
+                                    const doctorName = (appointment.doctor as any)?.name || (appointment.doctor as any)?.fullName || 'Unknown Doctor';
+                                    const doctorImage = (appointment.doctor as any)?.profilePicture || (appointment.doctor as any)?.profileImage;
+
                                     const hasImage = doctorImage && (
                                       doctorImage.includes('googleusercontent.com') ||
                                       doctorImage.startsWith('http://') ||
@@ -3834,7 +3831,7 @@ const Dashboard = () => {
                                       return (
                                         <img
                                           src={doctorImage}
-                                          alt={appointment.doctor.name || 'Doctor'}
+                                          alt={doctorName}
                                           className="rounded-circle"
                                           style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                                           onError={(e) => {
@@ -3842,20 +3839,19 @@ const Dashboard = () => {
                                             target.style.display = 'none';
                                             const parent = target.parentElement;
                                             if (parent) {
-                                              parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${getInitials(appointment.doctor.name, 'DR')}</div>`;
+                                              parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${getInitials(doctorName, 'DR')}</div>`;
                                             }
                                           }}
                                         />
                                       );
                                     }
 
-                                    // Show initials if no image
                                     return (
                                       <div
                                         className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold"
                                         style={{ width: '40px', height: '40px', fontSize: '14px' }}
                                       >
-                                        {getInitials(appointment.doctor.name, 'DR')}
+                                        {getInitials(doctorName, 'DR')}
                                       </div>
                                     );
                                   })()}
@@ -3866,10 +3862,10 @@ const Dashboard = () => {
                                       to={all_routes.doctordetails}
                                       className="fw-semibold"
                                     >
-                                      {appointment.doctor.name || 'Unknown Doctor'}
+                                      {(appointment.doctor as any)?.name || (appointment.doctor as any)?.fullName || 'Unknown Doctor'}
                                     </Link>
                                   </h6>
-                                  <p className="mb-0 fs-13">{appointment.doctor.specialization || 'N/A'}</p>
+                                  <p className="mb-0 fs-13">{(appointment.doctor as any)?.specialization || 'N/A'}</p>
                                 </div>
                               </div>
                             </td>
@@ -3881,7 +3877,10 @@ const Dashboard = () => {
                                   style={{ width: '40px', height: '40px', flexShrink: 0 }}
                                 >
                                   {(() => {
-                                    const patientImage = appointment.patient.profilePicture;
+                                    // Handle both possible field names
+                                    const patientName = (appointment.patient as any)?.name || (appointment.patient as any)?.fullName || 'Unknown Patient';
+                                    const patientImage = (appointment.patient as any)?.profilePicture || (appointment.patient as any)?.profileImage;
+
                                     const hasImage = patientImage && (
                                       patientImage.includes('googleusercontent.com') ||
                                       patientImage.startsWith('http://') ||
@@ -3893,7 +3892,7 @@ const Dashboard = () => {
                                       return (
                                         <img
                                           src={patientImage}
-                                          alt={appointment.patient.name || 'Patient'}
+                                          alt={patientName}
                                           className="rounded-circle"
                                           style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                                           onError={(e) => {
@@ -3901,20 +3900,19 @@ const Dashboard = () => {
                                             target.style.display = 'none';
                                             const parent = target.parentElement;
                                             if (parent) {
-                                              parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${getInitials(appointment.patient.name, 'PT')}</div>`;
+                                              parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${getInitials(patientName, 'PT')}</div>`;
                                             }
                                           }}
                                         />
                                       );
                                     }
 
-                                    // Show initials if no image
                                     return (
                                       <div
                                         className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
                                         style={{ width: '40px', height: '40px', fontSize: '14px' }}
                                       >
-                                        {getInitials(appointment.patient.name, 'PT')}
+                                        {getInitials(patientName, 'PT')}
                                       </div>
                                     );
                                   })()}
@@ -3925,10 +3923,10 @@ const Dashboard = () => {
                                       to={all_routes.patientDetails}
                                       className="fw-medium"
                                     >
-                                      {appointment.patient.name || 'Unknown Patient'}
+                                      {(appointment.patient as any)?.name || (appointment.patient as any)?.fullName || 'Unknown Patient'}
                                     </Link>
                                   </h6>
-                                  <p className="mb-0 fs-13">{appointment.patient.phone || 'N/A'}</p>
+                                  <p className="mb-0 fs-13">{(appointment.patient as any)?.phone || 'N/A'}</p>
                                 </div>
                               </div>
                             </td>

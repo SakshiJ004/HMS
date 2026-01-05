@@ -271,14 +271,44 @@ const createAppointment = async (req, res) => {
 const getAppointments = async (req, res) => {
     try {
         const appointments = await Appointment.find()
-            .populate('patient', 'fullName email profileImage')
-            .populate('doctor', 'fullName email profileImage')
-            .sort({ createdAt: -1 });
+            .populate({
+                path: 'doctor',
+                select: 'fullName name specialization profileImage profilePicture department status'
+            })
+            .populate({
+                path: 'patient',
+                select: 'fullName name email phone profileImage profilePicture'
+            })
+            .sort({ appointmentDate: -1, appointmentTime: -1 })
+            .lean();
+
+        // Transform data to ensure consistent field names
+        const transformedAppointments = appointments.map(apt => ({
+            ...apt,
+            doctor: apt.doctor ? {
+                _id: apt.doctor._id,
+                name: apt.doctor.fullName || apt.doctor.name,
+                fullName: apt.doctor.fullName || apt.doctor.name,
+                specialization: apt.doctor.specialization,
+                profilePicture: apt.doctor.profileImage || apt.doctor.profilePicture,
+                profileImage: apt.doctor.profileImage || apt.doctor.profilePicture,
+                department: apt.doctor.department,
+                status: apt.doctor.status
+            } : null,
+            patient: apt.patient ? {
+                _id: apt.patient._id,
+                name: apt.patient.fullName || apt.patient.name,
+                fullName: apt.patient.fullName || apt.patient.name,
+                email: apt.patient.email,
+                phone: apt.patient.phone,
+                profilePicture: apt.patient.profileImage || apt.patient.profilePicture,
+                profileImage: apt.patient.profileImage || apt.patient.profilePicture
+            } : null
+        }));
 
         res.status(200).json({
             success: true,
-            count: appointments.length,
-            data: appointments,
+            data: transformedAppointments,
         });
     } catch (error) {
         console.error('Get appointments error:', error);
