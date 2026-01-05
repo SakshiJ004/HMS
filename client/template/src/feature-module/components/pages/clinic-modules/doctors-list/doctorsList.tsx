@@ -1623,14 +1623,6 @@ const DoctorsList = () => {
                             placeholder="DD-MM-YYYY"
                             suffixIcon={null}
                           />
-                          {/* <span className="input-icon-addon">
-                            <i className="ti ti-calendar" />
-                          </span> */}
-                          <div className="action-item me-2">
-                            <Link to={all_routes.appointmentCalendar}>
-                              <i className="ti ti-calendar-cog" />
-                            </Link>
-                          </div>
                         </div>
                       </div>
                       <div className="mb-3">

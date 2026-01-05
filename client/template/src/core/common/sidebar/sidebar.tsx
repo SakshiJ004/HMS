@@ -8,12 +8,28 @@ import { useDispatch, useSelector } from "react-redux";
 import { setExpandMenu, setMobileSidebar } from "../../redux/sidebarSlice";
 import { updateTheme } from "../../redux/themeSlice";
 import { all_routes } from "../../../feature-module/routes/all_routes";
-
+import { getSidebarDataByRole } from "./sidebarData";
 
 const Sidebar = () => {
   const Location = useLocation();
   const [subOpen, setSubopen] = useState<any>("");
   const [subsidebar, setSubsidebar] = useState("");
+  // ✅ ADD: Get user role and filter sidebar
+  const [sidebarItems, setSidebarItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    const userDataStr = localStorage.getItem('userData');
+    if (userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr);
+        const userRole = userData.role as 'admin' | 'doctor' | 'patient';
+        const filteredData = getSidebarDataByRole(userRole);
+        setSidebarItems(filteredData);
+      } catch (error) {
+        console.error('Error loading sidebar:', error);
+      }
+    }
+  }, []);
   const dispatch = useDispatch();
 
   const toggleSidebar = (title: any) => {
@@ -268,14 +284,14 @@ const Sidebar = () => {
               </div>
             </div>
             <ul>
-              {SidebarData?.map((mainLabel, index) => (
+              {sidebarItems?.map((mainLabel, index) => (
                 <React.Fragment key={`main-${index}`}>
                   <li className="menu-title">
                     <span>{mainLabel?.tittle}</span>
                   </li>
                   <li>
                     <ul>
-                      {mainLabel?.submenuItems?.map((title: any, i) => {
+                      {mainLabel?.submenuItems?.map((title: any, _titleIndex: number) => {
                         let link_array: any = [];
                         if ("submenuItems" in title) {
                           title.submenuItems?.forEach((link: any) => {
@@ -290,7 +306,7 @@ const Sidebar = () => {
                         title.links = link_array;
 
                         return (
-                          <li className="submenu" key={`title-${i}`}>
+                          <li className="submenu" key={`title-${_titleIndex}`}>
                             <Link
                               to={title?.submenu ? "#" : title?.link}
                               onClick={() => {
@@ -301,9 +317,9 @@ const Sidebar = () => {
                                 }
                               }}
                               className={`${subOpen === title?.label ||
-                                  title?.links?.includes(Location.pathname)
-                                  ? "subdrop"
-                                  : ""
+                                title?.links?.includes(Location.pathname)
+                                ? "subdrop"
+                                : ""
                                 } ${title?.links?.includes(Location.pathname) ||
                                   title?.link === Location.pathname
                                   ? "active"
@@ -344,8 +360,8 @@ const Sidebar = () => {
                                     return (
                                       <li
                                         className={`${item?.submenuItems
-                                            ? "submenu submenu-two"
-                                            : ""
+                                          ? "submenu submenu-two"
+                                          : ""
                                           } `}
                                         key={`item-${j}`}
                                       >
@@ -402,8 +418,8 @@ const Sidebar = () => {
                                                           : items?.link
                                                       }
                                                       className={`${isSubSubActive
-                                                          ? "active"
-                                                          : ""
+                                                        ? "active"
+                                                        : ""
                                                         }`}
                                                     >
                                                       {items?.label}

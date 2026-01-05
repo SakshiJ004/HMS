@@ -519,13 +519,13 @@ const DoctorAppointmentCalendar = () => {
                     <div className="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-1 border-bottom">
                         <div className="flex-grow-1">
                             <h6 className="fw-bold mb-0 d-flex align-items-center">
-                                <Link to={all_routes.doctors}>
+                                <Link to={doctorId ? all_routes.doctors : all_routes.doctors}>
                                     <i className="ti ti-chevron-left me-1 fs-14" />
-                                    Back to Doctors
+                                    {doctorId ? 'Back to Doctors' : 'Back to Doctors'}
                                 </Link>
                             </h6>
                             <h4 className="fw-semibold mb-0 mt-2">
-                                All Doctors Appointment Calendar
+                                {doctorId ? 'Doctor' : 'All Doctors'} Appointment Calendar
                                 <span className="badge badge-soft-primary fs-13 fw-medium ms-2">
                                     Total Appointments in {selectedDate.format('MMMM YYYY')}: {appointments.filter(app =>
                                         dayjs(app.appointmentDate).format('YYYY-MM') === selectedDate.format('YYYY-MM')

@@ -910,6 +910,7 @@ import CommonSelect from "../../../../../core/common/common-select/commonSelect"
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useAuth } from "../../../../../hooks/useAuth";
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
@@ -920,6 +921,7 @@ const Appointments = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [editFormData, setEditFormData] = useState<any>({});
+  const { isAdmin, isDoctor, user } = useAuth();
 
   useEffect(() => {
     fetchAppointments();
@@ -929,7 +931,19 @@ const Appointments = () => {
     try {
       setLoading(true);
       const response = await getAppointments();
-      setAppointments(response.data || []);
+
+      let filteredAppointments = response.data || [];
+
+      // ✅ ADD: Filter appointments based on user role
+      if (isDoctor && user?._id) {
+        // Doctor sees only their own appointments
+        filteredAppointments = filteredAppointments.filter(
+          (app: AppointmentResponse) => app.doctor?._id === user._id
+        );
+      }
+      // Admin sees all appointments (no filter)
+
+      setAppointments(filteredAppointments);
     } catch (error: any) {
       console.error("Error fetching appointments:", error);
       message.error(error.message || "Failed to load appointments");
@@ -1245,18 +1259,22 @@ const Appointments = () => {
             <i className="ti ti-dots-vertical" />
           </Link>
           <ul className="dropdown-menu p-2">
-            <li>
-              <Link
-                to="#"
-                className="dropdown-item d-flex align-items-center"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleEdit(record.fullData);
-                }}
-              >
-                Edit
-              </Link>
-            </li>
+            {/* ✅ Admin can edit */}
+            {isAdmin && (
+              <li>
+                <Link
+                  to="#"
+                  className="dropdown-item d-flex align-items-center"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleEdit(record.fullData);
+                  }}
+                >
+                  Edit
+                </Link>
+              </li>
+            )}
+            {/* Everyone can view */}
             <li>
               <Link
                 to="#"
@@ -1269,17 +1287,20 @@ const Appointments = () => {
                 View
               </Link>
             </li>
-            <li>
-              <Link
-                to="#"
-                className="dropdown-item d-flex align-items-center"
-                data-bs-toggle="modal"
-                data-bs-target="#delete_modal"
-                onClick={() => setDeleteId(record._id)}
-              >
-                Delete
-              </Link>
-            </li>
+            {/* ✅ Only admin can delete */}
+            {isAdmin && (
+              <li>
+                <Link
+                  to="#"
+                  className="dropdown-item d-flex align-items-center"
+                  data-bs-toggle="modal"
+                  data-bs-target="#delete_modal"
+                  onClick={() => setDeleteId(record._id)}
+                >
+                  Delete
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
       ),
