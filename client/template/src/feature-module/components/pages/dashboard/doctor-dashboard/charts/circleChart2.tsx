@@ -46,67 +46,158 @@
 
 // export default CircleChart2;
 
-import { useEffect, useState } from "react";
+// import { useEffect, useState } from "react";
+// import Chart from "react-apexcharts";
+
+// interface CircleChart2Props {
+//   data?: {
+//     completed: number;
+//     pending: number;
+//     cancelled: number;
+//   };
+// }
+
+// const CircleChart2 = ({ data }: CircleChart2Props) => {
+//   const [chartOptions, setChartOptions] = useState<any>({});
+//   const [series, setSeries] = useState<number[]>([260, 21, 50]);
+
+//   useEffect(() => {
+//     if (data) {
+//       setSeries([data.completed, data.pending, data.cancelled]);
+//     }
+
+//     setChartOptions({
+//       chart: {
+//         type: "donut",
+//         height: 250,
+//       },
+//       labels: ["Completed", "Pending", "Cancelled"],
+//       colors: ["#10D876", "#FFC107", "#FF4B4B"],
+//       legend: {
+//         show: false,
+//       },
+//       dataLabels: {
+//         enabled: false,
+//       },
+//       plotOptions: {
+//         pie: {
+//           donut: {
+//             size: "70%",
+//           },
+//         },
+//       },
+//       responsive: [
+//         {
+//           breakpoint: 480,
+//           options: {
+//             chart: {
+//               height: 200,
+//             },
+//           },
+//         },
+//       ],
+//     });
+//   }, [data]);
+
+//   return (
+//     <Chart
+//       options={chartOptions}
+//       series={series}
+//       type="donut"
+//       height={250}
+//     />
+//   );
+// };
+
+// export default CircleChart2;
+
+
+// import { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 
-interface CircleChart2Props {
-  data?: {
-    completed: number;
-    pending: number;
-    cancelled: number;
-  };
+interface CircleChartProps {
+  data: Array<{ department: string; count: number }>;
 }
 
-const CircleChart2 = ({ data }: CircleChart2Props) => {
-  const [chartOptions, setChartOptions] = useState<any>({});
-  const [series, setSeries] = useState<number[]>([260, 21, 50]);
+const CircleChart = ({ data }: CircleChartProps) => {
+  // Calculate total from real data
+  const total = data && data.length > 0
+    ? data.reduce((sum, item) => sum + item.count, 0)
+    : 0;
 
-  useEffect(() => {
-    if (data) {
-      setSeries([data.completed, data.pending, data.cancelled]);
-    }
+  // Calculate percentages for the chart
+  const series = data && data.length > 0
+    ? data.map(item => item.count)
+    : [0];
 
-    setChartOptions({
-      chart: {
-        type: "donut",
-        height: 250,
-      },
-      labels: ["Completed", "Pending", "Cancelled"],
-      colors: ["#10D876", "#FFC107", "#FF4B4B"],
-      legend: {
-        show: false,
-      },
-      dataLabels: {
-        enabled: false,
-      },
-      plotOptions: {
-        pie: {
-          donut: {
-            size: "70%",
-          },
-        },
-      },
-      responsive: [
-        {
-          breakpoint: 480,
-          options: {
-            chart: {
-              height: 200,
+  const chartOptions = {
+    chart: {
+      type: "donut" as const,
+      height: 280,
+    },
+    labels: data && data.length > 0
+      ? data.map(item => item.department)
+      : ['No Data'],
+    colors: ["#5E63FF", "#AB47BC", "#29B6F6"],
+    legend: {
+      show: false,
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: "70%",
+          labels: {
+            show: true,
+            name: {
+              show: true,
+              fontSize: '14px',
+              color: '#6B7280',
             },
+            value: {
+              show: true,
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: '#111827',
+              formatter: function () {
+                return total.toString();
+              }
+            },
+            total: {
+              show: true,
+              label: 'Total Patient',
+              fontSize: '14px',
+              color: '#6B7280',
+              formatter: function () {
+                return total.toString();
+              }
+            }
+          }
+        },
+      },
+    },
+    responsive: [
+      {
+        breakpoint: 480,
+        options: {
+          chart: {
+            height: 200,
           },
         },
-      ],
-    });
-  }, [data]);
+      },
+    ],
+  };
 
   return (
     <Chart
       options={chartOptions}
       series={series}
       type="donut"
-      height={250}
+      height={280}
     />
   );
 };
 
-export default CircleChart2;
+export default CircleChart;

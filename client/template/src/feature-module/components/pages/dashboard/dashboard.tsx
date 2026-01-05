@@ -2805,6 +2805,21 @@ const Dashboard = () => {
     },
   ];
 
+  // Helper function to get initials safely
+  const getInitials = (name: string | undefined | null, defaultInitial: string = '?'): string => {
+    if (!name || typeof name !== 'string') return defaultInitial;
+
+    const nameParts = name.trim().split(' ').filter(Boolean);
+
+    if (nameParts.length === 0) return defaultInitial;
+
+    if (nameParts.length === 1) {
+      return nameParts[0].charAt(0).toUpperCase();
+    }
+
+    return nameParts[0].charAt(0).toUpperCase() + nameParts[nameParts.length - 1].charAt(0).toUpperCase();
+  };
+
   // Fetch dashboard stats
   // useEffect(() => {
   //   const fetchDashboardData = async () => {
@@ -2890,6 +2905,8 @@ const Dashboard = () => {
         setAppointmentStats(appointmentStatsResponse.data);
         setTopDoctors(topDoctorsResponse.data);
         setDepartmentStats(departmentStatsResponse.data);
+        console.log('Department Stats:', departmentStatsResponse.data)
+
         setDoctorsSchedule(doctorsScheduleResponse.data);
         if (topPatientsResponse.data.success) {
           setTopPatients(topPatientsResponse.data.data);
@@ -3573,7 +3590,13 @@ const Dashboard = () => {
                 </div>
                 <div className="card-body">
                   <div id="circle-chart" className="chart-set">
-                    <CircleChart data={departmentStats} />
+                    {departmentStats && departmentStats.length > 0 ? (
+                      <CircleChart data={departmentStats} />
+                    ) : (
+                      <div className="text-center py-5">
+                        <p className="text-muted">No department data available</p>
+                      </div>
+                    )}
                   </div>
                   <div className="d-flex align-items-center flex-wrap justify-content-center gap-2 mt-3">
                     {departmentStats.map((dept, index) => {
@@ -3798,38 +3821,44 @@ const Dashboard = () => {
                                   className="avatar me-2"
                                   style={{ width: '40px', height: '40px', flexShrink: 0 }}
                                 >
-                                  {appointment.doctor.profilePicture ? (
-                                    <img
-                                      src={
-                                        appointment.doctor.profilePicture.includes('googleusercontent.com') ||
-                                          appointment.doctor.profilePicture.startsWith('http://') ||
-                                          appointment.doctor.profilePicture.startsWith('https://') ||
-                                          appointment.doctor.profilePicture.startsWith('data:')
-                                          ? appointment.doctor.profilePicture
-                                          : appointment.doctor.profilePicture.startsWith('/')
-                                            ? `${API_URL}${appointment.doctor.profilePicture}`
-                                            : `${API_URL}/${appointment.doctor.profilePicture}`
-                                      }
-                                      alt={appointment.doctor.name}
-                                      className="rounded-circle"
-                                      style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                        const parent = e.currentTarget.parentElement;
-                                        if (parent) {
-                                          const initials = appointment.doctor.name ? appointment.doctor.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'DR';
-                                          parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>`;
-                                        }
-                                      }}
-                                    />
-                                  ) : (
-                                    <div
-                                      className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold"
-                                      style={{ width: '40px', height: '40px', fontSize: '14px' }}
-                                    >
-                                      {appointment.doctor.name ? appointment.doctor.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'DR'}
-                                    </div>
-                                  )}
+                                  {(() => {
+                                    const doctorImage = appointment.doctor.profilePicture;
+                                    const hasImage = doctorImage && (
+                                      doctorImage.includes('googleusercontent.com') ||
+                                      doctorImage.startsWith('http://') ||
+                                      doctorImage.startsWith('https://') ||
+                                      doctorImage.startsWith('data:image')
+                                    );
+
+                                    if (hasImage) {
+                                      return (
+                                        <img
+                                          src={doctorImage}
+                                          alt={appointment.doctor.name || 'Doctor'}
+                                          className="rounded-circle"
+                                          style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                          onError={(e) => {
+                                            const target = e.currentTarget;
+                                            target.style.display = 'none';
+                                            const parent = target.parentElement;
+                                            if (parent) {
+                                              parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${getInitials(appointment.doctor.name, 'DR')}</div>`;
+                                            }
+                                          }}
+                                        />
+                                      );
+                                    }
+
+                                    // Show initials if no image
+                                    return (
+                                      <div
+                                        className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold"
+                                        style={{ width: '40px', height: '40px', fontSize: '14px' }}
+                                      >
+                                        {getInitials(appointment.doctor.name, 'DR')}
+                                      </div>
+                                    );
+                                  })()}
                                 </Link>
                                 <div>
                                   <h6 className="fs-14 mb-1">
@@ -3837,10 +3866,10 @@ const Dashboard = () => {
                                       to={all_routes.doctordetails}
                                       className="fw-semibold"
                                     >
-                                      {appointment.doctor.name}
+                                      {appointment.doctor.name || 'Unknown Doctor'}
                                     </Link>
                                   </h6>
-                                  <p className="mb-0 fs-13">{appointment.doctor.specialization}</p>
+                                  <p className="mb-0 fs-13">{appointment.doctor.specialization || 'N/A'}</p>
                                 </div>
                               </div>
                             </td>
@@ -3851,38 +3880,44 @@ const Dashboard = () => {
                                   className="avatar me-2"
                                   style={{ width: '40px', height: '40px', flexShrink: 0 }}
                                 >
-                                  {appointment.patient.profilePicture ? (
-                                    <img
-                                      src={
-                                        appointment.patient.profilePicture.includes('googleusercontent.com') ||
-                                          appointment.patient.profilePicture.startsWith('http://') ||
-                                          appointment.patient.profilePicture.startsWith('https://') ||
-                                          appointment.patient.profilePicture.startsWith('data:')
-                                          ? appointment.patient.profilePicture
-                                          : appointment.patient.profilePicture.startsWith('/')
-                                            ? `${API_URL}${appointment.patient.profilePicture}`
-                                            : `${API_URL}/${appointment.patient.profilePicture}`
-                                      }
-                                      alt={appointment.patient.name}
-                                      className="rounded-circle"
-                                      style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                        const parent = e.currentTarget.parentElement;
-                                        if (parent) {
-                                          const initials = appointment.patient.name ? appointment.patient.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'PT';
-                                          parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>`;
-                                        }
-                                      }}
-                                    />
-                                  ) : (
-                                    <div
-                                      className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
-                                      style={{ width: '40px', height: '40px', fontSize: '14px' }}
-                                    >
-                                      {appointment.patient.name ? appointment.patient.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'PT'}
-                                    </div>
-                                  )}
+                                  {(() => {
+                                    const patientImage = appointment.patient.profilePicture;
+                                    const hasImage = patientImage && (
+                                      patientImage.includes('googleusercontent.com') ||
+                                      patientImage.startsWith('http://') ||
+                                      patientImage.startsWith('https://') ||
+                                      patientImage.startsWith('data:image')
+                                    );
+
+                                    if (hasImage) {
+                                      return (
+                                        <img
+                                          src={patientImage}
+                                          alt={appointment.patient.name || 'Patient'}
+                                          className="rounded-circle"
+                                          style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                          onError={(e) => {
+                                            const target = e.currentTarget;
+                                            target.style.display = 'none';
+                                            const parent = target.parentElement;
+                                            if (parent) {
+                                              parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${getInitials(appointment.patient.name, 'PT')}</div>`;
+                                            }
+                                          }}
+                                        />
+                                      );
+                                    }
+
+                                    // Show initials if no image
+                                    return (
+                                      <div
+                                        className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                                        style={{ width: '40px', height: '40px', fontSize: '14px' }}
+                                      >
+                                        {getInitials(appointment.patient.name, 'PT')}
+                                      </div>
+                                    );
+                                  })()}
                                 </Link>
                                 <div>
                                   <h6 className="fs-14 mb-1">
@@ -3890,10 +3925,10 @@ const Dashboard = () => {
                                       to={all_routes.patientDetails}
                                       className="fw-medium"
                                     >
-                                      {appointment.patient.name}
+                                      {appointment.patient.name || 'Unknown Patient'}
                                     </Link>
                                   </h6>
-                                  <p className="mb-0 fs-13">{appointment.patient.phone}</p>
+                                  <p className="mb-0 fs-13">{appointment.patient.phone || 'N/A'}</p>
                                 </div>
                               </div>
                             </td>
