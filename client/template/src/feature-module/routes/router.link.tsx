@@ -1,5 +1,5 @@
 // import AuthCallback from "../components/auth/callback/AuthCallback";
-import ProtectedRoute from "../../core/common/ProtectedRoute";
+import ProtectedRoute from "../../core/common/protectedRoute";
 import EmailVerificationBasic from "../components/auth/email-verification/emailVerificationBasic";
 import Error404 from "../components/auth/error-modules/error404";
 import Error500 from "../components/auth/error-modules/error500";
