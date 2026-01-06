@@ -1,5 +1,4 @@
 // import AuthCallback from "../components/auth/callback/AuthCallback";
-import ProtectedRoute from "../../core/common/protectedRoute";
 import EmailVerificationBasic from "../components/auth/email-verification/emailVerificationBasic";
 import Error404 from "../components/auth/error-modules/error404";
 import Error500 from "../components/auth/error-modules/error500";
@@ -238,11 +237,7 @@ export const publicRoutes = [
 
   {
     path: routes.dashboard,
-    element: (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <Dashboard />
-      </ProtectedRoute>
-    ),
+    element: <Dashboard />,
     route: Route,
   },
   {
@@ -282,11 +277,7 @@ export const publicRoutes = [
   },
   {
     path: routes.doctordashboard,
-    element: (
-      <ProtectedRoute allowedRoles={['doctor']}>
-        <DoctorDahboard />
-      </ProtectedRoute>
-    ),
+    element: <DoctorDahboard />,
     route: Route,
   },
   {
@@ -309,11 +300,7 @@ export const publicRoutes = [
   },
   {
     path: routes.doctorschedule,
-    element: (
-      <ProtectedRoute allowedRoles={['admin', 'doctor']}>
-        <DoctorSchedules />
-      </ProtectedRoute>
-    ),
+    element:<DoctorSchedules />,
     route: Route,
   },
   {
@@ -353,11 +340,7 @@ export const publicRoutes = [
   },
   {
     path: routes.patientdashboard,
-    element: (
-      <ProtectedRoute allowedRoles={['patient']}>
-        <PatientDashboard />
-      </ProtectedRoute>
-    ),
+    element: <PatientDashboard />,
     route: Route,
   },
   {
@@ -502,38 +485,22 @@ export const publicRoutes = [
   },
   {
     path: routes.doctors,
-    element: (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <Doctors />
-      </ProtectedRoute>
-    ),
+    element: <Doctors />,
     route: Route,
   },
   {
     path: routes.doctorsList,
-    element: (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <DoctorsList />
-      </ProtectedRoute>
-    ),
+    element: <DoctorsList />,
     route: Route,
   },
   {
     path: routes.editDoctors,
-    element: (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <EditDoctor />
-      </ProtectedRoute>
-    ),
+    element: <EditDoctor />,
     route: Route,
   },
   {
     path: routes.addDoctors,
-    element: (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <AddDoctor />
-      </ProtectedRoute>
-    ),
+    element: <AddDoctor />,
     route: Route,
   },
   {
@@ -543,11 +510,7 @@ export const publicRoutes = [
   },
   {
     path: routes.patients,
-    element: (
-      <ProtectedRoute allowedRoles={['admin', 'doctor']}>
-        <Patients />
-      </ProtectedRoute>
-    ),
+    element: <Patients />,
     route: Route,
   },
   {
@@ -1327,20 +1290,12 @@ export const publicRoutes = [
   },
   {
     path: routes.appointments,
-    element: (
-      <ProtectedRoute allowedRoles={['admin', 'doctor', 'patient']}>
-        <Appointments />
-      </ProtectedRoute>
-    ),
+    element: <Appointments />,
     route: Route,
   },
   {
     path: routes.newAppointment,
-    element: (
-      <ProtectedRoute allowedRoles={['admin', 'doctor', 'patient']}>
-        <NewAppointment />
-      </ProtectedRoute>
-    ),
+    element: <NewAppointment />,
     route: Route,
   },
   {
