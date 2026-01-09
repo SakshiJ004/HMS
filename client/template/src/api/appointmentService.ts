@@ -229,3 +229,24 @@ export const deleteAppointment = async (
         throw error;
     }
 };
+
+// Get doctor's schedule
+export const getDoctorSchedule = async (doctorId: string) => {
+    try {
+        const response = await fetch(`${API_URL}/doctors/${doctorId}/schedule`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch doctor schedule');
+        }
+
+        return await response.json();
+    } catch (error: any) {
+        throw new Error(error.message || 'Failed to fetch schedule');
+    }
+};

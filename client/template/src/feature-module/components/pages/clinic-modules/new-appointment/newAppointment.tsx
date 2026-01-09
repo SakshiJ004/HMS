@@ -526,6 +526,7 @@ import {
   createAppointment,
   type Doctor,
   type Patient,
+  getDoctorSchedule,
 } from "../../../../../api/appointmentService";
 
 // Define SelectOption type
@@ -539,6 +540,8 @@ const NewAppointment = () => {
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [doctorSchedule, setDoctorSchedule] = useState<any>(null);
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -566,34 +569,34 @@ const NewAppointment = () => {
   // Dropdown options
   const departmentOptions: SelectOption[] = [
     { value: "Cardiology", label: "Cardiology" },
-  { value: "Neurology", label: "Neurology" },
-  { value: "Orthopedics", label: "Orthopedics" },
-  { value: "Pediatrics", label: "Pediatrics" },
-  { value: "Gynecology", label: "Gynecology" },
-  { value: "Obstetrics", label: "Obstetrics" },
-  { value: "Psychiatry", label: "Psychiatry" },
-  { value: "Neurosurgery", label: "Neurosurgery" },
-  { value: "Oncology", label: "Oncology" },
-  { value: "Pulmonology", label: "Pulmonology" },
-  { value: "Urology", label: "Urology" },
-  { value: "Dermatology", label: "Dermatology" },
-  { value: "ENT", label: "ENT (Ear, Nose, Throat)" },
-  { value: "Ophthalmology", label: "Ophthalmology" },
-  { value: "Radiology", label: "Radiology" },
-  { value: "Anesthesiology", label: "Anesthesiology" },
-  { value: "Emergency Medicine", label: "Emergency Medicine" },
-  { value: "General Surgery", label: "General Surgery" },
-  { value: "Internal Medicine", label: "Internal Medicine" },
-  { value: "Nephrology", label: "Nephrology" },
-  { value: "Gastroenterology", label: "Gastroenterology" },
-  { value: "Endocrinology", label: "Endocrinology" },
-  { value: "Rheumatology", label: "Rheumatology" },
-  { value: "Hematology", label: "Hematology" },
-  { value: "Infectious Disease", label: "Infectious Disease" },
-  { value: "Plastic Surgery", label: "Plastic Surgery" },
-  { value: "Pathology", label: "Pathology" },
-  { value: "Physical Medicine", label: "Physical Medicine & Rehabilitation" },
-  { value: "Dental", label: "Dental" }
+    { value: "Neurology", label: "Neurology" },
+    { value: "Orthopedics", label: "Orthopedics" },
+    { value: "Pediatrics", label: "Pediatrics" },
+    { value: "Gynecology", label: "Gynecology" },
+    { value: "Obstetrics", label: "Obstetrics" },
+    { value: "Psychiatry", label: "Psychiatry" },
+    { value: "Neurosurgery", label: "Neurosurgery" },
+    { value: "Oncology", label: "Oncology" },
+    { value: "Pulmonology", label: "Pulmonology" },
+    { value: "Urology", label: "Urology" },
+    { value: "Dermatology", label: "Dermatology" },
+    { value: "ENT", label: "ENT (Ear, Nose, Throat)" },
+    { value: "Ophthalmology", label: "Ophthalmology" },
+    { value: "Radiology", label: "Radiology" },
+    { value: "Anesthesiology", label: "Anesthesiology" },
+    { value: "Emergency Medicine", label: "Emergency Medicine" },
+    { value: "General Surgery", label: "General Surgery" },
+    { value: "Internal Medicine", label: "Internal Medicine" },
+    { value: "Nephrology", label: "Nephrology" },
+    { value: "Gastroenterology", label: "Gastroenterology" },
+    { value: "Endocrinology", label: "Endocrinology" },
+    { value: "Rheumatology", label: "Rheumatology" },
+    { value: "Hematology", label: "Hematology" },
+    { value: "Infectious Disease", label: "Infectious Disease" },
+    { value: "Plastic Surgery", label: "Plastic Surgery" },
+    { value: "Pathology", label: "Pathology" },
+    { value: "Physical Medicine", label: "Physical Medicine & Rehabilitation" },
+    { value: "Dental", label: "Dental" }
   ];
 
   const appointmentTypeOptions: SelectOption[] = [
@@ -697,28 +700,60 @@ const NewAppointment = () => {
     return current && current.isBefore(dayjs().startOf('day'));
   };
 
-  // Disable past times in TimePicker
+  // Disable past times based on doctor schedule
   const disabledTime = () => {
     const now = dayjs();
     const selectedDate = formData.appointmentDate;
 
-    // If no date is selected or selected date is in the future, allow all times
-    if (!selectedDate || selectedDate.isAfter(now, 'day')) {
+    // If no date selected or no schedule
+    if (!selectedDate) {
       return {};
     }
 
-    // If selected date is today, disable past hours and minutes
+    // If doctor schedule exists, only allow scheduled time slots
+    if (doctorSchedule && doctorSchedule.schedule) {
+      const dateSchedule = doctorSchedule.schedule.find(
+        (s: any) => s.date === selectedDate.format('YYYY-MM-DD')
+      );
+
+      if (dateSchedule && dateSchedule.timeSlots) {
+        // Get available hours from schedule
+        const availableHours = dateSchedule.timeSlots.map((slot: string) => {
+          const [hour] = slot.split(':');
+          return parseInt(hour);
+        });
+
+        return {
+          disabledHours: () => {
+            // Disable all hours except scheduled ones
+            const allHours = Array.from({ length: 24 }, (_, i) => i);
+            return allHours.filter(h => !availableHours.includes(h));
+          },
+          disabledMinutes: (selectedHour: number) => {
+            // Get available minutes for this hour
+            const slotsForHour = dateSchedule.timeSlots
+              .filter((slot: string) => slot.startsWith(`${selectedHour}:`))
+              .map((slot: string) => {
+                const [, minute] = slot.split(':');
+                return parseInt(minute);
+              });
+
+            // Disable all minutes except scheduled ones
+            const allMinutes = Array.from({ length: 60 }, (_, i) => i);
+            return allMinutes.filter(m => !slotsForHour.includes(m));
+          },
+        };
+      }
+    }
+
+    // Default: disable past times for today
     if (selectedDate.isSame(now, 'day')) {
       const currentHour = now.hour();
       const currentMinute = now.minute();
 
       return {
-        disabledHours: () => {
-          // Disable all hours before current hour
-          return Array.from({ length: currentHour }, (_, i) => i);
-        },
+        disabledHours: () => Array.from({ length: currentHour }, (_, i) => i),
         disabledMinutes: (selectedHour: number) => {
-          // If selected hour is current hour, disable minutes before current minute
           if (selectedHour === currentHour) {
             return Array.from({ length: currentMinute + 1 }, (_, i) => i);
           }
@@ -945,9 +980,43 @@ const NewAppointment = () => {
                             className="select"
                             placeholder="Select Doctor"
                             value={doctorOptions.find((d: SelectOption) => d.value === formData.doctor)}
-                            onChange={(option: any) => {
-                              setFormData(prev => ({ ...prev, doctor: option?.value || "" }));
-                              clearError('doctor');
+                            onChange={async (option: any) => {
+                              const selectedDoctorId = option?.value || "";
+
+                              // Find selected doctor
+                              const selectedDoctor = doctors.find(d => d._id === selectedDoctorId);
+
+                              // Auto-fill department
+                              if (selectedDoctor) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  doctor: selectedDoctorId,
+                                  department: selectedDoctor.department || "",
+                                  appointmentDate: null, // Reset date
+                                  appointmentTime: null, // Reset time
+                                }));
+
+                                // Clear errors
+                                clearError('doctor');
+                                clearError('department');
+
+                                // Fetch doctor's schedule
+                                try {
+                                  const scheduleData = await getDoctorSchedule(selectedDoctorId);
+                                  setDoctorSchedule(scheduleData);
+
+                                  // Extract available dates from schedule
+                                  if (scheduleData && scheduleData.schedule) {
+                                    const dates = scheduleData.schedule.map((s: any) => s.date);
+                                    setAvailableDates(dates);
+                                  }
+                                } catch (error: any) {
+                                  console.error("Error fetching schedule:", error);
+                                  message.warning("Could not load doctor's schedule");
+                                  setDoctorSchedule(null);
+                                  setAvailableDates([]);
+                                }
+                              }
                             }}
                           />
                           {errors.doctor && (
@@ -995,7 +1064,20 @@ const NewAppointment = () => {
                               format="DD-MM-YYYY"
                               getPopupContainer={getModalContainer}
                               placeholder="DD-MM-YYYY"
-                              disabledDate={disabledDate}
+                              disabledDate={(current) => {
+                                // Disable past dates
+                                if (current && current.isBefore(dayjs().startOf('day'))) {
+                                  return true;
+                                }
+
+                                // If doctor schedule exists, only allow scheduled dates
+                                if (doctorSchedule && availableDates.length > 0) {
+                                  const currentDateStr = current.format('YYYY-MM-DD');
+                                  return !availableDates.includes(currentDateStr);
+                                }
+
+                                return false;
+                              }}
                               onChange={(date) => {
                                 setFormData(prev => ({ ...prev, appointmentDate: date }));
                                 // Reset time when date changes to force revalidation
