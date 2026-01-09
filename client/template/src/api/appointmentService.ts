@@ -11,6 +11,11 @@ export interface Doctor {
     fullName: string;
     email: string;
     profileImage?: string;
+    phone: string;
+    department: string; 
+    designation: string;
+    consultationCharge: number;
+    status?: string;
 }
 
 export interface Patient {

@@ -694,12 +694,6 @@ const NewAppointment = () => {
     setErrors({ ...errors, [field]: "" });
   };
 
-  // Disable past dates in DatePicker
-  const disabledDate = (current: Dayjs) => {
-    // Disable all dates before today
-    return current && current.isBefore(dayjs().startOf('day'));
-  };
-
   // Disable past times based on doctor schedule
   const disabledTime = () => {
     const now = dayjs();
