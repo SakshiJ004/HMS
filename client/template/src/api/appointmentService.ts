@@ -12,7 +12,7 @@ export interface Doctor {
     email: string;
     profileImage?: string;
     phone: string;
-    department: string; 
+    department: string;
     designation: string;
     consultationCharge: number;
     status?: string;
@@ -68,6 +68,18 @@ export interface ApiResponse<T> {
     message?: string;
     data: T;
     count?: number;
+}
+
+export interface DoctorSchedule {
+    schedule: Array<{
+        date: string;
+        day: string;
+        timeSlots: Array<{
+            startTime: string;
+            endTime: string;
+        }>;
+    }>;
+    appointmentDuration: number;
 }
 
 // Get auth token from localStorage
@@ -235,23 +247,20 @@ export const deleteAppointment = async (
     }
 };
 
-// Get doctor's schedule
-export const getDoctorSchedule = async (doctorId: string) => {
+export const getDoctorSchedule = async (doctorId: string): Promise<DoctorSchedule> => {
     try {
-        const response = await fetch(`${API_URL}/doctors/${doctorId}/schedule`, {
-            method: 'GET',
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_URL}/appointments/doctors/${doctorId}/schedule`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
             },
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch doctor schedule');
+        if (response.data.success) {
+            return response.data.data;
         }
-
-        return await response.json();
+        throw new Error(response.data.message || 'Failed to fetch doctor schedule');
     } catch (error: any) {
-        throw new Error(error.message || 'Failed to fetch schedule');
+        throw new Error(error.response?.data?.message || error.message || 'Failed to fetch doctor schedule');
     }
 };

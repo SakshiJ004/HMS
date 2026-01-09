@@ -460,6 +460,108 @@ const deleteAppointment = async (req, res) => {
     }
 };
 
+// In controllers/appointmentController.js
+
+const getDoctorSchedule = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+
+        // Find doctor with schedule data
+        const doctor = await User.findById(doctorId)
+            .select('schedules acceptBookingsDays appointmentDuration fullName department');
+
+        if (!doctor) {
+            return res.status(404).json({
+                success: false,
+                message: 'Doctor not found'
+            });
+        }
+
+        if (doctor.role !== 'doctor') {
+            return res.status(400).json({
+                success: false,
+                message: 'User is not a doctor'
+            });
+        }
+
+        // Check if doctor has schedules
+        if (!doctor.schedules || doctor.schedules.length === 0) {
+            return res.json({
+                success: true,
+                data: {
+                    schedule: [],
+                    appointmentDuration: doctor.appointmentDuration || 30,
+                    message: 'Doctor has not set up their schedule yet'
+                }
+            });
+        }
+
+        // Generate available dates based on doctor's schedule
+        const availableDates = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const maxDays = doctor.acceptBookingsDays || 30; // Default 30 days ahead
+
+        for (let i = 0; i <= maxDays; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+            // Check if doctor has schedule for this day
+            const daySchedule = doctor.schedules.find(s => s.day === dayName);
+
+            if (daySchedule && daySchedule.timeSlots && daySchedule.timeSlots.length > 0) {
+                // Generate time slots based on appointment duration
+                const timeSlots = [];
+
+                for (const slot of daySchedule.timeSlots) {
+                    const [startHour, startMin] = slot.startTime.split(':').map(Number);
+                    const [endHour, endMin] = slot.endTime.split(':').map(Number);
+
+                    const startMinutes = startHour * 60 + startMin;
+                    const endMinutes = endHour * 60 + endMin;
+                    const duration = doctor.appointmentDuration || 30;
+
+                    // Generate slots
+                    for (let mins = startMinutes; mins < endMinutes; mins += duration) {
+                        const slotHour = Math.floor(mins / 60);
+                        const slotMin = mins % 60;
+
+                        timeSlots.push(
+                            `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`
+                        );
+                    }
+                }
+
+                availableDates.push({
+                    date: date.toISOString().split('T')[0], // YYYY-MM-DD format
+                    day: dayName,
+                    timeSlots: timeSlots
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            data: {
+                schedule: availableDates,
+                appointmentDuration: doctor.appointmentDuration || 30,
+                doctorName: doctor.fullName,
+                department: doctor.department
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching doctor schedule:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching schedule'
+        });
+    }
+};
+
+
 module.exports = {
     getDoctors,
     getPatients,
@@ -469,4 +571,5 @@ module.exports = {
     getAppointment,
     updateAppointment,
     deleteAppointment,
+    getDoctorSchedule,
 };
