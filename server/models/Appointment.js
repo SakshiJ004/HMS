@@ -55,16 +55,6 @@ const appointmentSchema = new mongoose.Schema(
             enum: ['Scheduled', 'Confirmed', 'Checked In', 'Checked Out', 'Cancelled', 'Completed'],
             default: 'Schedule',
         },
-        "schedule": [
-            {
-                "date": "2026-01-10",
-                "timeSlots": ["09:00", "09:30", "10:00", "10:30", "14:00", "14:30"]
-            },
-            {
-                "date": "2026-01-12",
-                "timeSlots": ["09:00", "10:00", "11:00", "15:00", "16:00"]
-            }
-        ]
     },
     {
         timestamps: true,
