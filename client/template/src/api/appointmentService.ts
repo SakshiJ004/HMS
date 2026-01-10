@@ -247,20 +247,33 @@ export const deleteAppointment = async (
     }
 };
 
-export const getDoctorSchedule = async (doctorId: string): Promise<DoctorSchedule> => {
+export const getDoctorSchedule = async (doctorId: string) => {
     try {
+        console.log('📞 Fetching schedule for doctor:', doctorId);
+
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/appointments/doctors/${doctorId}/schedule`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await axios.get(
+            `${API_URL}/api/appointments/doctors/${doctorId}/schedule`, // ✅ Added /api
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        console.log('✅ Schedule response:', response.data);
 
         if (response.data.success) {
-            return response.data.data;
+            return response.data.data; // Return data.data
         }
         throw new Error(response.data.message || 'Failed to fetch doctor schedule');
     } catch (error: any) {
-        throw new Error(error.response?.data?.message || error.message || 'Failed to fetch doctor schedule');
+        console.error('❌ Schedule fetch error:', error);
+        throw new Error(
+            error.response?.data?.message ||
+            error.message ||
+            'Failed to fetch doctor schedule'
+        );
     }
 };

@@ -980,6 +980,8 @@ const NewAppointment = () => {
                               // Find selected doctor
                               const selectedDoctor = doctors.find(d => d._id === selectedDoctorId);
 
+                              console.log("✅ Selected Doctor:", selectedDoctor); // Debug
+
                               // Auto-fill department
                               if (selectedDoctor) {
                                 setFormData(prev => ({
@@ -996,16 +998,27 @@ const NewAppointment = () => {
 
                                 // Fetch doctor's schedule
                                 try {
+                                  console.log("📞 Fetching schedule for:", selectedDoctorId);
+
                                   const scheduleData = await getDoctorSchedule(selectedDoctorId);
+
+                                  console.log("✅ Schedule data received:", scheduleData);
+
                                   setDoctorSchedule(scheduleData);
 
                                   // Extract available dates from schedule
                                   if (scheduleData && scheduleData.schedule) {
                                     const dates = scheduleData.schedule.map((s: any) => s.date);
                                     setAvailableDates(dates);
+
+                                    console.log("✅ Available dates:", dates);
+
+                                    if (dates.length === 0) {
+                                      message.info("Doctor has not set up their schedule yet");
+                                    }
                                   }
                                 } catch (error: any) {
-                                  console.error("Error fetching schedule:", error);
+                                  console.error("❌ Error fetching schedule:", error);
                                   message.warning("Could not load doctor's schedule");
                                   setDoctorSchedule(null);
                                   setAvailableDates([]);

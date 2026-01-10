@@ -466,6 +466,8 @@ const getDoctorSchedule = async (req, res) => {
     try {
         const { doctorId } = req.params;
 
+        console.log('🔍 Fetching schedule for doctor:', doctorId);
+
         // Find doctor with schedule data
         const doctor = await User.findById(doctorId)
             .select('schedules acceptBookingsDays appointmentDuration fullName department');
@@ -491,6 +493,8 @@ const getDoctorSchedule = async (req, res) => {
                 data: {
                     schedule: [],
                     appointmentDuration: doctor.appointmentDuration || 30,
+                    doctorName: doctor.fullName,
+                    department: doctor.department,
                     message: 'Doctor has not set up their schedule yet'
                 }
             });
@@ -543,6 +547,8 @@ const getDoctorSchedule = async (req, res) => {
             }
         }
 
+        console.log('✅ Generated schedule:', availableDates.length, 'dates');
+
         res.json({
             success: true,
             data: {
@@ -553,10 +559,11 @@ const getDoctorSchedule = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error fetching doctor schedule:', error);
+        console.error('❌ Error fetching doctor schedule:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while fetching schedule'
+            message: 'Server error while fetching schedule',
+            error: error.message
         });
     }
 };
