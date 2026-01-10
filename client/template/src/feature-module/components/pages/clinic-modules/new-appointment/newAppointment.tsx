@@ -1083,7 +1083,6 @@ const NewAppointment = () => {
                             <span className="text-danger ms-1">*</span>
                           </label>
                           <div className="input-icon-end position-relative">
-                            // ✅ Update disabledDate function to show all available dates
                             <DatePicker
                               className="form-control datetimepicker"
                               format="DD-MM-YYYY"
