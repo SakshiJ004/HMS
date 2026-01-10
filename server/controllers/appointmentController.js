@@ -481,9 +481,11 @@ const getDoctorSchedule = async (req, res) => {
         }
 
         console.log('✅ Doctor Found:', doctor.fullName);
+        console.log('📋 Doctor schedules:', JSON.stringify(doctor.schedules, null, 2));
 
         // Check if doctor has schedules
         if (!doctor.schedules || doctor.schedules.length === 0) {
+            console.log('⚠️ Doctor has no schedule set');
             return res.json({
                 success: true,
                 data: {
@@ -496,49 +498,65 @@ const getDoctorSchedule = async (req, res) => {
             });
         }
 
-        // ✅ FIX: Generate available dates based on doctor's schedule
+        // ✅ Generate available dates based on doctor's schedule
         const availableDates = [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const maxDays = doctor.acceptBookingsDays || 30;
+        const maxDays = doctor.acceptBookingsDays || 30; // Default 30 days ahead
         console.log(`📅 Generating schedule for next ${maxDays} days`);
 
+        // ✅ Loop through next N days
         for (let i = 0; i <= maxDays; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
 
             const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
 
+            console.log(`\n🔍 Checking ${dayName} (${date.toISOString().split('T')[0]})`);
+
             // ✅ Find schedule for this day
             const daySchedule = doctor.schedules.find(s => s.day === dayName);
 
             // ✅ Skip if no schedule OR no time slots for this day
             if (!daySchedule || !daySchedule.timeSlots || daySchedule.timeSlots.length === 0) {
-                console.log(`⚠️ Skipping ${dayName} (${date.toISOString().split('T')[0]}) - No schedule`);
-                continue; // Skip Sunday or days without schedule
+                console.log(`⚠️ Skipping ${dayName} - No schedule/slots`);
+                continue; // Skip days without schedule
             }
+
+            console.log(`✅ Found schedule for ${dayName}:`, daySchedule.timeSlots);
 
             // ✅ Generate time slots based on appointment duration
             const timeSlots = [];
             const duration = doctor.appointmentDuration || 30;
 
             for (const slot of daySchedule.timeSlots) {
+                console.log(`  🕐 Processing slot: ${slot.startTime} - ${slot.endTime}`);
+
                 const [startHour, startMin] = slot.startTime.split(':').map(Number);
                 const [endHour, endMin] = slot.endTime.split(':').map(Number);
 
                 const startMinutes = startHour * 60 + startMin;
                 const endMinutes = endHour * 60 + endMin;
 
-                // ✅ Generate slots
+                // ✅ Generate slots with proper start and end times
                 for (let mins = startMinutes; mins < endMinutes; mins += duration) {
                     const slotHour = Math.floor(mins / 60);
                     const slotMin = mins % 60;
 
+                    const endMins = mins + duration;
+                    const endSlotHour = Math.floor(endMins / 60);
+                    const endSlotMin = endMins % 60;
+
+                    const slotStart = `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`;
+                    const slotEnd = `${String(endSlotHour).padStart(2, '0')}:${String(endSlotMin).padStart(2, '0')}`;
+
                     timeSlots.push({
-                        startTime: `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`,
-                        endTime: `${String(Math.floor((mins + duration) / 60)).padStart(2, '0')}:${String((mins + duration) % 60).padStart(2, '0')}`
+                        startTime: slotStart,
+                        endTime: slotEnd
                     });
+
+                    console.log(`    ✅ Generated slot: ${slotStart} - ${slotEnd}`);
                 }
             }
 
@@ -554,7 +572,7 @@ const getDoctorSchedule = async (req, res) => {
             }
         }
 
-        console.log(`✅ Generated ${availableDates.length} available dates`);
+        console.log(`\n✅ Final result: Generated ${availableDates.length} available dates`);
 
         res.json({
             success: true,

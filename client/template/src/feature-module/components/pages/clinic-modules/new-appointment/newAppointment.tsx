@@ -709,32 +709,44 @@ const NewAppointment = () => {
         (s: any) => s.date === selectedDate.format('YYYY-MM-DD')
       );
 
-      if (dateSchedule && dateSchedule.timeSlots) {
-        // ✅ Extract available hours from time slots
-        const availableSlots = dateSchedule.timeSlots.map((slot: any) => ({
-          hour: parseInt(slot.startTime.split(':')[0]),
-          minute: parseInt(slot.startTime.split(':')[1])
-        }));
+      if (dateSchedule && dateSchedule.timeSlots && dateSchedule.timeSlots.length > 0) {
+        console.log('📅 Available slots for selected date:', dateSchedule.timeSlots);
 
+        // ✅ Extract available hours and minutes from time slots
+        const availableSlots = dateSchedule.timeSlots.map((slot: any) => {
+          const [hour, minute] = slot.startTime.split(':').map(Number);
+          return { hour, minute };
+        });
+
+        // Get unique hours
         const availableHours = [...new Set(availableSlots.map((s: any) => s.hour))];
+
+        console.log('⏰ Available hours:', availableHours);
 
         return {
           disabledHours: () => {
             const allHours = Array.from({ length: 24 }, (_, i) => i);
-            return allHours.filter(h => !availableHours.includes(h));
+            const disabled = allHours.filter(h => !availableHours.includes(h));
+            console.log('🚫 Disabled hours:', disabled);
+            return disabled;
           },
           disabledMinutes: (selectedHour: number) => {
-            // ✅ Get available minutes for this hour
+            // Get available minutes for this hour
             const minutesForHour = availableSlots
               .filter((s: any) => s.hour === selectedHour)
               .map((s: any) => s.minute);
 
+            console.log(`⏰ Available minutes for hour ${selectedHour}:`, minutesForHour);
+
             if (minutesForHour.length === 0) {
+              // If no slots for this hour, disable all minutes
               return Array.from({ length: 60 }, (_, i) => i);
             }
 
             const allMinutes = Array.from({ length: 60 }, (_, i) => i);
-            return allMinutes.filter(m => !minutesForHour.includes(m));
+            const disabled = allMinutes.filter(m => !minutesForHour.includes(m));
+            console.log(`🚫 Disabled minutes for hour ${selectedHour}:`, disabled);
+            return disabled;
           },
         };
       }
