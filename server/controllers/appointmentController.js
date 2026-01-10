@@ -481,7 +481,7 @@ const getDoctorSchedule = async (req, res) => {
         }
 
         console.log('✅ Doctor Found:', doctor.fullName);
-        console.log('📋 Doctor schedules:', JSON.stringify(doctor.schedules, null, 2));
+        console.log('📋 Doctor schedules from DB:', JSON.stringify(doctor.schedules, null, 2));
 
         // Check if doctor has schedules
         if (!doctor.schedules || doctor.schedules.length === 0) {
@@ -512,8 +512,9 @@ const getDoctorSchedule = async (req, res) => {
             date.setDate(today.getDate() + i);
 
             const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+            const dateStr = date.toISOString().split('T')[0];
 
-            console.log(`\n🔍 Checking ${dayName} (${date.toISOString().split('T')[0]})`);
+            console.log(`\n🔍 Checking ${dayName} (${dateStr})`);
 
             // ✅ Find schedule for this day
             const daySchedule = doctor.schedules.find(s => s.day === dayName);
@@ -521,13 +522,13 @@ const getDoctorSchedule = async (req, res) => {
             // ✅ Skip if no schedule OR no time slots for this day
             if (!daySchedule || !daySchedule.timeSlots || daySchedule.timeSlots.length === 0) {
                 console.log(`⚠️ Skipping ${dayName} - No schedule/slots`);
-                continue; // Skip days without schedule
+                continue;
             }
 
             console.log(`✅ Found schedule for ${dayName}:`, daySchedule.timeSlots);
 
             // ✅ Generate time slots based on appointment duration
-            const timeSlots = [];
+            const allTimeSlots = [];
             const duration = doctor.appointmentDuration || 30;
 
             for (const slot of daySchedule.timeSlots) {
@@ -544,14 +545,14 @@ const getDoctorSchedule = async (req, res) => {
                     const slotHour = Math.floor(mins / 60);
                     const slotMin = mins % 60;
 
-                    const endMins = mins + duration;
+                    const endMins = Math.min(mins + duration, endMinutes); // Don't exceed slot end time
                     const endSlotHour = Math.floor(endMins / 60);
                     const endSlotMin = endMins % 60;
 
                     const slotStart = `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`;
                     const slotEnd = `${String(endSlotHour).padStart(2, '0')}:${String(endSlotMin).padStart(2, '0')}`;
 
-                    timeSlots.push({
+                    allTimeSlots.push({
                         startTime: slotStart,
                         endTime: slotEnd
                     });
@@ -561,14 +562,14 @@ const getDoctorSchedule = async (req, res) => {
             }
 
             // ✅ Only add if we have generated time slots
-            if (timeSlots.length > 0) {
+            if (allTimeSlots.length > 0) {
                 availableDates.push({
-                    date: date.toISOString().split('T')[0], // YYYY-MM-DD format
+                    date: dateStr, // YYYY-MM-DD format
                     day: dayName,
-                    timeSlots: timeSlots
+                    timeSlots: allTimeSlots
                 });
 
-                console.log(`✅ Added ${dayName} (${date.toISOString().split('T')[0]}) with ${timeSlots.length} slots`);
+                console.log(`✅ Added ${dayName} (${dateStr}) with ${allTimeSlots.length} slots`);
             }
         }
 

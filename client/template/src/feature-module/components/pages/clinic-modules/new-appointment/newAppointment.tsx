@@ -1083,11 +1083,13 @@ const NewAppointment = () => {
                             <span className="text-danger ms-1">*</span>
                           </label>
                           <div className="input-icon-end position-relative">
+                            // ✅ Update disabledDate function to show all available dates
                             <DatePicker
                               className="form-control datetimepicker"
                               format="DD-MM-YYYY"
                               getPopupContainer={getModalContainer}
                               placeholder="DD-MM-YYYY"
+                              value={formData.appointmentDate}
                               disabledDate={(current) => {
                                 // Disable past dates
                                 if (current && current.isBefore(dayjs().startOf('day'))) {
@@ -1097,17 +1099,22 @@ const NewAppointment = () => {
                                 // If doctor schedule exists, only allow scheduled dates
                                 if (doctorSchedule && availableDates.length > 0) {
                                   const currentDateStr = current.format('YYYY-MM-DD');
-                                  return !availableDates.includes(currentDateStr);
+                                  const isAvailable = availableDates.includes(currentDateStr);
+
+                                  console.log(`📅 Checking date ${currentDateStr}: ${isAvailable ? 'Available' : 'Not available'}`);
+
+                                  return !isAvailable; // Return true to DISABLE, false to ENABLE
                                 }
 
                                 return false;
                               }}
                               onChange={(date) => {
-                                setFormData(prev => ({ ...prev, appointmentDate: date }));
-                                // Reset time when date changes to force revalidation
-                                if (date && date.isSame(dayjs(), 'day')) {
-                                  setFormData(prev => ({ ...prev, appointmentTime: null }));
-                                }
+                                console.log('📅 Date selected:', date?.format('YYYY-MM-DD'));
+                                setFormData(prev => ({
+                                  ...prev,
+                                  appointmentDate: date,
+                                  appointmentTime: null // Reset time when date changes
+                                }));
                                 clearError('appointmentDate');
                               }}
                               suffixIcon={null}
@@ -1135,6 +1142,7 @@ const NewAppointment = () => {
                               format="HH:mm"
                               value={formData.appointmentTime}
                               onChange={(time) => {
+                                console.log('⏰ Time selected:', time?.format('HH:mm'));
                                 setFormData(prev => ({ ...prev, appointmentTime: time }));
                                 clearError('appointmentTime');
                               }}
@@ -1142,6 +1150,7 @@ const NewAppointment = () => {
                               showNow={false}
                               disabled={!formData.appointmentDate}
                               placeholder="Select time"
+                              minuteStep={doctorSchedule?.appointmentDuration || 30} // ✅ Step according to doctor's duration
                             />
                             <span className="input-icon-addon">
                               <i className="ti ti-clock text-gray-7" />
