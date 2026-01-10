@@ -600,13 +600,12 @@ const HrmDepartments = () => {
   };
 
   // Add Department
-  // handleAddDepartment function update करा:
   const handleAddDepartment = async (name: string, description: string) => {
     try {
       const response = await createDepartment({ name, description });
 
       if (response.success) {
-        await fetchDoctorsAndCreateDepartments();
+        await fetchDoctorsAndCreateDepartments();  // ✅ He line aahe
         setShowAddModal(false);
       } else {
         console.error('Failed to add department:', response.message);
