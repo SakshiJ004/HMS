@@ -530,7 +530,6 @@ const HrmDepartments = () => {
     {
       title: "",
       render: (_: any, record: any) => {
-        // ✅ Check if department has valid _id (means it's from backend)
         const hasValidId = record._id && !record.key.startsWith('temp_');
 
         return (
@@ -552,7 +551,6 @@ const HrmDepartments = () => {
                   }}
                   style={{ cursor: hasValidId ? 'pointer' : 'not-allowed' }}
                 >
-                  <i className="ti ti-edit me-2" />
                   Edit
                 </Link>
               </li>
@@ -569,7 +567,6 @@ const HrmDepartments = () => {
                   }}
                   style={{ cursor: hasValidId ? 'pointer' : 'not-allowed' }}
                 >
-                  <i className="ti ti-trash me-2" />
                   Delete
                 </Link>
               </li>
