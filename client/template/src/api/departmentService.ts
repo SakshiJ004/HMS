@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL;
+// ✅ Correct way
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export interface DepartmentPayload {
     name: string;
@@ -14,20 +15,6 @@ export const getDepartments = async () => {
         return response.data;
     } catch (error: any) {
         console.error('Get departments error:', error);
-        return {
-            success: false,
-            message: error.response?.data?.message || error.message
-        };
-    }
-};
-
-// Get single department by ID
-export const getDepartmentById = async (id: string) => {
-    try {
-        const response = await axios.get(`${API_URL}/departments/${id}`);
-        return response.data;
-    } catch (error: any) {
-        console.error('Get department error:', error);
         return {
             success: false,
             message: error.response?.data?.message || error.message
