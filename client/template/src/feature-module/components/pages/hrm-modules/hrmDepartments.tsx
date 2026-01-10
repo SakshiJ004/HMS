@@ -319,9 +319,11 @@ import dayjs from "dayjs";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { getDepartments, createDepartment, updateDepartment, deleteDepartment } from "../../../../api/departmentService";
 
 interface DepartmentData {
   key: string;
+  _id?: string;
   Department: string;
   CreatedDate: string;
   NoofDoctor: string;
@@ -342,7 +344,7 @@ const HrmDepartments = () => {
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'recent' | 'oldest'>('recent');
   // Add this new state at the top with other useState declarations (line 25 च्या आसपास)
-  const [localDepartments, setLocalDepartments] = useState<DepartmentData[]>([]);
+  // const [localDepartments, setLocalDepartments] = useState<DepartmentData[]>([]);
 
   const applyFilters = () => {
     let filtered = [...data];
@@ -398,16 +400,23 @@ const HrmDepartments = () => {
     fetchDoctorsAndCreateDepartments();
   }, []);
 
+  // fetchDoctorsAndCreateDepartments function ला replace करा:
   const fetchDoctorsAndCreateDepartments = async () => {
     try {
       setLoading(true);
-      const response = await getDoctors();
 
-      if (response.success && response.data) {
-        const doctorsList = response.data;
+      // Backend मधून departments घ्या
+      const deptResponse = await getDepartments();
+      const backendDepartments = deptResponse.success ? deptResponse.data : [];
+
+      // Doctors घ्या
+      const doctorResponse = await getDoctors();
+
+      if (doctorResponse.success && doctorResponse.data) {
+        const doctorsList = doctorResponse.data;
         setDoctors(doctorsList);
 
-        // Group doctors by department
+        // Department-wise doctors count काढा
         const departmentMap = new Map<string, {
           doctors: any[];
           earliestDate: Date;
@@ -429,28 +438,29 @@ const HrmDepartments = () => {
           const deptData = departmentMap.get(dept)!;
           deptData.doctors.push(doctor);
 
-          // Track earliest creation date
           const docDate = new Date(doctor.createdAt);
           if (docDate < deptData.earliestDate) {
             deptData.earliestDate = docDate;
           }
 
-          // Check if any doctor is active (displayOnBookingPage = true)
           if (doctor.displayOnBookingPage) {
             deptData.hasActive = true;
           }
         });
 
-        // Convert to department list
-        const departmentList: DepartmentData[] = Array.from(departmentMap.entries()).map(
-          ([deptName, deptData], index) => ({
-            key: String(index + 1),
-            Department: deptName,
-            CreatedDate: dayjs(deptData.earliestDate).format('DD-MMM-YYYY'),
-            NoofDoctor: String(deptData.doctors.length),
-            Status: deptData.hasActive ? "Active" : "Inactive"
-          })
-        );
+        // Backend departments ला doctors count सोबत merge करा
+        const departmentList: DepartmentData[] = backendDepartments.map((dept: any) => {
+          const deptData = departmentMap.get(dept.name);
+
+          return {
+            key: dept._id,
+            _id: dept._id,
+            Department: dept.name,
+            CreatedDate: dayjs(dept.createdAt).format('DD-MMM-YYYY'),
+            NoofDoctor: deptData ? String(deptData.doctors.length) : "0",
+            Status: deptData?.hasActive ? "Active" : dept.status
+          };
+        });
 
         // Sort by creation date (newest first)
         departmentList.sort((a, b) =>
@@ -458,10 +468,10 @@ const HrmDepartments = () => {
           dayjs(a.CreatedDate, 'DD-MMM-YYYY').valueOf()
         );
 
-        setData([...localDepartments, ...departmentList]);
+        setData(departmentList);
       }
     } catch (error) {
-      console.error("Error fetching doctors:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -548,53 +558,67 @@ const HrmDepartments = () => {
   };
 
   // Add Department
-  const handleAddDepartment = (name: string) => {
-    const newKey = String(Date.now());
-    const today = new Date();
-    const formattedDate = dayjs(today).format('DD-MMM-YYYY');
+  // handleAddDepartment function update करा:
+  const handleAddDepartment = async (name: string, description: string) => {
+    try {
+      const response = await createDepartment({ name, description });
 
-    const newDept = {
-      key: newKey,
-      Department: name,
-      CreatedDate: formattedDate,
-      NoofDoctor: "0",
-      Status: "Inactive"
-    };
-
-    setLocalDepartments([newDept, ...localDepartments])
-    setData([newDept, ...data]); // Add to beginning (newest first)
-    setShowAddModal(false);
+      if (response.success) {
+        await fetchDoctorsAndCreateDepartments();
+        setShowAddModal(false);
+      } else {
+        console.error('Failed to add department:', response.message);
+        alert('Failed to add department. Please try again.');
+      }
+    } catch (error) {
+      console.error('Add department error:', error);
+      alert('Error adding department. Please try again.');
+    }
   };
 
   // Edit Department
-  const handleEditDepartment = (name: string) => {
-    if (currentDepartment) {
-      const updatedData = data.map(item =>
-        item.key === currentDepartment.key
-          ? { ...item, Department: name }
-          : item
-      );
+  // handleEditDepartment function update करा:
+  const handleEditDepartment = async (name: string, description: string) => {
+    if (currentDepartment && currentDepartment._id) {
+      try {
+        const response = await updateDepartment(currentDepartment._id, { name, description });
 
-      const updatedLocal = localDepartments.map(item =>
-        item.key === currentDepartment.key
-          ? { ...item, Department: name }
-          : item
-      );
-
-      setData(updatedData);
-      setLocalDepartments(updatedLocal);
-      setShowEditModal(false);
-      setCurrentDepartment(null);
+        if (response.success) {
+          // Backend मधून नवीन data fetch करा
+          await fetchDoctorsAndCreateDepartments();
+          setShowEditModal(false);
+          setCurrentDepartment(null);
+        } else {
+          console.error('Failed to update department:', response.message);
+          alert('Failed to update department. Please try again.');
+        }
+      } catch (error) {
+        console.error('Update department error:', error);
+        alert('Error updating department. Please try again.');
+      }
     }
   };
 
   // Delete Department
-  const handleDeleteDepartment = () => {
-    if (currentDepartment) {
-      setData(data.filter(item => item.key !== currentDepartment.key));
-      setLocalDepartments(localDepartments.filter(item => item.key !== currentDepartment.key));
-      setShowDeleteModal(false);
-      setCurrentDepartment(null);
+  // handleDeleteDepartment function update करा:
+  const handleDeleteDepartment = async () => {
+    if (currentDepartment && currentDepartment._id) {
+      try {
+        const response = await deleteDepartment(currentDepartment._id);
+
+        if (response.success) {
+          // Backend मधून नवीन data fetch करा
+          await fetchDoctorsAndCreateDepartments();
+          setShowDeleteModal(false);
+          setCurrentDepartment(null);
+        } else {
+          console.error('Failed to delete department:', response.message);
+          alert('Failed to delete department. Please try again.');
+        }
+      } catch (error) {
+        console.error('Delete department error:', error);
+        alert('Error deleting department. Please try again.');
+      }
     }
   };
 
