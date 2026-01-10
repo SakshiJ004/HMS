@@ -3,6 +3,7 @@ import axios from 'axios';
 // ✅ Correct way
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
 
+console.log('🔗 Department Service API URL:', API_URL);
 export interface DepartmentPayload {
     name: string;
     description?: string;

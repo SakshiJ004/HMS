@@ -3,10 +3,15 @@ const mongoose = require('mongoose');
 const departmentSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true,
-        unique: true
+        required: [true, 'Department name is required'],
+        unique: true,
+        trim: true
     },
-    description: String,
+    description: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     numberOfDoctors: {
         type: Number,
         default: 0
