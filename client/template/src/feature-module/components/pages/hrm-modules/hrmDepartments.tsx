@@ -529,41 +529,54 @@ const HrmDepartments = () => {
     },
     {
       title: "",
-      render: (_: any, record: any) => (
-        <div className="action-item">
-          <Link to="#" data-bs-toggle="dropdown">
-            <i className="ti ti-dots-vertical" />
-          </Link>
-          <ul className="dropdown-menu">
-            <li>
-              <Link
-                to="#"
-                className="dropdown-item d-flex align-items-center"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setCurrentDepartment(record);
-                  setShowEditModal(true);
-                }}
-              >
-                Edit
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="#"
-                className="dropdown-item d-flex align-items-center"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setCurrentDepartment(record);
-                  setShowDeleteModal(true);
-                }}
-              >
-                Delete
-              </Link>
-            </li>
-          </ul>
-        </div>
-      ),
+      render: (_: any, record: any) => {
+        // ✅ Check if department has valid _id (means it's from backend)
+        const hasValidId = record._id && !record.key.startsWith('temp_');
+
+        return (
+          <div className="action-item">
+            <Link to="#" data-bs-toggle="dropdown">
+              <i className="ti ti-dots-vertical" />
+            </Link>
+            <ul className="dropdown-menu">
+              <li>
+                <Link
+                  to="#"
+                  className={`dropdown-item d-flex align-items-center ${!hasValidId ? 'disabled text-muted' : ''}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (hasValidId) {
+                      setCurrentDepartment(record);
+                      setShowEditModal(true);
+                    }
+                  }}
+                  style={{ cursor: hasValidId ? 'pointer' : 'not-allowed' }}
+                >
+                  <i className="ti ti-edit me-2" />
+                  Edit
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="#"
+                  className={`dropdown-item d-flex align-items-center ${!hasValidId ? 'disabled text-muted' : ''}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (hasValidId) {
+                      setCurrentDepartment(record);
+                      setShowDeleteModal(true);
+                    }
+                  }}
+                  style={{ cursor: hasValidId ? 'pointer' : 'not-allowed' }}
+                >
+                  <i className="ti ti-trash me-2" />
+                  Delete
+                </Link>
+              </li>
+            </ul>
+          </div>
+        );
+      },
     },
   ];
 
