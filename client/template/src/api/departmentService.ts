@@ -11,7 +11,7 @@ export interface DepartmentPayload {
 // Get all departments
 export const getDepartments = async () => {
     try {
-        const response = await axios.get(`${API_URL}/api/departments`);
+        const response = await axios.get(`${API_URL}/departments`);
         return response.data;
     } catch (error: any) {
         console.error('Get departments error:', error);
@@ -25,7 +25,7 @@ export const getDepartments = async () => {
 // Create new department
 export const createDepartment = async (data: DepartmentPayload) => {
     try {
-        const response = await axios.post(`${API_URL}/api/departments`, data);
+        const response = await axios.post(`${API_URL}/departments`, data);
         return response.data;
     } catch (error: any) {
         console.error('Create department error:', error);
@@ -39,7 +39,7 @@ export const createDepartment = async (data: DepartmentPayload) => {
 // Update department
 export const updateDepartment = async (id: string, data: DepartmentPayload) => {
     try {
-        const response = await axios.put(`${API_URL}/api/departments/${id}`, data);
+        const response = await axios.put(`${API_URL}/departments/${id}`, data);
         return response.data;
     } catch (error: any) {
         console.error('Update department error:', error);
@@ -53,7 +53,7 @@ export const updateDepartment = async (id: string, data: DepartmentPayload) => {
 // Delete department
 export const deleteDepartment = async (id: string) => {
     try {
-        const response = await axios.delete(`${API_URL}/api/departments/${id}`);
+        const response = await axios.delete(`${API_URL}/departments/${id}`);
         return response.data;
     } catch (error: any) {
         console.error('Delete department error:', error);
