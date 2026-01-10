@@ -405,12 +405,13 @@ const HrmDepartments = () => {
     try {
       setLoading(true);
 
-      // Backend मधून departments घ्या
+      // 1. Backend मधून departments घ्या
       const deptResponse = await getDepartments();
-      const backendDepartments = deptResponse.success ? deptResponse.data : [];
+      console.log('Department Response:', deptResponse); // Debug log
 
-      // Doctors घ्या
+      // 2. Doctors घ्या
       const doctorResponse = await getDoctors();
+      console.log('Doctor Response:', doctorResponse); // Debug log
 
       if (doctorResponse.success && doctorResponse.data) {
         const doctorsList = doctorResponse.data;
@@ -448,19 +449,36 @@ const HrmDepartments = () => {
           }
         });
 
-        // Backend departments ला doctors count सोबत merge करा
-        const departmentList: DepartmentData[] = backendDepartments.map((dept: any) => {
-          const deptData = departmentMap.get(dept.name);
+        // 3. Backend departments exist करतात का check करा
+        let departmentList: DepartmentData[] = [];
 
-          return {
-            key: dept._id,
-            _id: dept._id,
-            Department: dept.name,
-            CreatedDate: dayjs(dept.createdAt).format('DD-MMM-YYYY'),
-            NoofDoctor: deptData ? String(deptData.doctors.length) : "0",
-            Status: deptData?.hasActive ? "Active" : dept.status
-          };
-        });
+        if (deptResponse.success && deptResponse.data && deptResponse.data.length > 0) {
+          // Backend departments ला doctors count सोबत merge करा
+          departmentList = deptResponse.data.map((dept: any) => {
+            const deptData = departmentMap.get(dept.name);
+
+            return {
+              key: dept._id,
+              _id: dept._id,
+              Department: dept.name,
+              CreatedDate: dayjs(dept.createdAt).format('DD-MMM-YYYY'),
+              NoofDoctor: deptData ? String(deptData.doctors.length) : "0",
+              Status: deptData?.hasActive ? "Active" : dept.status || "Inactive"
+            };
+          });
+        } else {
+          // जर backend मध्ये departments नाहीत तर doctors च्या departments दाखवा
+          console.log('No backend departments found, showing doctor departments');
+          departmentList = Array.from(departmentMap.entries()).map(
+            ([deptName, deptData], index) => ({
+              key: `temp_${index + 1}`,
+              Department: deptName,
+              CreatedDate: dayjs(deptData.earliestDate).format('DD-MMM-YYYY'),
+              NoofDoctor: String(deptData.doctors.length),
+              Status: deptData.hasActive ? "Active" : "Inactive"
+            })
+          );
+        }
 
         // Sort by creation date (newest first)
         departmentList.sort((a, b) =>
@@ -468,10 +486,35 @@ const HrmDepartments = () => {
           dayjs(a.CreatedDate, 'DD-MMM-YYYY').valueOf()
         );
 
+        console.log('Final Department List:', departmentList); // Debug log
         setData(departmentList);
+      } else {
+        // अगर doctors नाहीत पण backend departments आहेत
+        if (deptResponse.success && deptResponse.data && deptResponse.data.length > 0) {
+          const departmentList: DepartmentData[] = deptResponse.data.map((dept: any) => ({
+            key: dept._id,
+            _id: dept._id,
+            Department: dept.name,
+            CreatedDate: dayjs(dept.createdAt).format('DD-MMM-YYYY'),
+            NoofDoctor: "0",
+            Status: dept.status || "Inactive"
+          }));
+
+          departmentList.sort((a, b) =>
+            dayjs(b.CreatedDate, 'DD-MMM-YYYY').valueOf() -
+            dayjs(a.CreatedDate, 'DD-MMM-YYYY').valueOf()
+          );
+
+          console.log('Departments without doctors:', departmentList);
+          setData(departmentList);
+        } else {
+          console.log('No data available');
+          setData([]);
+        }
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      setData([]);
     } finally {
       setLoading(false);
     }
