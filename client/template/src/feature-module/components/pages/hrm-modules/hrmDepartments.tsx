@@ -534,43 +534,50 @@ const HrmDepartments = () => {
 
         return (
           <div className="action-item">
-            <Link to="#" data-bs-toggle="dropdown">
-              <i className="ti ti-dots-vertical" />
-            </Link>
-            <ul className="dropdown-menu">
-              <li>
-                <Link
-                  to="#"
-                  className={`dropdown-item d-flex align-items-center ${!hasValidId ? 'disabled text-muted' : ''}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (hasValidId) {
-                      setCurrentDepartment(record);
-                      setShowEditModal(true);
-                    }
-                  }}
-                  style={{ cursor: hasValidId ? 'pointer' : 'not-allowed' }}
-                >
-                  Edit
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="#"
-                  className={`dropdown-item d-flex align-items-center ${!hasValidId ? 'disabled text-muted' : ''}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (hasValidId) {
-                      setCurrentDepartment(record);
-                      setShowDeleteModal(true);
-                    }
-                  }}
-                  style={{ cursor: hasValidId ? 'pointer' : 'not-allowed' }}
-                >
-                  Delete
-                </Link>
-              </li>
-            </ul>
+            <div className="dropdown">
+              <button
+                className="btn btn-sm btn-white border-0"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i className="ti ti-dots-vertical" />
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end">
+                <li>
+                  <button
+                    className={`dropdown-item ${!hasValidId ? 'disabled text-muted' : ''}`}
+                    onClick={() => {
+                      if (hasValidId) {
+                        setCurrentDepartment(record);
+                        setShowEditModal(true);
+                      }
+                    }}
+                    disabled={!hasValidId}
+                    type="button"
+                  >
+                    <i className="ti ti-edit me-2" />
+                    Edit
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className={`dropdown-item ${!hasValidId ? 'disabled text-muted' : ''}`}
+                    onClick={() => {
+                      if (hasValidId) {
+                        setCurrentDepartment(record);
+                        setShowDeleteModal(true);
+                      }
+                    }}
+                    disabled={!hasValidId}
+                    type="button"
+                  >
+                    <i className="ti ti-trash me-2" />
+                    Delete
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         );
       },
