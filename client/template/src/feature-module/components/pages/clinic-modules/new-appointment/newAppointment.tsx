@@ -699,42 +699,42 @@ const NewAppointment = () => {
     const now = dayjs();
     const selectedDate = formData.appointmentDate;
 
-    // If no date selected or no schedule
     if (!selectedDate) {
       return {};
     }
 
-    // If doctor schedule exists, only allow scheduled time slots
+    // ✅ If doctor schedule exists, only allow scheduled time slots
     if (doctorSchedule && doctorSchedule.schedule) {
       const dateSchedule = doctorSchedule.schedule.find(
         (s: any) => s.date === selectedDate.format('YYYY-MM-DD')
       );
 
       if (dateSchedule && dateSchedule.timeSlots) {
-        // Get available hours from schedule
-        const availableHours = dateSchedule.timeSlots.map((slot: string) => {
-          const [hour] = slot.split(':');
-          return parseInt(hour);
-        });
+        // ✅ Extract available hours from time slots
+        const availableSlots = dateSchedule.timeSlots.map((slot: any) => ({
+          hour: parseInt(slot.startTime.split(':')[0]),
+          minute: parseInt(slot.startTime.split(':')[1])
+        }));
+
+        const availableHours = [...new Set(availableSlots.map((s: any) => s.hour))];
 
         return {
           disabledHours: () => {
-            // Disable all hours except scheduled ones
             const allHours = Array.from({ length: 24 }, (_, i) => i);
             return allHours.filter(h => !availableHours.includes(h));
           },
           disabledMinutes: (selectedHour: number) => {
-            // Get available minutes for this hour
-            const slotsForHour = dateSchedule.timeSlots
-              .filter((slot: string) => slot.startsWith(`${selectedHour}:`))
-              .map((slot: string) => {
-                const [, minute] = slot.split(':');
-                return parseInt(minute);
-              });
+            // ✅ Get available minutes for this hour
+            const minutesForHour = availableSlots
+              .filter((s: any) => s.hour === selectedHour)
+              .map((s: any) => s.minute);
 
-            // Disable all minutes except scheduled ones
+            if (minutesForHour.length === 0) {
+              return Array.from({ length: 60 }, (_, i) => i);
+            }
+
             const allMinutes = Array.from({ length: 60 }, (_, i) => i);
-            return allMinutes.filter(m => !slotsForHour.includes(m));
+            return allMinutes.filter(m => !minutesForHour.includes(m));
           },
         };
       }

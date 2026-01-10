@@ -27,7 +27,7 @@ const generateAppointmentId = async () => {
 const getDoctors = async (req, res) => {
     try {
         const doctors = await User.find({ role: 'doctor' })
-            .select('fullName email profileImage')
+            .select('fullName email profileImage phone department designation consultationCharge status')
             .sort({ fullName: 1 });
 
         res.status(200).json({
@@ -469,10 +469,9 @@ const getDoctorSchedule = async (req, res) => {
         console.log('🔍 Fetching schedule for doctor:', doctorId);
 
         // Find doctor with schedule data
-        const doctor = await User.findById({
-            _id: doctorId,
-            role: 'doctor'
-        }).select('schedules acceptBookingsDays appointmentDuration fullName department');
+        const doctor = await User.findById(doctorId).select(
+            'schedules acceptBookingsDays appointmentDuration fullName department'
+        );
 
         if (!doctor) {
             return res.status(404).json({
@@ -480,11 +479,11 @@ const getDoctorSchedule = async (req, res) => {
                 message: 'Doctor not found'
             });
         }
-        console.log('Doctor Found:', doctor.fullName)
+
+        console.log('✅ Doctor Found:', doctor.fullName);
 
         // Check if doctor has schedules
         if (!doctor.schedules || doctor.schedules.length === 0) {
-            console.log('Doctor has no schedule set')
             return res.json({
                 success: true,
                 data: {
@@ -497,13 +496,13 @@ const getDoctorSchedule = async (req, res) => {
             });
         }
 
-        // Generate available dates based on doctor's schedule
+        // ✅ FIX: Generate available dates based on doctor's schedule
         const availableDates = [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const maxDays = doctor.acceptBookingsDays || 30; // Default 30 days ahead
-        console.log(`Generating schedule for next ${maxDays} days`)
+        const maxDays = doctor.acceptBookingsDays || 30;
+        console.log(`📅 Generating schedule for next ${maxDays} days`);
 
         for (let i = 0; i <= maxDays; i++) {
             const date = new Date(today);
@@ -511,37 +510,47 @@ const getDoctorSchedule = async (req, res) => {
 
             const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
 
-            // Check if doctor has schedule for this day
+            // ✅ Find schedule for this day
             const daySchedule = doctor.schedules.find(s => s.day === dayName);
 
-            if (daySchedule && daySchedule.timeSlots && daySchedule.timeSlots.length > 0) {
-                // Generate time slots based on appointment duration
-                const timeSlots = [];
+            // ✅ Skip if no schedule OR no time slots for this day
+            if (!daySchedule || !daySchedule.timeSlots || daySchedule.timeSlots.length === 0) {
+                console.log(`⚠️ Skipping ${dayName} (${date.toISOString().split('T')[0]}) - No schedule`);
+                continue; // Skip Sunday or days without schedule
+            }
 
-                for (const slot of daySchedule.timeSlots) {
-                    const [startHour, startMin] = slot.startTime.split(':').map(Number);
-                    const [endHour, endMin] = slot.endTime.split(':').map(Number);
+            // ✅ Generate time slots based on appointment duration
+            const timeSlots = [];
+            const duration = doctor.appointmentDuration || 30;
 
-                    const startMinutes = startHour * 60 + startMin;
-                    const endMinutes = endHour * 60 + endMin;
-                    const duration = doctor.appointmentDuration || 30;
+            for (const slot of daySchedule.timeSlots) {
+                const [startHour, startMin] = slot.startTime.split(':').map(Number);
+                const [endHour, endMin] = slot.endTime.split(':').map(Number);
 
-                    // Generate slots
-                    for (let mins = startMinutes; mins < endMinutes; mins += duration) {
-                        const slotHour = Math.floor(mins / 60);
-                        const slotMin = mins % 60;
+                const startMinutes = startHour * 60 + startMin;
+                const endMinutes = endHour * 60 + endMin;
 
-                        timeSlots.push(
-                            `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`
-                        );
-                    }
+                // ✅ Generate slots
+                for (let mins = startMinutes; mins < endMinutes; mins += duration) {
+                    const slotHour = Math.floor(mins / 60);
+                    const slotMin = mins % 60;
+
+                    timeSlots.push({
+                        startTime: `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`,
+                        endTime: `${String(Math.floor((mins + duration) / 60)).padStart(2, '0')}:${String((mins + duration) % 60).padStart(2, '0')}`
+                    });
                 }
+            }
 
+            // ✅ Only add if we have generated time slots
+            if (timeSlots.length > 0) {
                 availableDates.push({
                     date: date.toISOString().split('T')[0], // YYYY-MM-DD format
                     day: dayName,
                     timeSlots: timeSlots
                 });
+
+                console.log(`✅ Added ${dayName} (${date.toISOString().split('T')[0]}) with ${timeSlots.length} slots`);
             }
         }
 
