@@ -306,7 +306,6 @@
 // export default HrmDepartments;
 
 
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import SearchInput from "../../../../core/common/dataTable/dataTableSearch";
