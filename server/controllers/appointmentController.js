@@ -469,8 +469,10 @@ const getDoctorSchedule = async (req, res) => {
         console.log('🔍 Fetching schedule for doctor:', doctorId);
 
         // Find doctor with schedule data
-        const doctor = await User.findById(doctorId)
-            .select('schedules acceptBookingsDays appointmentDuration fullName department');
+        const doctor = await User.findById({
+            _id: doctorId,
+            role: 'doctor'
+        }).select('schedules acceptBookingsDays appointmentDuration fullName department');
 
         if (!doctor) {
             return res.status(404).json({
@@ -478,16 +480,11 @@ const getDoctorSchedule = async (req, res) => {
                 message: 'Doctor not found'
             });
         }
-
-        if (doctor.role !== 'doctor') {
-            return res.status(400).json({
-                success: false,
-                message: 'User is not a doctor'
-            });
-        }
+        console.log('Doctor Found:', doctor.fullName)
 
         // Check if doctor has schedules
         if (!doctor.schedules || doctor.schedules.length === 0) {
+            console.log('Doctor has no schedule set')
             return res.json({
                 success: true,
                 data: {
@@ -506,6 +503,7 @@ const getDoctorSchedule = async (req, res) => {
         today.setHours(0, 0, 0, 0);
 
         const maxDays = doctor.acceptBookingsDays || 30; // Default 30 days ahead
+        console.log(`Generating schedule for next ${maxDays} days`)
 
         for (let i = 0; i <= maxDays; i++) {
             const date = new Date(today);
@@ -547,7 +545,7 @@ const getDoctorSchedule = async (req, res) => {
             }
         }
 
-        console.log('✅ Generated schedule:', availableDates.length, 'dates');
+        console.log(`✅ Generated ${availableDates.length} available dates`);
 
         res.json({
             success: true,

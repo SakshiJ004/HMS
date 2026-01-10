@@ -979,11 +979,16 @@ const NewAppointment = () => {
 
                               // Find selected doctor
                               const selectedDoctor = doctors.find(d => d._id === selectedDoctorId);
+                              console.log("🔍 All doctors:", doctors); // ✅ Debug
+                              console.log("🔍 Selected doctor ID:", selectedDoctorId); // ✅ Debug
+                              console.log("🔍 Found doctor object:", selectedDoctor); // ✅ Debug
+                              console.log("🔍 Doctor department:", selectedDoctor?.department);
 
                               console.log("✅ Selected Doctor:", selectedDoctor); // Debug
 
                               // Auto-fill department
                               if (selectedDoctor) {
+                                console.log("✅ Setting department:", selectedDoctor.department);
                                 setFormData(prev => ({
                                   ...prev,
                                   doctor: selectedDoctorId,
