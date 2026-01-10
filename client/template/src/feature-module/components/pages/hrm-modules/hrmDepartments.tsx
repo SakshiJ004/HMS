@@ -404,19 +404,17 @@ const HrmDepartments = () => {
     try {
       setLoading(true);
 
-      // 1. Backend मधून departments घ्या
       const deptResponse = await getDepartments();
-      console.log('Department Response:', deptResponse); // Debug log
-
-      // 2. Doctors घ्या
       const doctorResponse = await getDoctors();
-      console.log('Doctor Response:', doctorResponse); // Debug log
+
+      console.log('Department Response:', deptResponse);
+      console.log('Doctor Response:', doctorResponse);
 
       if (doctorResponse.success && doctorResponse.data) {
         const doctorsList = doctorResponse.data;
         setDoctors(doctorsList);
 
-        // Department-wise doctors count काढा
+        // Department-wise doctors count
         const departmentMap = new Map<string, {
           doctors: any[];
           earliestDate: Date;
@@ -448,14 +446,13 @@ const HrmDepartments = () => {
           }
         });
 
-        // 3. Backend departments exist करतात का check करा
         let departmentList: DepartmentData[] = [];
 
+        // ✅ ALWAYS show ALL departments (backend + doctors)
+        // First, add backend departments
         if (deptResponse.success && deptResponse.data && deptResponse.data.length > 0) {
-          // Backend departments ला doctors count सोबत merge करा
-          departmentList = deptResponse.data.map((dept: any) => {
+          const backendDepts = deptResponse.data.map((dept: any) => {
             const deptData = departmentMap.get(dept.name);
-
             return {
               key: dept._id,
               _id: dept._id,
@@ -465,51 +462,31 @@ const HrmDepartments = () => {
               Status: deptData?.hasActive ? "Active" : dept.status || "Inactive"
             };
           });
-        } else {
-          // जर backend मध्ये departments नाहीत तर doctors च्या departments दाखवा
-          console.log('No backend departments found, showing doctor departments');
-          departmentList = Array.from(departmentMap.entries()).map(
-            ([deptName, deptData], index) => ({
-              key: `temp_${index + 1}`,
-              Department: deptName,
-              CreatedDate: dayjs(deptData.earliestDate).format('DD-MMM-YYYY'),
-              NoofDoctor: String(deptData.doctors.length),
-              Status: deptData.hasActive ? "Active" : "Inactive"
-            })
-          );
+          departmentList.push(...backendDepts);
         }
 
-        // Sort by creation date (newest first)
+        // ✅ Then, add doctor departments that are NOT in backend
+        const backendDeptNames = departmentList.map(d => d.Department);
+        const doctorOnlyDepts = Array.from(departmentMap.entries())
+          .filter(([deptName]) => !backendDeptNames.includes(deptName))
+          .map(([deptName, deptData], index) => ({
+            key: `temp_${index + 1}`,
+            Department: deptName,
+            CreatedDate: dayjs(deptData.earliestDate).format('DD-MMM-YYYY'),
+            NoofDoctor: String(deptData.doctors.length),
+            Status: deptData.hasActive ? "Active" : "Inactive"
+          }));
+
+        departmentList.push(...doctorOnlyDepts);
+
+        // Sort by date
         departmentList.sort((a, b) =>
           dayjs(b.CreatedDate, 'DD-MMM-YYYY').valueOf() -
           dayjs(a.CreatedDate, 'DD-MMM-YYYY').valueOf()
         );
 
-        console.log('Final Department List:', departmentList); // Debug log
+        console.log('Final Department List:', departmentList);
         setData(departmentList);
-      } else {
-        // अगर doctors नाहीत पण backend departments आहेत
-        if (deptResponse.success && deptResponse.data && deptResponse.data.length > 0) {
-          const departmentList: DepartmentData[] = deptResponse.data.map((dept: any) => ({
-            key: dept._id,
-            _id: dept._id,
-            Department: dept.name,
-            CreatedDate: dayjs(dept.createdAt).format('DD-MMM-YYYY'),
-            NoofDoctor: "0",
-            Status: dept.status || "Inactive"
-          }));
-
-          departmentList.sort((a, b) =>
-            dayjs(b.CreatedDate, 'DD-MMM-YYYY').valueOf() -
-            dayjs(a.CreatedDate, 'DD-MMM-YYYY').valueOf()
-          );
-
-          console.log('Departments without doctors:', departmentList);
-          setData(departmentList);
-        } else {
-          console.log('No data available');
-          setData([]);
-        }
       }
     } catch (error) {
       console.error("Error fetching data:", error);
