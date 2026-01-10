@@ -316,6 +316,9 @@ import { Department, StatusActive } from "../../../../core/common/selectOption";
 import { DatePicker, Select } from "antd";
 import { getDoctors } from "../../../../api/doctorService";
 import dayjs from "dayjs";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface DepartmentData {
   key: string;
@@ -334,6 +337,60 @@ const HrmDepartments = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentDepartment, setCurrentDepartment] = useState<any>(null);
+  const [filterDepartment, setFilterDepartment] = useState<string[]>([]);
+  const [filterDate, setFilterDate] = useState<any>(null);
+  const [filterStatus, setFilterStatus] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<'recent' | 'oldest'>('recent');
+
+
+  const applyFilters = () => {
+    let filtered = [...data];
+
+    // Department filter
+    if (filterDepartment.length > 0) {
+      filtered = filtered.filter(item =>
+        filterDepartment.includes(item.Department)
+      );
+    }
+
+    // Date filter
+    if (filterDate) {
+      const selectedDate = dayjs(filterDate).format('DD-MMM-YYYY');
+      filtered = filtered.filter(item =>
+        item.CreatedDate === selectedDate
+      );
+    }
+
+    // Status filter
+    if (filterStatus.length > 0) {
+      filtered = filtered.filter(item =>
+        filterStatus.includes(item.Status)
+      );
+    }
+
+    // return filtered;
+
+    return applySorting(filtered)
+  };
+
+  const applySorting = (dataToSort: DepartmentData[]) => {
+    const sorted = [...dataToSort];
+
+    if (sortBy === 'recent') {
+      sorted.sort((a, b) =>
+        dayjs(b.CreatedDate, 'DD-MMM-YYYY').valueOf() -
+        dayjs(a.CreatedDate, 'DD-MMM-YYYY').valueOf()
+      );
+    } else {
+      sorted.sort((a, b) =>
+        dayjs(a.CreatedDate, 'DD-MMM-YYYY').valueOf() -
+        dayjs(b.CreatedDate, 'DD-MMM-YYYY').valueOf()
+      );
+    }
+
+    return sorted;
+  };
+  const filteredData = applyFilters();
 
   // Fetch doctors and create department list
   useEffect(() => {
@@ -529,51 +586,68 @@ const HrmDepartments = () => {
     }
   };
 
+
   // Export to PDF
   const exportToPDF = () => {
-    let content = "DEPARTMENT LIST\n\n";
-    content += "Department".padEnd(30) + "Created Date".padEnd(20) + "No. of Doctors".padEnd(20) + "Status\n";
-    content += "=".repeat(90) + "\n";
+    try {
+      const doc = new jsPDF();
 
-    data.forEach(item => {
-      content += `${item.Department.padEnd(30)}${item.CreatedDate.padEnd(20)}${item.NoofDoctor.padEnd(20)}${item.Status}\n`;
-    });
+      // Title add करा
+      doc.setFontSize(18);
+      doc.text('Department List', 14, 20);
 
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'departments_report.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      // Date add करा
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${dayjs().format('DD-MM-YYYY HH:mm')}`, 14, 30);
+
+      // Table data prepare करा
+      const tableData = data.map(item => [
+        item.Department,
+        item.CreatedDate,
+        item.NoofDoctor,
+        item.Status
+      ]);
+
+      // Auto table add करा
+      autoTable(doc, {
+        head: [['Department', 'Created Date', 'No. of Doctors', 'Status']],
+        body: tableData,
+        startY: 35,
+        theme: 'grid',
+        headStyles: { fillColor: [79, 70, 229] },
+        styles: { fontSize: 9 }
+      });
+
+      // Save PDF
+      doc.save(`departments-list-${dayjs().format('YYYY-MM-DD')}.pdf`);
+    } catch (error) {
+      console.error('PDF export error:', error);
+    }
   };
 
   // Export to Excel (CSV)
   const exportToExcel = () => {
-    const headers = ['Department', 'Created Date', 'No. of Doctors', 'Status'];
-    const rows = data.map(item => [
-      item.Department,
-      item.CreatedDate,
-      item.NoofDoctor,
-      item.Status
-    ]);
+    try {
+      // Excel data prepare करा
+      const excelData = data.map(item => ({
+        "Department": item.Department,
+        "Created Date": item.CreatedDate,
+        "No. of Doctors": item.NoofDoctor,
+        "Status": item.Status
+      }));
 
-    let csv = headers.join(',') + '\n';
-    rows.forEach(row => {
-      csv += row.map(cell => `"${cell}"`).join(',') + '\n';
-    });
+      // Worksheet create करा
+      const ws = XLSX.utils.json_to_sheet(excelData);
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'departments.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      // Workbook create करा
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Departments");
+
+      // Excel file save करा
+      XLSX.writeFile(wb, `departments-list-${dayjs().format('YYYY-MM-DD')}.xlsx`);
+    } catch (error) {
+      console.error('Excel export error:', error);
+    }
   };
 
   if (loading) {
@@ -677,6 +751,12 @@ const HrmDepartments = () => {
                       <Link
                         to="#"
                         className="link-danger text-decoration-underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setFilterDepartment([]);
+                          setFilterDate(null);
+                          setFilterStatus([]);
+                        }}
                       >
                         Clear All
                       </Link>
@@ -687,9 +767,14 @@ const HrmDepartments = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Department</label>
+                          // Department Reset
                           <Link
                             to="#"
                             className="link-primary mb-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setFilterDepartment([]);
+                            }}
                           >
                             Reset
                           </Link>
@@ -699,7 +784,8 @@ const HrmDepartments = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          defaultValue={[]}
+                          value={filterDepartment}
+                          onChange={setFilterDepartment}
                           options={Department}
                         />
                       </div>
@@ -714,6 +800,8 @@ const HrmDepartments = () => {
                               format: "DD-MM-YYYY",
                               type: "mask",
                             }}
+                            value={filterDate}
+                            onChange={setFilterDate}
                             getPopupContainer={getModalContainer}
                             placeholder="DD-MM-YYYY"
                             suffixIcon={null}
@@ -726,9 +814,14 @@ const HrmDepartments = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Status</label>
+                          // Department Reset
                           <Link
                             to="#"
                             className="link-primary mb-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setFilterStatus([]);
+                            }}
                           >
                             Reset
                           </Link>
@@ -738,7 +831,8 @@ const HrmDepartments = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          defaultValue={[]}
+                          value={filterStatus}
+                          onChange={setFilterStatus}
                           options={StatusActive}
                         />
                       </div>
@@ -764,16 +858,31 @@ const HrmDepartments = () => {
                   className="dropdown-toggle btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14"
                   data-bs-toggle="dropdown"
                 >
-                  <span className="me-1"> Sort By : </span> Recent
+                  <span className="me-1"> Sort By : </span>
+                  {sortBy === 'recent' ? 'Recent' : 'Oldest'}
                 </Link>
-                <ul className="dropdown-menu  dropdown-menu-end p-2">
+                <ul className="dropdown-menu dropdown-menu-end p-2">
                   <li>
-                    <Link to="#" className="dropdown-item rounded-1">
+                    <Link
+                      to="#"
+                      className="dropdown-item rounded-1"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSortBy('recent');
+                      }}
+                    >
                       Recent
                     </Link>
                   </li>
                   <li>
-                    <Link to="#" className="dropdown-item rounded-1">
+                    <Link
+                      to="#"
+                      className="dropdown-item rounded-1"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSortBy('oldest');
+                      }}
+                    >
                       Oldest
                     </Link>
                   </li>
@@ -784,7 +893,7 @@ const HrmDepartments = () => {
           <div className="table-responsive">
             <Datatable
               columns={columns}
-              dataSource={data}
+              dataSource={filteredData}
               Selection={false}
               searchText={searchText}
             />
