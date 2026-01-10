@@ -341,7 +341,8 @@ const HrmDepartments = () => {
   const [filterDate, setFilterDate] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'recent' | 'oldest'>('recent');
-
+  // Add this new state at the top with other useState declarations (line 25 च्या आसपास)
+  const [localDepartments, setLocalDepartments] = useState<DepartmentData[]>([]);
 
   const applyFilters = () => {
     let filtered = [...data];
@@ -457,7 +458,7 @@ const HrmDepartments = () => {
           dayjs(a.CreatedDate, 'DD-MMM-YYYY').valueOf()
         );
 
-        setData(departmentList);
+        setData([...localDepartments, ...departmentList]);
       }
     } catch (error) {
       console.error("Error fetching doctors:", error);
@@ -548,7 +549,7 @@ const HrmDepartments = () => {
 
   // Add Department
   const handleAddDepartment = (name: string) => {
-    const newKey = String(data.length + 1);
+    const newKey = String(Date.now());
     const today = new Date();
     const formattedDate = dayjs(today).format('DD-MMM-YYYY');
 
@@ -560,6 +561,7 @@ const HrmDepartments = () => {
       Status: "Inactive"
     };
 
+    setLocalDepartments([newDept, ...localDepartments])
     setData([newDept, ...data]); // Add to beginning (newest first)
     setShowAddModal(false);
   };
@@ -567,11 +569,20 @@ const HrmDepartments = () => {
   // Edit Department
   const handleEditDepartment = (name: string) => {
     if (currentDepartment) {
-      setData(data.map(item =>
+      const updatedData = data.map(item =>
         item.key === currentDepartment.key
           ? { ...item, Department: name }
           : item
-      ));
+      );
+
+      const updatedLocal = localDepartments.map(item =>
+        item.key === currentDepartment.key
+          ? { ...item, Department: name }
+          : item
+      );
+
+      setData(updatedData);
+      setLocalDepartments(updatedLocal);
       setShowEditModal(false);
       setCurrentDepartment(null);
     }
@@ -581,6 +592,7 @@ const HrmDepartments = () => {
   const handleDeleteDepartment = () => {
     if (currentDepartment) {
       setData(data.filter(item => item.key !== currentDepartment.key));
+      setLocalDepartments(localDepartments.filter(item => item.key !== currentDepartment.key));
       setShowDeleteModal(false);
       setCurrentDepartment(null);
     }
@@ -767,7 +779,6 @@ const HrmDepartments = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Department</label>
-                          // Department Reset
                           <Link
                             to="#"
                             className="link-primary mb-1"
@@ -814,7 +825,6 @@ const HrmDepartments = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Status</label>
-                          // Department Reset
                           <Link
                             to="#"
                             className="link-primary mb-1"
