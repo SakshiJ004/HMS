@@ -541,7 +541,7 @@ const NewAppointment = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctorSchedule, setDoctorSchedule] = useState<any>(null);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [_availableDates, setAvailableDates] = useState<string[]>([]);
 
   // Form state
   const [formData, setFormData] = useState({
