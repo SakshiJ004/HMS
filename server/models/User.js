@@ -388,6 +388,16 @@ const userSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        fromDate: {
+            type: Date,
+            required: false,
+            default: null
+        },
+        toDate: {
+            type: Date,
+            required: false,
+            default: null
+        },
         appointmentDuration: {
             type: Number,
             default: 30, // minutes
@@ -479,7 +489,7 @@ userSchema.pre('save', async function (next) {
         return next();
     }
 
-    if(!this.isNew && !this.isModified('password')) {
+    if (!this.isNew && !this.isModified('password')) {
         return next();
     }
 

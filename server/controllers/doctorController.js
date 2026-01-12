@@ -744,6 +744,15 @@ const updateDoctorSchedule = async (req, res) => {
         const { id } = req.params;
         const { schedules, location, fromDate, toDate, recuresEvery } = req.body;
 
+        console.log('📝 Updating schedule for doctor:', id);
+        console.log('📅 Schedule data received:', {
+            schedulesCount: schedules?.length,
+            fromDate,
+            toDate,
+            location,
+            recuresEvery
+        });
+
         const doctor = await User.findById(id);
         if (!doctor || doctor.role !== 'doctor') {
             return res.status(404).json({
@@ -752,21 +761,54 @@ const updateDoctorSchedule = async (req, res) => {
             });
         }
 
-        // Update schedules
-        doctor.schedules = schedules;
+        // ✅ Update schedules
+        if (schedules) {
+            doctor.schedules = schedules;
+        }
 
-        // You can store location, dates, etc. in a separate field if needed
-        // doctor.scheduleMetadata = { location, fromDate, toDate, recuresEvery };
+        // ✅ Update fromDate and toDate
+        if (fromDate) {
+            doctor.fromDate = new Date(fromDate);
+            console.log('✅ Set fromDate:', doctor.fromDate);
+        }
+
+        if (toDate) {
+            doctor.toDate = new Date(toDate);
+            console.log('✅ Set toDate:', doctor.toDate);
+        }
+
+        // ✅ Update acceptBookingsDays if not using explicit dates
+        if (!fromDate && !toDate && recuresEvery) {
+            // If no explicit dates but has recuresEvery, calculate acceptBookingsDays
+            // For example: Weekly = 7, Monthly = 30, Yearly = 365
+            const daysMap = {
+                Weekly: 7,
+                Monthly: 30,
+                Yearly: 365
+            };
+
+            if (daysMap[recuresEvery]) {
+                doctor.acceptBookingsDays = daysMap[recuresEvery];
+                console.log('✅ Set acceptBookingsDays:', doctor.acceptBookingsDays);
+            }
+        }
 
         await doctor.save();
+
+        console.log('✅ Schedule updated successfully');
 
         res.status(200).json({
             success: true,
             message: 'Schedule updated successfully',
-            data: doctor
+            data: {
+                schedules: doctor.schedules,
+                fromDate: doctor.fromDate,
+                toDate: doctor.toDate,
+                acceptBookingsDays: doctor.acceptBookingsDays
+            }
         });
     } catch (error) {
-        console.error('Update schedule error:', error);
+        console.error('❌ Update schedule error:', error);
         res.status(500).json({
             success: false,
             message: 'Error updating schedule',

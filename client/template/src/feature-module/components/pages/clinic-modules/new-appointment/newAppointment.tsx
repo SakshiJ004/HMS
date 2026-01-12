@@ -694,81 +694,23 @@ const NewAppointment = () => {
     setErrors({ ...errors, [field]: "" });
   };
 
-  // Disable past times based on doctor schedule
-  const disabledTime = () => {
-    const now = dayjs();
-    const selectedDate = formData.appointmentDate;
-
-    if (!selectedDate) {
-      return {};
+  // ✅ NEW: Get available time slots for selected date
+  const getAvailableTimeSlots = () => {
+    if (!formData.appointmentDate || !doctorSchedule || !doctorSchedule.schedule) {
+      return [];
     }
 
-    // ✅ If doctor schedule exists, only allow scheduled time slots
-    if (doctorSchedule && doctorSchedule.schedule) {
-      const dateSchedule = doctorSchedule.schedule.find(
-        (s: any) => s.date === selectedDate.format('YYYY-MM-DD')
-      );
+    const dateStr = formData.appointmentDate.format('YYYY-MM-DD');
+    const dateSchedule = doctorSchedule.schedule.find(
+      (s: any) => s.date === dateStr
+    );
 
-      if (dateSchedule && dateSchedule.timeSlots && dateSchedule.timeSlots.length > 0) {
-        console.log('📅 Available slots for selected date:', dateSchedule.timeSlots);
-
-        // ✅ Extract available hours and minutes from time slots
-        const availableSlots = dateSchedule.timeSlots.map((slot: any) => {
-          const [hour, minute] = slot.startTime.split(':').map(Number);
-          return { hour, minute };
-        });
-
-        // Get unique hours
-        const availableHours = [...new Set(availableSlots.map((s: any) => s.hour))];
-
-        console.log('⏰ Available hours:', availableHours);
-
-        return {
-          disabledHours: () => {
-            const allHours = Array.from({ length: 24 }, (_, i) => i);
-            const disabled = allHours.filter(h => !availableHours.includes(h));
-            console.log('🚫 Disabled hours:', disabled);
-            return disabled;
-          },
-          disabledMinutes: (selectedHour: number) => {
-            // Get available minutes for this hour
-            const minutesForHour = availableSlots
-              .filter((s: any) => s.hour === selectedHour)
-              .map((s: any) => s.minute);
-
-            console.log(`⏰ Available minutes for hour ${selectedHour}:`, minutesForHour);
-
-            if (minutesForHour.length === 0) {
-              // If no slots for this hour, disable all minutes
-              return Array.from({ length: 60 }, (_, i) => i);
-            }
-
-            const allMinutes = Array.from({ length: 60 }, (_, i) => i);
-            const disabled = allMinutes.filter(m => !minutesForHour.includes(m));
-            console.log(`🚫 Disabled minutes for hour ${selectedHour}:`, disabled);
-            return disabled;
-          },
-        };
-      }
+    if (!dateSchedule || !dateSchedule.timeSlots) {
+      return [];
     }
 
-    // Default: disable past times for today
-    if (selectedDate.isSame(now, 'day')) {
-      const currentHour = now.hour();
-      const currentMinute = now.minute();
-
-      return {
-        disabledHours: () => Array.from({ length: currentHour }, (_, i) => i),
-        disabledMinutes: (selectedHour: number) => {
-          if (selectedHour === currentHour) {
-            return Array.from({ length: currentMinute + 1 }, (_, i) => i);
-          }
-          return [];
-        },
-      };
-    }
-
-    return {};
+    console.log('⏰ Available slots for', dateStr, ':', dateSchedule.timeSlots);
+    return dateSchedule.timeSlots;
   };
 
   // Validate form
@@ -1090,22 +1032,37 @@ const NewAppointment = () => {
                               placeholder="DD-MM-YYYY"
                               value={formData.appointmentDate}
                               disabledDate={(current) => {
-                                // Disable past dates
-                                if (current && current.isBefore(dayjs().startOf('day'))) {
-                                  return true;
-                                }
+                                if (!current) return true;
 
-                                // If doctor schedule exists, only allow scheduled dates
-                                if (doctorSchedule && availableDates.length > 0) {
+                                // ✅ If doctor schedule exists, check both availability and past status
+                                if (doctorSchedule && doctorSchedule.schedule && doctorSchedule.schedule.length > 0) {
                                   const currentDateStr = current.format('YYYY-MM-DD');
-                                  const isAvailable = availableDates.includes(currentDateStr);
 
-                                  console.log(`📅 Checking date ${currentDateStr}: ${isAvailable ? 'Available' : 'Not available'}`);
+                                  // Find this date in schedule
+                                  const dateSchedule = doctorSchedule.schedule.find(
+                                    (s: any) => s.date === currentDateStr
+                                  );
 
-                                  return !isAvailable; // Return true to DISABLE, false to ENABLE
+                                  if (!dateSchedule) {
+                                    // Date not in schedule - disable it
+                                    console.log(`🚫 ${currentDateStr}: Not in doctor's schedule`);
+                                    return true;
+                                  }
+
+                                  // Check if it's marked as past
+                                  if (dateSchedule.isPast) {
+                                    console.log(`⏮️ ${currentDateStr}: Past date - disabled`);
+                                    return true;
+                                  }
+
+                                  // Date is in schedule and not past - enable it
+                                  console.log(`✅ ${currentDateStr}: Available`);
+                                  return false;
                                 }
 
-                                return false;
+                                // ✅ If no doctor selected yet, disable all dates
+                                console.log(`⚠️ No schedule loaded - disabling all dates`);
+                                return true;
                               }}
                               onChange={(date) => {
                                 console.log('📅 Date selected:', date?.format('YYYY-MM-DD'));
@@ -1135,7 +1092,7 @@ const NewAppointment = () => {
                           <label className="form-label mb-1 fw-medium">
                             Time<span className="text-danger ms-1">*</span>
                           </label>
-                          <div className="input-icon-end position-relative">
+                          {/* <div className="input-icon-end position-relative">
                             <TimePicker
                               className="form-control"
                               format="HH:mm"
@@ -1151,6 +1108,59 @@ const NewAppointment = () => {
                               placeholder="Select time"
                               minuteStep={doctorSchedule?.appointmentDuration || 30} // ✅ Step according to doctor's duration
                             />
+                            <span className="input-icon-addon">
+                              <i className="ti ti-clock text-gray-7" />
+                            </span>
+                          </div> */}
+
+                          <div className="input-icon-end position-relative">
+                            {(() => {
+                              const availableSlots = getAvailableTimeSlots();
+
+                              // ✅ If we have specific slots, use Select dropdown
+                              if (availableSlots.length > 0) {
+                                return (
+                                  <select
+                                    className="form-control"
+                                    value={formData.appointmentTime ? formData.appointmentTime.format('HH:mm') : ''}
+                                    onChange={(e) => {
+                                      const timeStr = e.target.value;
+                                      if (timeStr) {
+                                        const time = dayjs(timeStr, 'HH:mm');
+                                        setFormData(prev => ({ ...prev, appointmentTime: time }));
+                                        clearError('appointmentTime');
+                                      } else {
+                                        setFormData(prev => ({ ...prev, appointmentTime: null }));
+                                      }
+                                    }}
+                                    disabled={!formData.appointmentDate}
+                                  >
+                                    <option value="">Select time slot</option>
+                                    {availableSlots.map((slot: any, index: number) => (
+                                      <option key={index} value={slot.startTime}>
+                                        {slot.startTime} - {slot.endTime}
+                                      </option>
+                                    ))}
+                                  </select>
+                                );
+                              }
+
+                              // ✅ Fallback: If no schedule, use TimePicker
+                              return (
+                                <TimePicker
+                                  className="form-control"
+                                  format="HH:mm"
+                                  value={formData.appointmentTime}
+                                  onChange={(time) => {
+                                    setFormData(prev => ({ ...prev, appointmentTime: time }));
+                                    clearError('appointmentTime');
+                                  }}
+                                  showNow={false}
+                                  disabled={!formData.appointmentDate}
+                                  placeholder="Select time"
+                                />
+                              );
+                            })()}
                             <span className="input-icon-addon">
                               <i className="ti ti-clock text-gray-7" />
                             </span>
