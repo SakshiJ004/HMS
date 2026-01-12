@@ -470,7 +470,7 @@ const getDoctorSchedule = async (req, res) => {
 
         // Find doctor with schedule data
         const doctor = await User.findById(doctorId).select(
-            'schedules acceptBookingsDays appointmentDuration fullName department'
+            'schedules acceptBookingsDays appointmentDuration fullName department fromDate toDate'
         );
 
         if (!doctor) {
@@ -482,6 +482,9 @@ const getDoctorSchedule = async (req, res) => {
 
         console.log('✅ Doctor Found:', doctor.fullName);
         console.log('📋 Doctor schedules from DB:', JSON.stringify(doctor.schedules, null, 2));
+        console.log('📅 fromDate from DB:', doctor.fromDate);
+        console.log('📅 toDate from DB:', doctor.toDate);
+        console.log('📅 acceptBookingsDays from DB:', doctor.acceptBookingsDays);
 
         // Check if doctor has schedules
         if (!doctor.schedules || doctor.schedules.length === 0) {

@@ -795,6 +795,17 @@ const updateDoctorSchedule = async (req, res) => {
 
         await doctor.save();
 
+        console.log('🔍 Saved doctor data:');
+        console.log('  fromDate:', doctor.fromDate);
+        console.log('  toDate:', doctor.toDate);
+        console.log('  schedules count:', doctor.schedules?.length);
+
+        // ✅ Fetch fresh from DB to confirm
+        const verifyDoctor = await User.findById(id).select('fromDate toDate schedules');
+        console.log('🔍 Verified from DB:');
+        console.log('  fromDate:', verifyDoctor.fromDate);
+        console.log('  toDate:', verifyDoctor.toDate);
+
         console.log('✅ Schedule updated successfully');
 
         res.status(200).json({
