@@ -1,13 +1,330 @@
+// import { Link } from "react-router";
+// import ImageWithBasePath from "../../../../../core/imageWithBasePath";
+// import { all_routes } from "../../../../routes/all_routes";
+// import { DatePicker } from "antd";
+
+// const HolidaysModal = () => {
+//   const getModalContainer = () => {
+//     const modalElement = document.getElementById("modal-datepicker");
+//     return modalElement ? modalElement : document.body; // Fallback to document.body if modalElement is null
+//   };
+//   return (
+//     <>
+//       {/* Start Add Categories */}
+//       <div id="add_holiday" className="modal fade">
+//         <div className="modal-dialog modal-dialog-centered">
+//           <div className="modal-content">
+//             <div className="modal-header">
+//               <h5 className="text-dark modal-title fw-bold">Add Holiday</h5>
+//               <button
+//                 type="button"
+//                 className="btn-close btn-close-modal custom-btn-close"
+//                 data-bs-dismiss="modal"
+//                 aria-label="Close"
+//               >
+//                 <i className="fa-solid fa-x" />
+//               </button>
+//             </div>
+//             <form>
+//               <div className="modal-body">
+//                 <div className="mb-3">
+//                   <label className="form-label">
+//                     Title<span className="text-danger ms-1">*</span>
+//                   </label>
+//                   <input type="text" className="form-control" />
+//                 </div>
+//                 <div className="mb-3">
+//                   <label className="form-label">Description</label>
+//                   <textarea
+//                     className="form-control"
+//                     rows={3}
+//                     defaultValue={""}
+//                   />
+//                 </div>
+//                 <div className="mb-0">
+//                   <label className="form-label">
+//                     Date<span className="text-danger ms-1">*</span>
+//                   </label>
+//                   <div className="input-icon-end position-relative">
+//                     <DatePicker
+//                       className="form-control datetimepicker"
+//                       format={{
+//                         format: "DD-MM-YYYY",
+//                         type: "mask",
+//                       }}
+//                       getPopupContainer={getModalContainer}
+//                       placeholder="DD-MM-YYYY"
+//                       suffixIcon={null}
+//                     />
+//                     <span className="input-icon-addon">
+//                       <i className="ti ti-calendar" />
+//                     </span>
+//                   </div>
+//                 </div>
+//               </div>
+//               <div className="modal-footer d-flex align-items-center gap-1">
+//                 <button
+//                   type="button"
+//                   className="btn btn-white border"
+//                   data-bs-dismiss="modal"
+//                 >
+//                   Cancel
+//                 </button>
+//                 <button type="submit" className="btn btn-primary">
+//                   Add Holiday
+//                 </button>
+//               </div>
+//             </form>
+//           </div>
+//         </div>
+//       </div>
+//       {/* End Add Categories */}
+//       {/* Start Edit Categories */}
+//       <div id="edit_holiday" className="modal fade">
+//         <div className="modal-dialog modal-dialog-centered">
+//           <div className="modal-content">
+//             <div className="modal-header">
+//               <h5 className="text-dark modal-title fw-bold">Edit Holiday</h5>
+//               <button
+//                 type="button"
+//                 className="btn-close btn-close-modal custom-btn-close"
+//                 data-bs-dismiss="modal"
+//                 aria-label="Close"
+//               >
+//                 <i className="fa-solid fa-x" />
+//               </button>
+//             </div>
+//             <form>
+//               <div className="modal-body">
+//                 <div className="mb-3">
+//                   <label className="form-label">
+//                     Title<span className="text-danger ms-1">*</span>
+//                   </label>
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     defaultValue=" Mosquito Awareness Week "
+//                   />
+//                 </div>
+//                 <div className="mb-3">
+//                   <label className="form-label">Description</label>
+//                   <textarea
+//                     className="form-control"
+//                     rows={3}
+//                     defaultValue={
+//                       "Encourage communities to eliminate mosquito breeding sites, especially standing water."
+//                     }
+//                   />
+//                 </div>
+//                 <div className="mb-0">
+//                   <label className="form-label">
+//                     Date<span className="text-danger ms-1">*</span>
+//                   </label>
+//                   <div className="input-icon-end position-relative">
+//                     <DatePicker
+//                       className="form-control datetimepicker"
+//                       format={{
+//                         format: "DD-MM-YYYY",
+//                         type: "mask",
+//                       }}
+//                       getPopupContainer={getModalContainer}
+//                       placeholder="DD-MM-YYYY"
+//                       suffixIcon={null}
+//                     />
+//                     <span className="input-icon-addon">
+//                       <i className="ti ti-calendar" />
+//                     </span>
+//                   </div>
+//                 </div>
+//               </div>
+//               <div className="modal-footer d-flex align-items-center gap-1">
+//                 <button
+//                   type="button"
+//                   className="btn btn-white border"
+//                   data-bs-dismiss="modal"
+//                 >
+//                   Cancel
+//                 </button>
+//                 <button type="submit" className="btn btn-primary">
+//                   Save Changes
+//                 </button>
+//               </div>
+//             </form>
+//           </div>
+//         </div>
+//       </div>
+//       {/* End Edit Categories */}
+//       {/* Start Delete Modal  */}
+//       <div className="modal fade" id="delete_holiday">
+//         <div className="modal-dialog modal-dialog-centered modal-sm">
+//           <div className="modal-content">
+//             <div className="modal-body text-center position-relative">
+//               <ImageWithBasePath
+//                 src="assets/img/bg/delete-modal-bg-01.png"
+//                 alt=""
+//                 className="img-fluid position-absolute top-0 start-0"
+//               />
+//               <ImageWithBasePath
+//                 src="assets/img/bg/delete-modal-bg-02.png"
+//                 alt=""
+//                 className="img-fluid position-absolute bottom-0 end-0"
+//               />
+//               <div className="mb-3">
+//                 <span className="avatar avatar-lg bg-danger text-white">
+//                   <i className="ti ti-trash fs-24" />
+//                 </span>
+//               </div>
+//               <h5 className="fw-bold mb-1">Delete Confirmation</h5>
+//               <p className="mb-3">Are you sure want to delete?</p>
+//               <div className="d-flex justify-content-center">
+//                 <Link
+//                   to="#"
+//                   className="btn btn-light position-relative z-1 me-3"
+//                   data-bs-dismiss="modal"
+//                 >
+//                   Cancel
+//                 </Link>
+//                 <Link
+//                   to={all_routes.holidays}
+//                   className="btn btn-danger position-relative z-1"
+//                 >
+//                   Yes, Delete
+//                 </Link>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//       {/* End Delete Modal  */}
+//     </>
+//   );
+// };
+
+// export default HolidaysModal;
+
+
+
+
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
-import { all_routes } from "../../../../routes/all_routes";
 import { DatePicker } from "antd";
+import { useState, useEffect } from "react";
+import dayjs, { Dayjs } from "dayjs";
+import type { Holiday } from "./useHolidays";
 
-const HolidaysModal = () => {
+interface HolidaysModalProps {
+  onAdd: (holiday: Omit<Holiday, 'key'>) => void;
+  onUpdate: (key: string, holiday: Omit<Holiday, 'key'>) => void;
+  onDelete: (key: string) => void;
+  editHoliday: Holiday | null;
+}
+
+const HolidaysModal = ({ onAdd, onUpdate, onDelete, editHoliday }: HolidaysModalProps) => {
+  // Add Holiday Form State
+  const [addTitle, setAddTitle] = useState("");
+  const [addDescription, setAddDescription] = useState("");
+  const [addDate, setAddDate] = useState<Dayjs | null>(null);
+
+  // Edit Holiday Form State
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editDate, setEditDate] = useState<Dayjs | null>(null);
+
+  // Delete State
+  const [deleteKey, setDeleteKey] = useState<string | null>(null);
+
+  // Update edit form when editHoliday changes
+  useEffect(() => {
+    if (editHoliday) {
+      setEditTitle(editHoliday.Name);
+      setEditDescription(editHoliday.Description || "");
+      setEditDate(dayjs(editHoliday.Date, "DD-MM-YYYY"));
+    }
+  }, [editHoliday]);
+
   const getModalContainer = () => {
     const modalElement = document.getElementById("modal-datepicker");
-    return modalElement ? modalElement : document.body; // Fallback to document.body if modalElement is null
+    return modalElement ? modalElement : document.body;
   };
+
+  const getDayName = (date: Dayjs): string => {
+    return date.format('dddd');
+  };
+
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!addTitle.trim() || !addDate) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    onAdd({
+      Name: addTitle.trim(),
+      Description: addDescription.trim(),
+      Date: addDate.format("DD-MM-YYYY"),
+      Days: getDayName(addDate)
+    });
+
+    // Reset form
+    setAddTitle("");
+    setAddDescription("");
+    setAddDate(null);
+
+    // Close modal
+    const modal = document.getElementById('add_holiday');
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      if (backdrop) backdrop.remove();
+    }
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editTitle.trim() || !editDate || !editHoliday) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    onUpdate(editHoliday.key, {
+      Name: editTitle.trim(),
+      Description: editDescription.trim(),
+      Date: editDate.format("DD-MM-YYYY"),
+      Days: getDayName(editDate)
+    });
+
+    // Close modal
+    const modal = document.getElementById('edit_holiday');
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      if (backdrop) backdrop.remove();
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteKey) {
+      onDelete(deleteKey);
+      setDeleteKey(null);
+    }
+
+    // Close modal
+    const modal = document.getElementById('delete_holiday');
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      if (backdrop) backdrop.remove();
+    }
+  };
+
   return (
     <>
       {/* Start Add Categories */}
@@ -25,20 +342,27 @@ const HolidaysModal = () => {
                 <i className="fa-solid fa-x" />
               </button>
             </div>
-            <form>
+            <form onSubmit={handleAddSubmit}>
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label">
                     Title<span className="text-danger ms-1">*</span>
                   </label>
-                  <input type="text" className="form-control" />
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={addTitle}
+                    onChange={(e) => setAddTitle(e.target.value)}
+                    required
+                  />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Description</label>
                   <textarea
                     className="form-control"
                     rows={3}
-                    defaultValue={""}
+                    value={addDescription}
+                    onChange={(e) => setAddDescription(e.target.value)}
                   />
                 </div>
                 <div className="mb-0">
@@ -55,6 +379,8 @@ const HolidaysModal = () => {
                       getPopupContainer={getModalContainer}
                       placeholder="DD-MM-YYYY"
                       suffixIcon={null}
+                      value={addDate}
+                      onChange={(date) => setAddDate(date)}
                     />
                     <span className="input-icon-addon">
                       <i className="ti ti-calendar" />
@@ -79,6 +405,7 @@ const HolidaysModal = () => {
         </div>
       </div>
       {/* End Add Categories */}
+
       {/* Start Edit Categories */}
       <div id="edit_holiday" className="modal fade">
         <div className="modal-dialog modal-dialog-centered">
@@ -94,7 +421,7 @@ const HolidaysModal = () => {
                 <i className="fa-solid fa-x" />
               </button>
             </div>
-            <form>
+            <form onSubmit={handleEditSubmit}>
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label">
@@ -103,7 +430,9 @@ const HolidaysModal = () => {
                   <input
                     type="text"
                     className="form-control"
-                    defaultValue=" Mosquito Awareness Week "
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    required
                   />
                 </div>
                 <div className="mb-3">
@@ -111,9 +440,8 @@ const HolidaysModal = () => {
                   <textarea
                     className="form-control"
                     rows={3}
-                    defaultValue={
-                      "Encourage communities to eliminate mosquito breeding sites, especially standing water."
-                    }
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
                   />
                 </div>
                 <div className="mb-0">
@@ -130,6 +458,8 @@ const HolidaysModal = () => {
                       getPopupContainer={getModalContainer}
                       placeholder="DD-MM-YYYY"
                       suffixIcon={null}
+                      value={editDate}
+                      onChange={(date) => setEditDate(date)}
                     />
                     <span className="input-icon-addon">
                       <i className="ti ti-calendar" />
@@ -154,6 +484,7 @@ const HolidaysModal = () => {
         </div>
       </div>
       {/* End Edit Categories */}
+
       {/* Start Delete Modal  */}
       <div className="modal fade" id="delete_holiday">
         <div className="modal-dialog modal-dialog-centered modal-sm">
@@ -184,12 +515,13 @@ const HolidaysModal = () => {
                 >
                   Cancel
                 </Link>
-                <Link
-                  to={all_routes.holidays}
+                <button
+                  onClick={handleDeleteConfirm}
                   className="btn btn-danger position-relative z-1"
+                  type="button"
                 >
                   Yes, Delete
-                </Link>
+                </button>
               </div>
             </div>
           </div>
