@@ -1,6 +1,6 @@
 // backend/controllers/holiday.controller.js
 
-const Holiday = require('../models/Holiday.model');
+const Holiday = require('../models/Holidays');
 
 // Get all holidays
 exports.getAllHolidays = async (req, res) => {
