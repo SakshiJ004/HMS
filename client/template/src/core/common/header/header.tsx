@@ -1,10 +1,14 @@
 import { Link } from "react-router-dom";
 import ImageWithBasePath from "../../imageWithBasePath";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { updateTheme } from "../../redux/themeSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { setMobileSidebar } from "../../redux/sidebarSlice";
 import { all_routes } from "../../../feature-module/routes/all_routes";
+import { globalSearch, type SearchResult } from "../../../api/searchService";
+import { debounce } from "lodash";
+
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -23,6 +27,13 @@ const Header = () => {
     email: "",
     profileImage: "",
   });
+
+  // Search states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const htmlElement: any = document.documentElement;
@@ -121,6 +132,56 @@ const Header = () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('userDataUpdated', handleCustomStorageChange);
     };
+  }, []);
+
+  //Search functionality with debounce
+  const performSearch = useCallback(
+    debounce(async (query: string) => {
+      if (!query || query.trim().length < 2) {
+        setSearchResults([]);
+        setShowResults(false);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await globalSearch(query);
+        console.log('🔍 Search results:', response);
+        setSearchResults(response.results || []);
+        setShowResults(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300),
+    []
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    performSearch(query);
+  };
+
+  const handleSearchResultClick = () => {
+    setShowResults(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleUpdateTheme = (key: string, value: string) => {
@@ -257,21 +318,130 @@ const Header = () => {
             >
               <i className="ti ti-arrow-right" />
             </button>
-            {/* Search */}
-            <div className="me-auto d-flex align-items-center header-search d-lg-flex d-none">
-              <div className="input-icon-start position-relative me-2">
+            {/* Search with Results Dropdown */}
+            <div className="me-auto d-flex align-items-center header-search d-lg-flex d-none position-relative" ref={searchRef}>
+              <div className="input-icon-start position-relative me-2 w-100">
                 <span className="input-icon-addon">
                   <i className="ti ti-search" />
                 </span>
                 <input
                   type="text"
                   className="form-control shadow-sm"
-                  placeholder="Search"
+                  placeholder="Search doctors, patients, appointments..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onFocus={() => searchResults.length > 0 && setShowResults(true)}
+                  style={{ paddingRight: '40px' }}
                 />
+                {isSearching && (
+                  <span className="position-absolute" style={{ right: '45px', top: '50%', transform: 'translateY(-50%)' }}>
+                    <div className="spinner-border spinner-border-sm text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </span>
+                )}
                 <span className="input-icon-addon text-dark shadow fs-18 d-inline-flex p-0 header-search-icon">
                   <i className="ti ti-command" />
                 </span>
               </div>
+
+              {/* Search Results Dropdown */}
+              {showResults && searchResults.length > 0 && (
+                <div
+                  className="position-absolute bg-white border shadow-lg rounded-2 mt-1"
+                  style={{
+                    top: '100%',
+                    left: 0,
+                    width: '450px',
+                    maxHeight: '500px',
+                    overflowY: 'auto',
+                    zIndex: 1050
+                  }}
+                >
+                  {/* Group results by category */}
+                  {['Doctors', 'Patients', 'Appointments', 'Quick Actions'].map(category => {
+                    const categoryResults = searchResults.filter(r => r.category === category);
+                    if (categoryResults.length === 0) return null;
+
+                    return (
+                      <div key={category}>
+                        <div className="px-3 py-2 bg-light border-bottom">
+                          <small className="text-muted fw-semibold">{category}</small>
+                        </div>
+                        {categoryResults.map((result, index) => (
+                          <Link
+                            key={`${result.type}-${result.id || index}`}
+                            to={result.link}
+                            className="d-flex align-items-center p-3 border-bottom text-decoration-none"
+                            onClick={handleSearchResultClick}
+                            style={{
+                              transition: 'background-color 0.2s',
+                              cursor: 'pointer'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            {result.image ? (
+                              <img
+                                src={result.image.startsWith('http') || result.image.startsWith('data:')
+                                  ? result.image
+                                  : `${API_URL}${result.image}`
+                                }
+                                className="rounded-circle me-3"
+                                width="40"
+                                height="40"
+                                alt=""
+                                style={{ objectFit: 'cover' }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent) {
+                                    const placeholder = document.createElement('div');
+                                    placeholder.className = 'rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold me-3';
+                                    placeholder.style.width = '40px';
+                                    placeholder.style.height = '40px';
+                                    placeholder.style.fontSize = '14px';
+                                    placeholder.textContent = result.initials;
+                                    parent.insertBefore(placeholder, e.currentTarget);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div
+                                className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold me-3"
+                                style={{ width: '40px', height: '40px', fontSize: '14px' }}
+                              >
+                                {result.initials}
+                              </div>
+                            )}
+                            <div className="flex-grow-1">
+                              <p className="mb-0 fw-semibold text-dark">{result.title}</p>
+                              <small className="text-muted">{result.subtitle}</small>
+                            </div>
+                            <i className="ti ti-arrow-right ms-auto text-muted"></i>
+                          </Link>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* No Results Message */}
+              {showResults && searchResults.length === 0 && searchQuery.length >= 2 && !isSearching && (
+                <div
+                  className="position-absolute bg-white border shadow-lg rounded-2 mt-1 p-4 text-center"
+                  style={{
+                    top: '100%',
+                    left: 0,
+                    width: '450px',
+                    zIndex: 1050
+                  }}
+                >
+                  <i className="ti ti-search-off fs-48 text-muted mb-2 d-block"></i>
+                  <p className="mb-0 text-muted">No results found for "{searchQuery}"</p>
+                </div>
+              )}
             </div>
           </div>
           <div className="d-flex align-items-center">
