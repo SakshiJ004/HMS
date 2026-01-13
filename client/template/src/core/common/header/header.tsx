@@ -813,7 +813,9 @@ const Header = () => {
                 <input
                   type="search"
                   className="form-control border-0"
-                  placeholder="Search"
+                  placeholder="Search doctors, patients, appointments..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
                 />
                 <button
                   type="button"
@@ -824,6 +826,31 @@ const Header = () => {
                   <i className="ti ti-x fs-22" />
                 </button>
               </div>
+              {/* Mobile Search Results */}
+              {showResults && searchResults.length > 0 && (
+                <div className="px-3 pb-3" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                  {searchResults.map((result, index) => (
+                    <Link
+                      key={`mobile-${result.type}-${result.id || index}`}
+                      to={result.link}
+                      className="d-flex align-items-center p-2 border-bottom text-decoration-none"
+                      onClick={handleSearchResultClick}
+                      data-bs-dismiss="modal"
+                    >
+                      <div
+                        className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold me-2"
+                        style={{ width: '35px', height: '35px', fontSize: '12px' }}
+                      >
+                        {result.initials}
+                      </div>
+                      <div>
+                        <p className="mb-0 fw-semibold text-dark">{result.title}</p>
+                        <small className="text-muted">{result.subtitle}</small>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
