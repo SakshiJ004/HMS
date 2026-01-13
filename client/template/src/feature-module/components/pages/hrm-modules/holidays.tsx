@@ -237,8 +237,10 @@ const HolidaysList = () => {
       <HolidaysModal
         onAdd={addHoliday}
         onUpdate={updateHoliday}
-        onDelete={() => deleteKey && deleteHoliday(deleteKey)}
+        onDelete={deleteHoliday} 
         editHoliday={editHoliday}
+        deleteKey={deleteKey} 
+        setDeleteKey={setDeleteKey}
       />
     </>
   );

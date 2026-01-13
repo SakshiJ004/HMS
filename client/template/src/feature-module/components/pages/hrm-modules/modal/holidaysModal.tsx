@@ -217,9 +217,11 @@ interface HolidaysModalProps {
   onUpdate: (key: string, holiday: Omit<Holiday, 'key'>) => void;
   onDelete: (key: string) => void;
   editHoliday: Holiday | null;
+  deleteKey: string | null;
+  setDeleteKey: (key: string | null) => void;
 }
 
-const HolidaysModal = ({ onAdd, onUpdate, onDelete, editHoliday }: HolidaysModalProps) => {
+const HolidaysModal = ({ onAdd, onUpdate, onDelete, editHoliday, deleteKey, setDeleteKey }: HolidaysModalProps) => {
   // Add Holiday Form State
   const [addTitle, setAddTitle] = useState("");
   const [addDescription, setAddDescription] = useState("");
@@ -229,9 +231,6 @@ const HolidaysModal = ({ onAdd, onUpdate, onDelete, editHoliday }: HolidaysModal
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editDate, setEditDate] = useState<Dayjs | null>(null);
-
-  // Delete State
-  const [deleteKey, setDeleteKey] = useState<string | null>(null);
 
   // Update edit form when editHoliday changes
   useEffect(() => {
