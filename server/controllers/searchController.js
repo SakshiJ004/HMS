@@ -1,7 +1,6 @@
 // backend/controllers/searchController.js
 
-const Doctor = require('../models/Doctor');
-const Patient = require('../models/Patient');
+const Doctor = require('../models/User');
 const Appointment = require('../models/Appointment');
 
 // Global Search - searches across doctors, patients, and appointments
