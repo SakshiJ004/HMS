@@ -76,6 +76,7 @@ app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/designations', require('./routes/designationRoutes'))
 app.use('/api/holidays', require('./routes/holidaysRoutes'))
 app.use('/api/search', require('./routes/searchRoutes'));
+app.use('/api/staffs', require('./routes/staffRoutes'))
 
 // Health check route
 app.get('/api/health', (req, res) => {
