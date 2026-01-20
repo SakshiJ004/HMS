@@ -1049,7 +1049,7 @@ const StaffsModal = ({
       });
     }
   }, [currentStaff, showEditModal]);
-  
+
   // Clear errors when modals close
   useEffect(() => {
     if (!showAddModal) {
@@ -1469,9 +1469,10 @@ const StaffsModal = ({
               <button
                 type="button"
                 className="btn-close btn-close-modal custom-btn-close"
-                data-bs-dismiss="modal"
+                onClick={onCloseAdd}
                 aria-label="Close"
               >
+
                 <i className="ti ti-x" />
               </button>
             </div>
