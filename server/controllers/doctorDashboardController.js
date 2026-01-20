@@ -238,9 +238,10 @@ const getUpcomingAppointmentWithFilter = async (req, res) => {
         } else if (filter === 'week') {
             startDate.setHours(0, 0, 0, 0);
             endDate = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+            endDate.setHours(23, 59, 59, 999);
         } else if (filter === 'month') {
             startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         }
 
         // ✅ Changed: Get multiple appointments (limit 3) instead of 1
@@ -251,7 +252,7 @@ const getUpcomingAppointmentWithFilter = async (req, res) => {
         })
             .populate('patient', 'fullName email phone profileImage')
             .sort({ appointmentDate: 1, appointmentTime: 1 })
-            .limit(2);  // ✅ Changed from .findOne() and limit(1)
+            .limit(3);  // ✅ Changed from .findOne() and limit(1)
 
         res.status(200).json({
             success: true,
