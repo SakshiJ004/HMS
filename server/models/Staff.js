@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const staffSchema = new mongoose.Schema({
     staffId: {
         type: String,
-        unique: true,
-        required: true
+        unique: true
     },
     name: {
         type: String,
@@ -13,55 +12,66 @@ const staffSchema = new mongoose.Schema({
     },
     designation: {
         type: String,
-        required: true
+        required: [true, 'Designation is required']
     },
     role: {
         type: String,
-        required: true
+        required: [true, 'Role is required']
     },
     phone: {
         type: String,
-        required: true
+        required: [true, 'Phone number is required']
     },
     email: {
         type: String,
-        required: true,
+        required: [true, 'Email is required'],
         unique: true,
-        lowercase: true
+        lowercase: true,
+        trim: true
     },
     dob: {
         type: Date,
-        required: true
+        required: [true, 'Date of birth is required']
     },
     dateOfJoining: {
         type: Date,
-        required: true
+        required: [true, 'Date of joining is required']
     },
     gender: {
         type: String,
-        enum: ['Male', 'Female', 'Other'],
-        required: true
+        enum: {
+            values: ['Male', 'Female', 'Other'],
+            message: 'Gender must be Male, Female, or Other'
+        },
+        required: [true, 'Gender is required']
     },
     bloodGroup: {
-        type: String
+        type: String,
+        default: ''
     },
     address1: {
-        type: String
+        type: String,
+        default: ''
     },
     address2: {
-        type: String
+        type: String,
+        default: ''
     },
     country: {
-        type: String
+        type: String,
+        default: ''
     },
     state: {
-        type: String
+        type: String,
+        default: ''
     },
     city: {
-        type: String
+        type: String,
+        default: ''
     },
     pincode: {
-        type: String
+        type: String,
+        default: ''
     },
     staffType: {
         type: String,
@@ -73,7 +83,10 @@ const staffSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Available', 'Unavailable'],
+        enum: {
+            values: ['Available', 'Unavailable'],
+            message: 'Status must be Available or Unavailable'
+        },
         default: 'Available'
     },
     salaryInfo: [{

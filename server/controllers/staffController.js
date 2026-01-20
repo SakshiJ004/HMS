@@ -47,6 +47,7 @@ exports.getStaffById = async (req, res) => {
 };
 
 // Create new staff
+// Create new staff
 exports.createStaff = async (req, res) => {
     try {
         const {
@@ -55,11 +56,21 @@ exports.createStaff = async (req, res) => {
             city, pincode, image, staffType
         } = req.body;
 
+        console.log('📝 Received staff data:', req.body); // Debug log
+
         // Validation
         if (!name || !email || !phone || !designation || !role) {
             return res.status(400).json({
                 success: false,
                 message: 'Required fields are missing'
+            });
+        }
+
+        // Validate dates
+        if (!dob || !dateOfJoining) {
+            return res.status(400).json({
+                success: false,
+                message: 'Date of Birth and Date of Joining are required'
             });
         }
 
@@ -72,6 +83,25 @@ exports.createStaff = async (req, res) => {
             });
         }
 
+        // Parse dates properly - handle both ISO strings and date objects
+        let parsedDob, parsedJoining;
+
+        try {
+            parsedDob = new Date(dob);
+            parsedJoining = new Date(dateOfJoining);
+
+            // Check if dates are valid
+            if (isNaN(parsedDob.getTime()) || isNaN(parsedJoining.getTime())) {
+                throw new Error('Invalid date format');
+            }
+        } catch (dateError) {
+            console.error('Date parsing error:', dateError);
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid date format. Please use valid dates.'
+            });
+        }
+
         // Create new staff
         const newStaff = new Staff({
             name: name.trim(),
@@ -79,16 +109,16 @@ exports.createStaff = async (req, res) => {
             role,
             phone,
             email: email.toLowerCase(),
-            dob,
-            dateOfJoining,
+            dob: parsedDob,
+            dateOfJoining: parsedJoining,
             gender,
-            bloodGroup,
-            address1,
-            address2,
-            country,
-            state,
-            city,
-            pincode,
+            bloodGroup: bloodGroup || '',
+            address1: address1 || '',
+            address2: address2 || '',
+            country: country || '',
+            state: state || '',
+            city: city || '',
+            pincode: pincode || '',
             image: image || '',
             staffType: staffType || 'Permanent',
             status: 'Available'
@@ -96,13 +126,33 @@ exports.createStaff = async (req, res) => {
 
         await newStaff.save();
 
+        console.log('✅ Staff created successfully:', newStaff.staffId);
+
         res.status(201).json({
             success: true,
             message: 'Staff created successfully',
             data: newStaff
         });
     } catch (error) {
-        console.error('Create staff error:', error);
+        console.error('❌ Create staff error:', error);
+
+        // Handle mongoose validation errors
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: messages.join(', ')
+            });
+        }
+
+        // Handle duplicate key errors
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: 'Staff with this email or phone already exists'
+            });
+        }
+
         res.status(500).json({
             success: false,
             message: 'Failed to create staff',
@@ -112,6 +162,7 @@ exports.createStaff = async (req, res) => {
 };
 
 // Update staff
+// Update staff
 exports.updateStaff = async (req, res) => {
     try {
         const {
@@ -119,6 +170,8 @@ exports.updateStaff = async (req, res) => {
             gender, bloodGroup, address1, address2, country, state,
             city, pincode, image, staffType, status
         } = req.body;
+
+        console.log('📝 Update request for staff:', req.params.id);
 
         // Check if staff exists
         const staff = await Staff.findById(req.params.id);
@@ -143,16 +196,48 @@ exports.updateStaff = async (req, res) => {
             }
         }
 
+        // Parse dates if provided
+        let parsedDob = staff.dob;
+        let parsedJoining = staff.dateOfJoining;
+
+        if (dob) {
+            try {
+                parsedDob = new Date(dob);
+                if (isNaN(parsedDob.getTime())) {
+                    throw new Error('Invalid DOB format');
+                }
+            } catch (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid Date of Birth format'
+                });
+            }
+        }
+
+        if (dateOfJoining) {
+            try {
+                parsedJoining = new Date(dateOfJoining);
+                if (isNaN(parsedJoining.getTime())) {
+                    throw new Error('Invalid joining date format');
+                }
+            } catch (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid Date of Joining format'
+                });
+            }
+        }
+
         // Update staff
         staff.name = name || staff.name;
         staff.designation = designation || staff.designation;
         staff.role = role || staff.role;
         staff.phone = phone || staff.phone;
         staff.email = email ? email.toLowerCase() : staff.email;
-        staff.dob = dob || staff.dob;
-        staff.dateOfJoining = dateOfJoining || staff.dateOfJoining;
+        staff.dob = parsedDob;
+        staff.dateOfJoining = parsedJoining;
         staff.gender = gender || staff.gender;
-        staff.bloodGroup = bloodGroup || staff.bloodGroup;
+        staff.bloodGroup = bloodGroup !== undefined ? bloodGroup : staff.bloodGroup;
         staff.address1 = address1 !== undefined ? address1 : staff.address1;
         staff.address2 = address2 !== undefined ? address2 : staff.address2;
         staff.country = country || staff.country;
@@ -165,13 +250,24 @@ exports.updateStaff = async (req, res) => {
 
         await staff.save();
 
+        console.log('✅ Staff updated successfully:', staff.staffId);
+
         res.status(200).json({
             success: true,
             message: 'Staff updated successfully',
             data: staff
         });
     } catch (error) {
-        console.error('Update staff error:', error);
+        console.error('❌ Update staff error:', error);
+
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: messages.join(', ')
+            });
+        }
+
         res.status(500).json({
             success: false,
             message: 'Failed to update staff',
