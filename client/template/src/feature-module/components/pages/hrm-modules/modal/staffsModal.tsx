@@ -1024,6 +1024,7 @@ const StaffsModal = ({
   // Populate edit form when currentStaff changes
   useEffect(() => {
     if (currentStaff && showEditModal) {
+      setEditFormErrors({});
       setEditFormData({
         name: currentStaff.Staff || "",
         designation: currentStaff.Designation || "",
@@ -1048,6 +1049,19 @@ const StaffsModal = ({
       });
     }
   }, [currentStaff, showEditModal]);
+  
+  // Clear errors when modals close
+  useEffect(() => {
+    if (!showAddModal) {
+      setAddFormErrors({});
+    }
+  }, [showAddModal]);
+
+  useEffect(() => {
+    if (!showEditModal) {
+      setEditFormErrors({});
+    }
+  }, [showEditModal]);
 
   const getModalContainer = () => {
     const modalElement = document.getElementById("modal-datepicker");
@@ -1789,8 +1803,8 @@ const StaffsModal = ({
       </div>
 
       {/* Edit Staff Modal */}
-      {/* Edit Staff Modal */}
-      <div id="edit_staff" className="modal fade">
+      <div id="edit_staff" className={`modal fade ${showEditModal ? "show" : ""}`}
+        style={{ display: showEditModal ? "block" : "none" }}>
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-header">
