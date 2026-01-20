@@ -1018,6 +1018,8 @@ const StaffsModal = ({
 
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("tab1");
+  const [addFormErrors, setAddFormErrors] = useState<{ [key: string]: string }>({});
+  const [editFormErrors, setEditFormErrors] = useState<{ [key: string]: string }>({});
 
   // Populate edit form when currentStaff changes
   useEffect(() => {
@@ -1052,9 +1054,102 @@ const StaffsModal = ({
     return modalElement ? modalElement : document.body;
   };
 
+  // Validation function
+  const validateAddForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!addFormData.name.trim()) {
+      errors.name = 'Name is required';
+    }
+
+    if (!addFormData.designation) {
+      errors.designation = 'Designation is required';
+    }
+
+    if (!addFormData.role) {
+      errors.role = 'Role is required';
+    }
+
+    if (!addFormData.phone.trim()) {
+      errors.phone = 'Phone number is required';
+    }
+
+    if (!addFormData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addFormData.email)) {
+      errors.email = 'Please enter a valid email';
+    }
+
+    if (!addFormData.dob) {
+      errors.dob = 'Date of Birth is required';
+    }
+
+    if (!addFormData.dateOfJoining) {
+      errors.dateOfJoining = 'Date of Joining is required';
+    }
+
+    if (!addFormData.gender) {
+      errors.gender = 'Gender is required';
+    }
+
+    setAddFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Validation function for Edit Form
+  const validateEditForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!editFormData.name.trim()) {
+      errors.name = 'Name is required';
+    }
+
+    if (!editFormData.designation) {
+      errors.designation = 'Designation is required';
+    }
+
+    if (!editFormData.role) {
+      errors.role = 'Role is required';
+    }
+
+    if (!editFormData.phone.trim()) {
+      errors.phone = 'Phone number is required';
+    }
+
+    if (!editFormData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email)) {
+      errors.email = 'Please enter a valid email';
+    }
+
+    if (!editFormData.dob) {
+      errors.dob = 'Date of Birth is required';
+    }
+
+    if (!editFormData.dateOfJoining) {
+      errors.dateOfJoining = 'Date of Joining is required';
+    }
+
+    if (!editFormData.gender) {
+      errors.gender = 'Gender is required';
+    }
+
+    setEditFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Handle Add Staff Submit
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Clear previous errors
+    setAddFormErrors({});
+
+    // Validate form
+    if (!validateAddForm()) {
+      return; // Stop if validation fails
+    }
+
     setLoading(true);
 
     try {
@@ -1105,22 +1200,14 @@ const StaffsModal = ({
         });
 
         onAdd(); // Refresh the staff list
-        onCloseAdd(); // Close modal
-
-        // Close modal programmatically
-        const modalElement = document.getElementById("add_staff");
-        if (modalElement) {
-          const modal = bootstrap.Modal.getInstance(modalElement);
-          if (modal) {
-            modal.hide();
-          }
-        }
+        onCloseAdd(); // Close modal - This will trigger parent to hide modal
       } else {
-        alert(response.message || "Failed to add staff");
+        // Show backend error in form
+        setAddFormErrors({ submit: response.message || "Failed to add staff" });
       }
     } catch (error) {
       console.error("Add staff error:", error);
-      alert("Error adding staff. Please try again.");
+      setAddFormErrors({ submit: "Error adding staff. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -1130,6 +1217,14 @@ const StaffsModal = ({
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentStaff?._id) return;
+
+    // Clear previous errors
+    setEditFormErrors({});
+
+    // Validate form
+    if (!validateEditForm()) {
+      return; // Stop if validation fails
+    }
 
     setLoading(true);
 
@@ -1162,21 +1257,13 @@ const StaffsModal = ({
       if (response.success) {
         onEdit(); // Refresh the staff list
         onCloseEdit(); // Close modal
-
-        // Close modal programmatically
-        const modalElement = document.getElementById("edit_staff");
-        if (modalElement) {
-          const modal = bootstrap.Modal.getInstance(modalElement);
-          if (modal) {
-            modal.hide();
-          }
-        }
       } else {
-        alert(response.message || "Failed to update staff");
+        // Show backend error in form
+        setEditFormErrors({ submit: response.message || "Failed to update staff" });
       }
     } catch (error) {
       console.error("Edit staff error:", error);
-      alert("Error updating staff. Please try again.");
+      setEditFormErrors({ submit: "Error updating staff. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -1360,7 +1447,7 @@ const StaffsModal = ({
       </div>
 
       {/* Add Staff Modal */}
-      <div id="add_staff" className={`modal fade ${showAddModal ? "show" : ""}`} style={{display: showAddModal ? "block" : "none"}}>
+      <div id="add_staff" className={`modal fade ${showAddModal ? "show" : ""}`} style={{ display: showAddModal ? "block" : "none" }}>
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-header">
@@ -1384,13 +1471,21 @@ const StaffsModal = ({
                   </label>
                   <input
                     type="text"
-                    className="form-control"
+                    className={`form-control ${addFormErrors.name ? 'is-invalid' : ''}`}
                     value={addFormData.name}
-                    onChange={(e) =>
-                      setAddFormData({ ...addFormData, name: e.target.value })
-                    }
-                    required
+                    onChange={(e) => {
+                      setAddFormData({ ...addFormData, name: e.target.value });
+                      // Clear error when user starts typing
+                      if (addFormErrors.name) {
+                        setAddFormErrors({ ...addFormErrors, name: '' });
+                      }
+                    }}
                   />
+                  {addFormErrors.name && (
+                    <div className="invalid-feedback d-block">
+                      {addFormErrors.name}
+                    </div>
+                  )}
                 </div>
 
                 <div className="row mb-3 border-bottom">
@@ -1401,14 +1496,20 @@ const StaffsModal = ({
                       </label>
                       <CommonSelect
                         options={StaffsRole}
-                        className="select"
-                        value={StaffsRole.find(
-                          (r) => r.value === addFormData.role
-                        )}
-                        onChange={(option: any) =>
-                          setAddFormData({ ...addFormData, role: option.value })
-                        }
+                        className={`select ${addFormErrors.role ? 'is-invalid' : ''}`}
+                        value={StaffsRole.find((r) => r.value === addFormData.role)}
+                        onChange={(option: any) => {
+                          setAddFormData({ ...addFormData, role: option.value });
+                          if (addFormErrors.role) {
+                            setAddFormErrors({ ...addFormErrors, role: '' });
+                          }
+                        }}
                       />
+                      {addFormErrors.role && (
+                        <div className="invalid-feedback d-block">
+                          {addFormErrors.role}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-lg-6">
@@ -1462,16 +1563,20 @@ const StaffsModal = ({
                       </label>
                       <input
                         type="email"
-                        className="form-control"
+                        className={`form-control ${addFormErrors.email ? 'is-invalid' : ''}`}
                         value={addFormData.email}
-                        onChange={(e) =>
-                          setAddFormData({
-                            ...addFormData,
-                            email: e.target.value,
-                          })
-                        }
-                        required
+                        onChange={(e) => {
+                          setAddFormData({ ...addFormData, email: e.target.value });
+                          if (addFormErrors.email) {
+                            setAddFormErrors({ ...addFormErrors, email: '' });
+                          }
+                        }}
                       />
+                      {addFormErrors.email && (
+                        <div className="invalid-feedback d-block">
+                          {addFormErrors.email}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-6">
@@ -1661,6 +1766,11 @@ const StaffsModal = ({
                   </div>
                 </div>
               </div>
+              {addFormErrors.submit && (
+                <div className="alert alert-danger mx-3 mb-0" role="alert">
+                  {addFormErrors.submit}
+                </div>
+              )}
               <div className="modal-footer d-flex align-items-center gap-1">
                 <button
                   type="button"
@@ -1679,6 +1789,7 @@ const StaffsModal = ({
       </div>
 
       {/* Edit Staff Modal */}
+      {/* Edit Staff Modal */}
       <div id="edit_staff" className="modal fade">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
@@ -1694,7 +1805,322 @@ const StaffsModal = ({
               </button>
             </div>
             <form onSubmit={handleEditSubmit}>
-              {/* Add same form fields as Add modal but using editFormData */}
+              <div className="modal-body">
+                <h6 className="fw-bold mb-3">Staff Information</h6>
+
+                <div className="mb-3">
+                  <label className="form-label">
+                    Name <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className={`form-control ${editFormErrors.name ? 'is-invalid' : ''}`}
+                    value={editFormData.name}
+                    onChange={(e) => {
+                      setEditFormData({ ...editFormData, name: e.target.value });
+                      if (editFormErrors.name) {
+                        setEditFormErrors({ ...editFormErrors, name: '' });
+                      }
+                    }}
+                  />
+                  {editFormErrors.name && (
+                    <div className="invalid-feedback d-block">
+                      {editFormErrors.name}
+                    </div>
+                  )}
+                </div>
+
+                <div className="row mb-3 border-bottom">
+                  <div className="col-lg-6">
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Role<span className="text-danger ms-1">*</span>
+                      </label>
+                      <CommonSelect
+                        options={StaffsRole}
+                        className="select"
+                        value={StaffsRole.find((r) => r.value === editFormData.role)}
+                        onChange={(option: any) => {
+                          setEditFormData({ ...editFormData, role: option.value });
+                          if (editFormErrors.role) {
+                            setEditFormErrors({ ...editFormErrors, role: '' });
+                          }
+                        }}
+                      />
+                      {editFormErrors.role && (
+                        <div className="invalid-feedback d-block">
+                          {editFormErrors.role}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-lg-6">
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Designation<span className="text-danger ms-1">*</span>
+                      </label>
+                      <CommonSelect
+                        options={StaffsDesignation}
+                        className="select"
+                        value={StaffsDesignation.find(
+                          (d) => d.value === editFormData.designation
+                        )}
+                        onChange={(option: any) => {
+                          setEditFormData({ ...editFormData, designation: option.value });
+                          if (editFormErrors.designation) {
+                            setEditFormErrors({ ...editFormErrors, designation: '' });
+                          }
+                        }}
+                      />
+                      {editFormErrors.designation && (
+                        <div className="invalid-feedback d-block">
+                          {editFormErrors.designation}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <h6 className="fw-bold mb-3">Contact Information</h6>
+
+                <div className="row row-gap-2">
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">
+                        Phone Number<span className="text-danger ms-1">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className={`form-control ${editFormErrors.phone ? 'is-invalid' : ''}`}
+                        value={editFormData.phone}
+                        onChange={(e) => {
+                          setEditFormData({ ...editFormData, phone: e.target.value });
+                          if (editFormErrors.phone) {
+                            setEditFormErrors({ ...editFormErrors, phone: '' });
+                          }
+                        }}
+                      />
+                      {editFormErrors.phone && (
+                        <div className="invalid-feedback d-block">
+                          {editFormErrors.phone}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">
+                        Email<span className="text-danger ms-1">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        className={`form-control ${editFormErrors.email ? 'is-invalid' : ''}`}
+                        value={editFormData.email}
+                        onChange={(e) => {
+                          setEditFormData({ ...editFormData, email: e.target.value });
+                          if (editFormErrors.email) {
+                            setEditFormErrors({ ...editFormErrors, email: '' });
+                          }
+                        }}
+                      />
+                      {editFormErrors.email && (
+                        <div className="invalid-feedback d-block">
+                          {editFormErrors.email}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">
+                        DOB<span className="text-danger ms-1">*</span>
+                      </label>
+                      <div className="input-icon-end position-relative">
+                        <DatePicker
+                          className={`form-control datetimepicker ${editFormErrors.dob ? 'is-invalid' : ''}`}
+                          format={{
+                            format: "DD-MM-YYYY",
+                            type: "mask",
+                          }}
+                          value={editFormData.dob}
+                          onChange={(date) => {
+                            setEditFormData({ ...editFormData, dob: date });
+                            if (editFormErrors.dob) {
+                              setEditFormErrors({ ...editFormErrors, dob: '' });
+                            }
+                          }}
+                          getPopupContainer={getModalContainer}
+                          placeholder="DD-MM-YYYY"
+                          suffixIcon={null}
+                        />
+                        <span className="input-icon-addon">
+                          <i className="ti ti-calendar" />
+                        </span>
+                      </div>
+                      {editFormErrors.dob && (
+                        <div className="invalid-feedback d-block">
+                          {editFormErrors.dob}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">
+                        Date of Joining<span className="text-danger ms-1">*</span>
+                      </label>
+                      <div className="input-icon-end position-relative">
+                        <DatePicker
+                          className={`form-control datetimepicker ${editFormErrors.dateOfJoining ? 'is-invalid' : ''}`}
+                          format={{
+                            format: "DD-MM-YYYY",
+                            type: "mask",
+                          }}
+                          value={editFormData.dateOfJoining}
+                          onChange={(date) => {
+                            setEditFormData({ ...editFormData, dateOfJoining: date });
+                            if (editFormErrors.dateOfJoining) {
+                              setEditFormErrors({ ...editFormErrors, dateOfJoining: '' });
+                            }
+                          }}
+                          getPopupContainer={getModalContainer}
+                          placeholder="DD-MM-YYYY"
+                          suffixIcon={null}
+                        />
+                        <span className="input-icon-addon">
+                          <i className="ti ti-calendar" />
+                        </span>
+                      </div>
+                      {editFormErrors.dateOfJoining && (
+                        <div className="invalid-feedback d-block">
+                          {editFormErrors.dateOfJoining}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">
+                        Gender<span className="text-danger ms-1">*</span>
+                      </label>
+                      <CommonSelect
+                        options={Gender}
+                        className="select"
+                        value={Gender.find((g) => g.value === editFormData.gender)}
+                        onChange={(option: any) => {
+                          setEditFormData({ ...editFormData, gender: option.value });
+                          if (editFormErrors.gender) {
+                            setEditFormErrors({ ...editFormErrors, gender: '' });
+                          }
+                        }}
+                      />
+                      {editFormErrors.gender && (
+                        <div className="invalid-feedback d-block">
+                          {editFormErrors.gender}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">Blood Group</label>
+                      <CommonSelect
+                        options={Blood_Group}
+                        className="select"
+                        value={Blood_Group.find((b) => b.value === editFormData.bloodGroup)}
+                        onChange={(option: any) =>
+                          setEditFormData({ ...editFormData, bloodGroup: option.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">Address 1</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={editFormData.address1}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, address1: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">Address 2</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={editFormData.address2}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, address2: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">Country</label>
+                      <CommonSelect
+                        options={Country}
+                        className="select"
+                        value={Country.find((c) => c.value === editFormData.country)}
+                        onChange={(option: any) =>
+                          setEditFormData({ ...editFormData, country: option.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">State</label>
+                      <CommonSelect
+                        options={State}
+                        className="select"
+                        value={State.find((s) => s.value === editFormData.state)}
+                        onChange={(option: any) =>
+                          setEditFormData({ ...editFormData, state: option.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">City</label>
+                      <CommonSelect
+                        options={City}
+                        className="select"
+                        value={City.find((c) => c.value === editFormData.city)}
+                        onChange={(option: any) =>
+                          setEditFormData({ ...editFormData, city: option.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="mb-0">
+                      <label className="form-label">Pincode</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={editFormData.pincode}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, pincode: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {editFormErrors.submit && (
+                <div className="alert alert-danger mx-3 mb-0" role="alert">
+                  {editFormErrors.submit}
+                </div>
+              )}
+
               <div className="modal-footer d-flex align-items-center gap-1">
                 <button
                   type="button"
@@ -1713,7 +2139,7 @@ const StaffsModal = ({
       </div>
 
       {/* Delete Staff Modal */}
-      <div className={`modal fade ${showDeleteModal ? "show" : ""}`} style={{display: showDeleteModal ? "block" : "none"}} id="delete_staff">
+      <div className={`modal fade ${showDeleteModal ? "show" : ""}`} style={{ display: showDeleteModal ? "block" : "none" }} id="delete_staff">
         <div className="modal-dialog modal-dialog-centered modal-sm">
           <div className="modal-content">
             <div className="modal-body text-center position-relative z-1">
