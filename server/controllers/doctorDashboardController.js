@@ -552,6 +552,33 @@ const getTopPatients = async (req, res) => {
     }
 };
 
+const getAllDoctorAppointments = async (req, res) => {
+    try {
+        const doctorId = new mongoose.Types.ObjectId(req.user._id);
+
+        const appointments = await Appointment.find({ doctor: doctorId })
+            .populate('patient', 'fullName email phone profileImage')
+            .populate('doctor', 'consultationCharge')
+            .sort({ appointmentDate: -1, appointmentTime: -1 });
+
+        const appointmentsWithFee = appointments.map(apt => ({
+            ...apt.toObject(),
+            consultationCharge: apt.doctor?.consultationCharge || 0
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: appointmentsWithFee,
+        });
+    } catch (error) {
+        console.error('Get all appointments error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching appointments',
+            error: error.message,
+        });
+    }
+};
 
 module.exports = {
     getDoctorStats,
@@ -562,4 +589,5 @@ module.exports = {
     getAdditionalStats,
     getAppointmentStatistics,
     getTopPatients,
+    getAllDoctorAppointments,
 };

@@ -196,3 +196,15 @@ export const getTopPatients = async (period: 'monthly' | 'weekly' | 'yearly' = '
         throw new Error(error.response?.data?.message || 'Failed to fetch top patients');
     }
 };
+export const getAllDoctorAppointments = async () => {
+    try {
+        const response = await axios.get<{ success: boolean; data: RecentAppointment[] }>(
+            `${API_URL}/api/doctor/dashboard/all-appointments`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get all appointments error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch appointments');
+    }
+};

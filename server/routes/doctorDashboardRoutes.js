@@ -9,6 +9,7 @@ const {
     getUpcomingAppointmentWithFilter,
     getAppointmentStatistics,
     getTopPatients,
+    getAllDoctorAppointments,
 } = require('../controllers/doctorDashboardController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -20,5 +21,6 @@ router.get('/recent', protect, authorize('doctor'), getRecentAppointments);
 router.get('/additional-stats', protect, authorize('doctor'), getAdditionalStats);
 router.get('/appointment-statistics', protect, authorize('doctor'), getAppointmentStatistics);
 router.get('/top-patients', protect, authorize('doctor'), getTopPatients);
+router.get('/all-appointments', protect, authorize('doctor'), getAllDoctorAppointments)
 
 module.exports = router;
