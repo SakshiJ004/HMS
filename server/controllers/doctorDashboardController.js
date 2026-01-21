@@ -436,7 +436,7 @@ const getAppointmentStatistics = async (req, res) => {
         } else if (period === 'weekly') {
             startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
         } else if (period === 'yearly') {
-            // startDate = new Date(now.getFullYear(), 0, 1);
+            startDate = new Date(now.getFullYear(), 0, 1);
         }
 
         const statistics = await Appointment.aggregate([
