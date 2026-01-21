@@ -625,11 +625,6 @@ const DoctorAppointments = () => {
     setSearchText(value);
   };
 
-  const getModalContainer = () => {
-    const modalElement = document.getElementById("modal-datepicker");
-    return modalElement ? modalElement : document.body;
-  };
-
   // ✅ Fixed: Use appointments instead of recentAppointments
   const downloadPDF = () => {
     const doc = new jsPDF();
