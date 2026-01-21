@@ -230,6 +230,7 @@ import UiRating from "../components/pages/ui-modules/ui-interface/ui-advance/uiR
 import UiScrollbar from "../components/pages/ui-modules/ui-interface/ui-advance/uiScrollbar";
 import { all_routes } from "./all_routes";
 import { Navigate, Route } from "react-router";
+import DoctorAppointments from "../components/pages/doctor-modules/doctor-appointments/doctorAppointments";
 
 const routes = all_routes;
 
@@ -286,12 +287,18 @@ export const publicRoutes = [
     route: Route,
   },
   {
-    path: '/doctor-appointment-calendar',
+    path: routes.doctorAppointmentCalendar,
+    // path: '/doctor-appointment-calendar',
     element: <DoctorAppointmentCalendar />
   },
   {
-    path: '/doctor-appointments',
+    path: routes.doctorAppointments,
+    // path: '/doctor-appointments',
     element: <DoctorAppointmentList />
+  },
+  {
+    path: routes.doctorsappointments,
+    element: <DoctorAppointments />
   },
   {
     path: routes.onlineconsultations,
