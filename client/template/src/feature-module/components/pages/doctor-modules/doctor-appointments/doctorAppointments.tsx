@@ -1061,7 +1061,7 @@ import Modal from "./modal/modals";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { getRecentAppointments, type RecentAppointment } from "../../../../../api/doctorDashboardService";
+import { getAllDoctorAppointments, type RecentAppointment } from "../../../../../api/doctorDashboardService";
 import dayjs from "dayjs";
 import type { Dayjs } from 'dayjs'; // ✅ ADD THIS
 
@@ -1244,7 +1244,7 @@ const DoctorAppointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const res = await getRecentAppointments();
+      const res = await getAllDoctorAppointments();
       if (res.success) {
         setAppointments(res.data);
       }
