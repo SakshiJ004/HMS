@@ -135,27 +135,233 @@
 
 
 
+// import { useState, useRef, useEffect } from "react";
+// import FullCalendar from "@fullcalendar/react";
+// import dayGridPlugin from "@fullcalendar/daygrid";
+// import timeGridPlugin from "@fullcalendar/timegrid";
+// import interactionPlugin from "@fullcalendar/interaction";
+// import { getRecentAppointments } from "../../../api/doctorDashboardService";
+// import dayjs from "dayjs";
+
+
+// interface EventCalendarProps {
+//   appointments?: any[];
+//   view?: 'month' | 'week' | 'day';
+// }
+
+// const EventCalendar = ({ appointments = [], view = 'month' }: EventCalendarProps) => {
+//   const calendarRef = useRef(null);
+//   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+//   const [modalOpen, setModalOpen] = useState(false);
+//   const [events, setEvents] = useState<any[]>([]);
+
+//   useEffect(() => {
+//     fetchAppointments();
+//   }, []);
+
+//   const fetchAppointments = async () => {
+//     try {
+//       const res = await getRecentAppointments();
+//       if (res.success) {
+//         const formattedEvents = res.data.map((apt: any) => ({
+//           id: apt._id,
+//           title: apt.patient.fullName,
+//           start: apt.appointmentDate,
+//           extendedProps: {
+//             image: apt.patient.profileImage,
+//             time: apt.appointmentTime,
+//             type: apt.appointmentType,
+//             status: apt.status,
+//             phone: apt.patient.phone || apt.patient.email,
+//             appointmentId: apt.appointmentId,
+//           }
+//         }));
+//         setEvents(formattedEvents);
+//       }
+//     } catch (error) {
+//       console.error('Error fetching appointments:', error);
+//     }
+//   };
+
+//   const renderEventContent = (eventInfo: any) => {
+//     const { image } = eventInfo.event.extendedProps;
+//     return (
+//       <div style={{ display: "flex", alignItems: "center", padding: "2px" }}>
+//         {image ? (
+//           <img
+//             src={image}
+//             alt="patient"
+//             style={{
+//               width: "20px",
+//               height: "20px",
+//               borderRadius: "50%",
+//               objectFit: "cover",
+//               marginRight: "4px"
+//             }}
+//           />
+//         ) : (
+//           <div
+//             style={{
+//               width: "20px",
+//               height: "20px",
+//               borderRadius: "50%",
+//               backgroundColor: "#5E63FF",
+//               color: "white",
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent: "center",
+//               fontSize: "10px",
+//               marginRight: "4px"
+//             }}
+//           >
+//             {eventInfo.event.title.charAt(0)}
+//           </div>
+//         )}
+//         <span style={{ fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+//           {eventInfo.event.title}
+//         </span>
+//       </div>
+//     );
+//   };
+
+//   const handleEventClick = (clickInfo: any) => {
+//     setSelectedEvent(clickInfo.event);
+//     setModalOpen(true);
+//   };
+
+//   const closeModal = () => {
+//     setModalOpen(false);
+//     setSelectedEvent(null);
+//   };
+
+//   return (
+//     <div className="p-4">
+//       <FullCalendar
+//         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+//         initialView={view === 'month' ? 'dayGridMonth' : view === 'week' ? 'dayGridWeek': 'dayGridDay'}
+//         events={events}
+//         headerToolbar={{
+//           start: "today,prev,next",
+//           center: "title",
+//           end: "dayGridMonth,dayGridWeek,dayGridDay",
+//         }}
+//         eventContent={renderEventContent}
+//         eventClick={handleEventClick}
+//         ref={calendarRef}
+//         height="auto"
+//       />
+
+//       {selectedEvent && (
+//         <div
+//           className={`modal fade ${modalOpen ? "show d-block" : ""}`}
+//           tabIndex={-1}
+//           role="dialog"
+//           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+//           onClick={closeModal}
+//         >
+//           <div className="modal-dialog modal-dialog-centered" role="document" onClick={(e) => e.stopPropagation()}>
+//             <div className="modal-content">
+//               <div className="modal-header bg-primary">
+//                 <h5 className="modal-title text-white">
+//                   Appointment Details - #{selectedEvent.extendedProps.appointmentId}
+//                 </h5>
+//                 <button
+//                   type="button"
+//                   className="btn-close btn-close-white"
+//                   aria-label="Close"
+//                   onClick={closeModal}
+//                 ></button>
+//               </div>
+//               <div className="modal-body">
+//                 <p className="d-flex align-items-center fw-medium text-black mb-3">
+//                   <i className="ti ti-user text-primary me-2 fs-18" />
+//                   <strong>Patient:</strong>&nbsp;{selectedEvent.title}
+//                 </p>
+//                 <p className="d-flex align-items-center fw-medium text-black mb-3">
+//                   <i className="ti ti-phone text-primary me-2 fs-18" />
+//                   <strong>Contact:</strong>&nbsp;{selectedEvent.extendedProps.phone}
+//                 </p>
+//                 <p className="d-flex align-items-center fw-medium text-black mb-3">
+//                   <i className="ti ti-calendar-check text-primary me-2 fs-18" />
+//                   <strong>Date:</strong>&nbsp;{dayjs(selectedEvent.start).format('DD MMM YYYY')}
+//                 </p>
+//                 <p className="d-flex align-items-center fw-medium text-black mb-3">
+//                   <i className="ti ti-clock text-primary me-2 fs-18" />
+//                   <strong>Time:</strong>&nbsp;{selectedEvent.extendedProps.time}
+//                 </p>
+//                 <p className="d-flex align-items-center fw-medium text-black mb-3">
+//                   <i className="ti ti-video text-primary me-2 fs-18" />
+//                   <strong>Type:</strong>&nbsp;{selectedEvent.extendedProps.type}
+//                 </p>
+//                 <p className="d-flex align-items-center fw-medium text-black mb-0">
+//                   <i className="ti ti-check text-primary me-2 fs-18" />
+//                   <strong>Status:</strong>&nbsp;
+//                   <span className={`badge ${selectedEvent.extendedProps.status === 'Checked Out' ? 'bg-success' :
+//                     selectedEvent.extendedProps.status === 'Checked In' ? 'bg-warning' :
+//                       'bg-primary'
+//                     } ms-2`}>
+//                     {selectedEvent.extendedProps.status}
+//                   </span>
+//                 </p>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default EventCalendar;
+
+
+
 import { useState, useRef, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { getRecentAppointments } from "../../../api/doctorDashboardService";
+import { getAllDoctorAppointments } from "../../../api/doctorDashboardService"; // ✅ CHANGED
 import dayjs from "dayjs";
 
-const EventCalendar = () => {
+interface EventCalendarProps {
+  appointments?: any[];
+  view?: 'month' | 'week' | 'day';
+}
+
+const EventCalendar = ({ appointments = [], view = 'month' }: EventCalendarProps) => {
   const calendarRef = useRef(null);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
 
+  // ✅ UPDATE: Use appointments prop if provided, otherwise fetch
   useEffect(() => {
-    fetchAppointments();
-  }, []);
+    if (appointments && appointments.length > 0) {
+      // ✅ Use provided appointments
+      const formattedEvents = appointments.map((apt: any) => ({
+        id: apt._id,
+        title: apt.patient.fullName,
+        start: apt.appointmentDate,
+        extendedProps: {
+          image: apt.patient.profileImage,
+          time: apt.appointmentTime,
+          type: apt.appointmentType,
+          status: apt.status,
+          phone: apt.patient.phone || apt.patient.email,
+          appointmentId: apt.appointmentId,
+        }
+      }));
+      setEvents(formattedEvents);
+    } else {
+      // ✅ Fetch if not provided
+      fetchAppointments();
+    }
+  }, [appointments]); // ✅ Add appointments as dependency
 
   const fetchAppointments = async () => {
     try {
-      const res = await getRecentAppointments();
+      const res = await getAllDoctorAppointments(); // ✅ CHANGED to get all
       if (res.success) {
         const formattedEvents = res.data.map((apt: any) => ({
           id: apt._id,
@@ -232,7 +438,7 @@ const EventCalendar = () => {
     <div className="p-4">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
+        initialView={view === 'month' ? 'dayGridMonth' : view === 'week' ? 'dayGridWeek' : 'dayGridDay'}
         events={events}
         headerToolbar={{
           start: "today,prev,next",
@@ -292,7 +498,9 @@ const EventCalendar = () => {
                   <strong>Status:</strong>&nbsp;
                   <span className={`badge ${selectedEvent.extendedProps.status === 'Checked Out' ? 'bg-success' :
                       selectedEvent.extendedProps.status === 'Checked In' ? 'bg-warning' :
-                        'bg-primary'
+                        selectedEvent.extendedProps.status === 'Confirmed' ? 'bg-info' :
+                          selectedEvent.extendedProps.status === 'Scheduled' ? 'bg-primary' :
+                            'bg-danger'
                     } ms-2`}>
                     {selectedEvent.extendedProps.status}
                   </span>
