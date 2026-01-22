@@ -1055,7 +1055,7 @@ import { Link } from "react-router";
 import SearchInput from "../../../../../core/common/dataTable/dataTableSearch";
 import { useState, useEffect } from "react";
 import Datatable from "../../../../../core/common/dataTable/index";
-import { Select } from "antd"; // ✅ UNCOMMENT THIS
+import { DatePicker, Select } from "antd"; // ✅ UNCOMMENT THIS
 import { all_routes } from "../../../../routes/all_routes";
 import Modal from "./modal/modals";
 import * as XLSX from 'xlsx';
@@ -1063,7 +1063,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { getAllDoctorAppointments, type RecentAppointment } from "../../../../../api/doctorDashboardService";
 import dayjs from "dayjs";
-// import type { Dayjs } from 'dayjs'; // ✅ ADD THIS
+import type { Dayjs } from 'dayjs'; // ✅ ADD THIS
 
 const DoctorAppointments = () => {
   // ✅ State declarations
@@ -1196,14 +1196,14 @@ const DoctorAppointments = () => {
       render: (text: string) => (
         <span
           className={`badge ${text === "Checked Out"
-            ? "bg-success"
-            : text === "Checked In"
-              ? "bg-warning"
-              : text === "Confirmed"
-                ? "bg-info"
-                : text === "Scheduled"
-                  ? "bg-primary"
-                  : "bg-danger"
+              ? "bg-success"
+              : text === "Checked In"
+                ? "bg-warning"
+                : text === "Confirmed"
+                  ? "bg-info"
+                  : text === "Scheduled"
+                    ? "bg-primary"
+                    : "bg-danger"
             } fw-medium fs-13`}
         >
           {text}
@@ -1259,47 +1259,10 @@ const DoctorAppointments = () => {
     setSearchText(value);
   };
 
-  // const downloadPDF = () => {
-  //   const doc = new jsPDF();
-
-  //   const tableData = appointments.map((apt: any) => [
-  //     dayjs(apt.appointmentDate).format('DD MMM YYYY') + ' - ' + apt.appointmentTime,
-  //     apt.patient.fullName,
-  //     apt.appointmentType,
-  //     apt.status,
-  //   ]);
-
-  //   (doc as any).autoTable({
-  //     head: [['Date & Time', 'Patient', 'Mode', 'Status']],
-  //     body: tableData,
-  //     startY: 20,
-  //   });
-
-  //   doc.save('appointments.pdf');
-  // };
-
-  // const downloadExcel = () => {
-  //   const excelData = appointments.map((apt: any) => ({
-  //     'Date & Time': dayjs(apt.appointmentDate).format('DD MMM YYYY') + ' - ' + apt.appointmentTime,
-  //     'Patient': apt.patient.fullName,
-  //     'Phone': apt.patient.phone || apt.patient.email,
-  //     'Mode': apt.appointmentType,
-  //     'Status': apt.status,
-  //   }));
-
-  //   const ws = XLSX.utils.json_to_sheet(excelData);
-  //   const wb = XLSX.utils.book_new();
-  //   XLSX.utils.book_append_sheet(wb, ws, 'Appointments');
-  //   XLSX.writeFile(wb, 'appointments.xlsx');
-  // };
-
-
-  // ✅ FIX: Download filtered data instead of all appointments
   const downloadPDF = () => {
     const doc = new jsPDF();
 
-    // ✅ Use sortedAndFilteredAppointments (currently visible data)
-    const tableData = sortedAndFilteredAppointments.map((apt: any) => [
+    const tableData = appointments.map((apt: any) => [
       dayjs(apt.appointmentDate).format('DD MMM YYYY') + ' - ' + apt.appointmentTime,
       apt.patient.fullName,
       apt.appointmentType,
@@ -1316,8 +1279,7 @@ const DoctorAppointments = () => {
   };
 
   const downloadExcel = () => {
-    // ✅ Use sortedAndFilteredAppointments
-    const excelData = sortedAndFilteredAppointments.map((apt: any) => ({
+    const excelData = appointments.map((apt: any) => ({
       'Date & Time': dayjs(apt.appointmentDate).format('DD MMM YYYY') + ' - ' + apt.appointmentTime,
       'Patient': apt.patient.fullName,
       'Phone': apt.patient.phone || apt.patient.email,
@@ -1415,7 +1377,6 @@ const DoctorAppointments = () => {
                   </div>
                 </div>
               </div>
-              // ✅ REPLACE entire date picker section with this:
               <div className="d-flex right-content align-items-center flex-wrap mb-3">
                 <div className="dropdown">
                   <button
@@ -1428,71 +1389,53 @@ const DoctorAppointments = () => {
                       : 'Select Date Range'}
                     <i className="ti ti-chevron-down ms-2" />
                   </button>
-                  <ul className="dropdown-menu dropdown-menu-end p-3" style={{ minWidth: '250px' }}>
+                  <ul className="dropdown-menu p-2">
                     <li>
-                      <button
-                        className="dropdown-item rounded"
-                        onClick={() => handleDatePreset('today')}
-                        type="button"
-                      >
+                      <button className="dropdown-item" onClick={() => handleDatePreset('today')}>
                         Today
                       </button>
                     </li>
                     <li>
-                      <button
-                        className="dropdown-item rounded"
-                        onClick={() => handleDatePreset('yesterday')}
-                        type="button"
-                      >
+                      <button className="dropdown-item" onClick={() => handleDatePreset('yesterday')}>
                         Yesterday
                       </button>
                     </li>
                     <li>
-                      <button
-                        className="dropdown-item rounded"
-                        onClick={() => handleDatePreset('last7days')}
-                        type="button"
-                      >
+                      <button className="dropdown-item" onClick={() => handleDatePreset('last7days')}>
                         Last 7 Days
                       </button>
                     </li>
                     <li>
-                      <button
-                        className="dropdown-item rounded"
-                        onClick={() => handleDatePreset('last30days')}
-                        type="button"
-                      >
+                      <button className="dropdown-item" onClick={() => handleDatePreset('last30days')}>
                         Last 30 Days
                       </button>
                     </li>
                     <li>
-                      <button
-                        className="dropdown-item rounded"
-                        onClick={() => handleDatePreset('thismonth')}
-                        type="button"
-                      >
+                      <button className="dropdown-item" onClick={() => handleDatePreset('thismonth')}>
                         This Month
                       </button>
                     </li>
                     <li>
-                      <button
-                        className="dropdown-item rounded"
-                        onClick={() => handleDatePreset('lastmonth')}
-                        type="button"
-                      >
+                      <button className="dropdown-item" onClick={() => handleDatePreset('lastmonth')}>
                         Last Month
                       </button>
                     </li>
-                    <li><hr className="dropdown-divider my-2" /></li>
                     <li>
-                      <button
-                        className="dropdown-item rounded text-primary fw-medium"
-                        onClick={() => setDateRange([null, null])}
-                        type="button"
-                      >
-                        <i className="ti ti-x me-1" />
-                        Clear Filter
-                      </button>
+                      <hr className="dropdown-divider" />
+                    </li>
+                    <li className="px-2">
+                      <label className="form-label mb-1">Custom Range</label>
+                      <DatePicker.RangePicker
+                        format="DD-MM-YYYY"
+                        onChange={(dates: [Dayjs | null, Dayjs | null] | null) => {
+                          if (dates && dates[0] && dates[1]) {
+                            setDateRange([dates[0].toDate(), dates[1].toDate()]);
+                          } else {
+                            setDateRange([null, null]);
+                          }
+                        }}
+                        className="form-control"
+                      />
                     </li>
                   </ul>
                 </div>
