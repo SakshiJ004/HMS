@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const leaveController = require('../controllers/leaveController');
-const { protect, authorize } = require('../middleware/auth'); // Your auth middleware
+// const {protect, authorize} = require('../middleware/authMiddleware')
+const {protect, authorize} = require('../middleware/authMiddleware')
 
 // Admin routes
 router.get('/admin/leaves', protect, authorize('admin'), leaveController.getAllLeaves);
