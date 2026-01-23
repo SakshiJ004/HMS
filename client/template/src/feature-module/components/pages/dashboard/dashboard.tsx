@@ -2697,7 +2697,8 @@ import type { Dayjs } from "dayjs";
 import Chart from "react-apexcharts";
 import { getDashboardStats, getAppointmentStats, getTopDoctors, getDepartmentStats, getDoctorsSchedule, type DashboardStats, type AppointmentStatsResponse, type TopDoctor, type DepartmentStat, type DoctorsScheduleResponse } from "../../../../api/dashboardService";
 import axios from "axios";
-
+// import { getAllLeaves, updateLeaveStatus } from "../../../../api/leaveService";
+import { getAllLeaves, updateLeaveStatus } from "../../../../api/leaveService";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 interface Appointment {
@@ -2754,6 +2755,7 @@ const Dashboard = () => {
     counts: { available: 0, unavailable: 0, onLeave: 0 }
   });
   const [topPatients, setTopPatients] = useState<any[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
 
   // const [_loading, setLoading] = useState(true);
 
@@ -3010,6 +3012,22 @@ const Dashboard = () => {
   //   return growthRates[type];
   // };
 
+  useEffect(() => {
+    const fetchLeaveRequests = async () => {
+      try {
+        const response = await getAllLeaves();
+        if (response.success) {
+          // Filter only "Applied" status leaves for admin review
+          const pendingLeaves = response.data.filter((leave: any) => leave.Status === 'Applied');
+          setLeaveRequests(pendingLeaves.slice(0, 5)); // Show top 5
+        }
+      } catch (error) {
+        console.error("Error fetching leave requests:", error);
+      }
+    };
+
+    fetchLeaveRequests();
+  }, []);
 
   // Calculate dynamic growth percentage based on real data
   const calculateGrowth = (type: 'doctors' | 'patients' | 'appointments') => {
@@ -3103,6 +3121,42 @@ const Dashboard = () => {
   const doctorGrowth = calculateGrowth('doctors');
   const patientGrowth = calculateGrowth('patients');
   const appointmentGrowth = calculateGrowth('appointments');
+
+  const handleApproveLeave = async (leaveId: string) => {
+    try {
+      const response = await updateLeaveStatus(leaveId, 'Approved');
+      if (response.success) {
+        // Refresh leave requests
+        const updatedResponse = await getAllLeaves();
+        if (updatedResponse.success) {
+          const pendingLeaves = updatedResponse.data.filter((leave: any) => leave.Status === 'Applied');
+          setLeaveRequests(pendingLeaves.slice(0, 5));
+        }
+        alert('Leave approved successfully');
+      }
+    } catch (error) {
+      console.error("Error approving leave:", error);
+      alert('Failed to approve leave');
+    }
+  };
+
+  const handleRejectLeave = async (leaveId: string) => {
+    try {
+      const response = await updateLeaveStatus(leaveId, 'Rejected');
+      if (response.success) {
+        // Refresh leave requests
+        const updatedResponse = await getAllLeaves();
+        if (updatedResponse.success) {
+          const pendingLeaves = updatedResponse.data.filter((leave: any) => leave.Status === 'Applied');
+          setLeaveRequests(pendingLeaves.slice(0, 5));
+        }
+        alert('Leave rejected successfully');
+      }
+    } catch (error) {
+      console.error("Error rejecting leave:", error);
+      alert('Failed to reject leave');
+    }
+  };
 
   return (
     <>
@@ -4210,231 +4264,111 @@ const Dashboard = () => {
                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Today <i className="ti ti-chevron-down ms-1" />
+                      Pending <i className="ti ti-chevron-down ms-1" />
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
                         <Link className="dropdown-item" to="#">
-                          Today
+                          All
                         </Link>
                       </li>
                       <li>
                         <Link className="dropdown-item" to="#">
-                          This Week
+                          Pending
                         </Link>
                       </li>
                       <li>
                         <Link className="dropdown-item" to="#">
-                          This Month
+                          Approved
                         </Link>
                       </li>
                     </ul>
                   </div>
                 </div>
                 <div className="card-body">
-                  <div className="d-flex justify-content-between mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.doctordetails}
-                        className="avatar flex-shrink-0"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-16.jpg"
-                          className="rounded-circle"
-                          alt="img"
-                        />
-                      </Link>
-                      <div className="ms-2">
-                        <div>
-                          <h6 className="fw-semibold text-truncate mb-1 fs-14">
-                            <Link to={all_routes.doctordetails}>
-                              James Allaire
+                  {leaveRequests.length > 0 ? (
+                    leaveRequests.map((leave, index) => {
+                      // Parse date range
+                      const dateRange = leave.Date?.split(' - ') || [];
+                      const startDate = dateRange[0] || '';
+
+                      return (
+                        <div
+                          key={leave._id}
+                          className={`d-flex justify-content-between ${index < leaveRequests.length - 1 ? 'mb-3' : 'mb-0'}`}
+                        >
+                          <div className="d-flex align-items-center">
+                            <Link
+                              to="#"
+                              className="avatar flex-shrink-0"
+                            >
+                              {leave.doctorName ? (
+                                <div
+                                  className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                                  style={{ width: '40px', height: '40px', fontSize: '14px' }}
+                                >
+                                  {leave.doctorName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+                                </div>
+                              ) : (
+                                <ImageWithBasePath
+                                  src="assets/img/profiles/avatar-16.jpg"
+                                  className="rounded-circle"
+                                  alt="img"
+                                />
+                              )}
                             </Link>
-                          </h6>
-                          <p className="fs-13 mb-0 text-truncate">
-                            4 Days - Personal Reason
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to="#"
-                        className="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"
-                      >
-                        <i className="ti ti-x fw-bold" />
-                      </Link>
-                      <Link
-                        to="#"
-                        className="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"
-                      >
-                        <i className="ti ti-check fw-bold" />
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="d-flex justify-content-between mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.doctordetails}
-                        className="avatar flex-shrink-0"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-21.jpg"
-                          className="rounded-circle"
-                          alt="img"
-                        />
-                      </Link>
-                      <div className="ms-2">
-                        <div>
-                          <h6 className="fw-semibold text-truncate mb-1 fs-14">
-                            <Link to={all_routes.doctordetails}>
-                              Esther Schmidt
+                            <div className="ms-2">
+                              <div>
+                                <h6 className="fw-semibold text-truncate mb-1 fs-14">
+                                  <Link to="#">
+                                    {leave.doctorName || 'Unknown Doctor'}
+                                  </Link>
+                                </h6>
+                                <p className="fs-13 mb-0 text-truncate">
+                                  {leave.Day} - {leave.Leave_Type}
+                                </p>
+                                <p className="fs-12 mb-0 text-muted">
+                                  {startDate}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="d-flex align-items-center">
+                            <Link
+                              to="#"
+                              className="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleRejectLeave(leave._id);
+                              }}
+                              title="Reject"
+                            >
+                              <i className="ti ti-x fw-bold" />
                             </Link>
-                          </h6>
-                          <p className="fs-13 mb-0 text-truncate">
-                            2 Days - Going to Hospital
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to="#"
-                        className="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"
-                      >
-                        <i className="ti ti-x fw-bold" />
-                      </Link>
-                      <Link
-                        to="#"
-                        className="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"
-                      >
-                        <i className="ti ti-check fw-bold" />
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="d-flex justify-content-between mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.doctordetails}
-                        className="avatar flex-shrink-0"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/doctors/doctor-03.jpg"
-                          className="rounded-circle"
-                          alt="img"
-                        />
-                      </Link>
-                      <div className="ms-2">
-                        <div>
-                          <h6 className="fw-semibold text-truncate mb-1 fs-14">
-                            <Link to={all_routes.doctordetails}>
-                              Valerie Padgett
+                            <Link
+                              to="#"
+                              className="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleApproveLeave(leave._id);
+                              }}
+                              title="Approve"
+                            >
+                              <i className="ti ti-check fw-bold" />
                             </Link>
-                          </h6>
-                          <p className="fs-13 mb-0 text-truncate">
-                            1 Day - Changing Account
-                          </p>
+                          </div>
                         </div>
-                      </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-3">
+                      <p className="text-muted mb-0">No pending leave requests</p>
                     </div>
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to="#"
-                        className="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"
-                      >
-                        <i className="ti ti-x fw-bold" />
-                      </Link>
-                      <Link
-                        to="#"
-                        className="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"
-                      >
-                        <i className="ti ti-check fw-bold" />
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="d-flex justify-content-between mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.doctordetails}
-                        className="avatar flex-shrink-0"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/doctors/doctor-02.jpg"
-                          className="rounded-circle"
-                          alt="img"
-                        />
-                      </Link>
-                      <div className="ms-2">
-                        <div>
-                          <h6 className="fw-semibold text-truncate mb-1 fs-14">
-                            <Link to={all_routes.doctordetails}>
-                              Diane Nash
-                            </Link>
-                          </h6>
-                          <p className="fs-13 mb-0 text-truncate">
-                            1 Day - Not Well
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to="#"
-                        className="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"
-                      >
-                        <i className="ti ti-x fw-bold" />
-                      </Link>
-                      <Link
-                        to="#"
-                        className="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"
-                      >
-                        <i className="ti ti-check fw-bold" />
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="d-flex justify-content-between mb-0">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.doctordetails}
-                        className="avatar flex-shrink-0"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/doctors/doctor-09.jpg"
-                          className="rounded-circle"
-                          alt="img"
-                        />
-                      </Link>
-                      <div className="ms-2">
-                        <div>
-                          <h6 className="fw-semibold text-truncate mb-1 fs-14">
-                            <Link to={all_routes.doctordetails}>
-                              Sally Cavazos
-                            </Link>
-                          </h6>
-                          <p className="fs-13 mb-0 text-truncate">
-                            2 Days - Going to Checkup
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to="#"
-                        className="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"
-                      >
-                        <i className="ti ti-x fw-bold" />
-                      </Link>
-                      <Link
-                        to="#"
-                        className="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"
-                      >
-                        <i className="ti ti-check fw-bold" />
-                      </Link>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 
