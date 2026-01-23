@@ -143,17 +143,37 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { getAllDoctorAppointments } from "../../../api/doctorDashboardService";
 import dayjs from "dayjs";
 
+interface EventCalendarProps {
+  appointments?: any[];
+}
 
 
-const EventCalendar = () => {
+const EventCalendar = ({ appointments: propAppointments }: EventCalendarProps) => {
   const calendarRef = useRef(null);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchAppointments();
-  }, []);
+    if (propAppointments && propAppointments.length > 0) {
+      const formattedEvents = propAppointments.map((apt: any) => ({
+        id: apt._id,
+        title: apt.patient.fullName,
+        start: apt.appointmentDate,
+        extendedProps: {
+          image: apt.patient.profileImage,
+          time: apt.appointmentTime,
+          type: apt.appointmentType,
+          status: apt.status,
+          phone: apt.patient.phone || apt.patient.email,
+          appointmentId: apt.appointmentId,
+        }
+      }));
+      setEvents(formattedEvents);
+    } else {
+      fetchAppointments();
+    }
+  }, [propAppointments]);
 
   const fetchAppointments = async () => {
     try {
@@ -293,8 +313,8 @@ const EventCalendar = () => {
                   <i className="ti ti-check text-primary me-2 fs-18" />
                   <strong>Status:</strong>&nbsp;
                   <span className={`badge ${selectedEvent.extendedProps.status === 'Checked Out' ? 'bg-success' :
-                      selectedEvent.extendedProps.status === 'Checked In' ? 'bg-warning' :
-                        'bg-primary'
+                    selectedEvent.extendedProps.status === 'Checked In' ? 'bg-warning' :
+                      'bg-primary'
                     } ms-2`}>
                     {selectedEvent.extendedProps.status}
                   </span>

@@ -1196,14 +1196,14 @@ const DoctorAppointments = () => {
       render: (text: string) => (
         <span
           className={`badge ${text === "Checked Out"
-              ? "bg-success"
-              : text === "Checked In"
-                ? "bg-warning"
-                : text === "Confirmed"
-                  ? "bg-info"
-                  : text === "Scheduled"
-                    ? "bg-primary"
-                    : "bg-danger"
+            ? "bg-success"
+            : text === "Checked In"
+              ? "bg-warning"
+              : text === "Confirmed"
+                ? "bg-info"
+                : text === "Scheduled"
+                  ? "bg-primary"
+                  : "bg-danger"
             } fw-medium fs-13`}
         >
           {text}
@@ -1262,7 +1262,11 @@ const DoctorAppointments = () => {
   const downloadPDF = () => {
     const doc = new jsPDF();
 
-    const tableData = appointments.map((apt: any) => [
+    // Add title
+    doc.setFontSize(16);
+    doc.text('Appointments Report', 14, 15);
+
+    const tableData = sortedAndFilteredAppointments.map((apt: any) => [
       dayjs(apt.appointmentDate).format('DD MMM YYYY') + ' - ' + apt.appointmentTime,
       apt.patient.fullName,
       apt.appointmentType,
@@ -1273,9 +1277,11 @@ const DoctorAppointments = () => {
       head: [['Date & Time', 'Patient', 'Mode', 'Status']],
       body: tableData,
       startY: 20,
+      headStyles: { fillColor: [41, 98, 255] }, // Optional: styling
+      styles: { fontSize: 9 }
     });
 
-    doc.save('appointments.pdf');
+    doc.save(`appointments-${dayjs().format('DD-MM-YYYY')}.pdf`);
   };
 
   const downloadExcel = () => {
