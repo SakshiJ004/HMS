@@ -1,5 +1,6 @@
 const Leave = require('../models/Leave');
-const Doctor = require('../models/Doctor');
+// const Doctor = require('../models/Doctor');
+const User = require('../models/User')
 
 // Get all leaves (Admin)
 exports.getAllLeaves = async (req, res) => {
