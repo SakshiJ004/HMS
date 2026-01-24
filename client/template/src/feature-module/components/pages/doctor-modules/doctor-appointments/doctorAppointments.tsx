@@ -1063,7 +1063,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getAllDoctorAppointments, type RecentAppointment } from "../../../../../api/doctorDashboardService";
 import dayjs from "dayjs";
-import type { Dayjs } from 'dayjs'; // ✅ ADD THIS
 
 const DoctorAppointments = () => {
   // ✅ State declarations
@@ -1440,11 +1439,11 @@ const DoctorAppointments = () => {
                     <li>
                       <hr className="dropdown-divider" />
                     </li>
-                    <li className="px-2">
+                    <li className="px-2" onClick={(e) => e.stopPropagation()}>
                       <label className="form-label mb-1">Custom Range</label>
                       <DatePicker.RangePicker
                         format="DD-MM-YYYY"
-                        onChange={(dates: [Dayjs | null, Dayjs | null] | null) => {
+                        onChange={(dates: any) => {
                           if (dates && dates[0] && dates[1]) {
                             setDateRange([dates[0].toDate(), dates[1].toDate()]);
                           } else {
@@ -1452,12 +1451,24 @@ const DoctorAppointments = () => {
                           }
                         }}
                         className="form-control"
-                        getPopupContainer={(trigger) => trigger.parentElement || document.body}
-                        onClick={(e) => e.stopPropagation()}
+                        getPopupContainer={(trigger) => {
+                          return trigger.parentElement?.parentElement || document.body;
+                        }}
+                        disabledDate={() => false}
+                        allowClear
                       />
                     </li>
                   </ul>
                 </div>
+                {(dateRange[0] || dateRange[1]) && (
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => setDateRange([null, null])}
+                    title="Clear date filter"
+                  >
+                    <i className="ti ti-x" />
+                  </button>
+                )}
               </div>
             </div>
             <div className="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">

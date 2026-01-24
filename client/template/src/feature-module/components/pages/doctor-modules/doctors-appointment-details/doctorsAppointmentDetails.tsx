@@ -866,7 +866,7 @@ const DoctorsAppointmentDetails = () => {
                     <li>
                       <hr className="dropdown-divider" />
                     </li>
-                    <li className="px-2">
+                    <li className="px-2" onClick={(e) => e.stopPropagation()}>
                       <label className="form-label mb-1">Custom Range</label>
                       <DatePicker.RangePicker
                         format="DD-MM-YYYY"
@@ -878,10 +878,24 @@ const DoctorsAppointmentDetails = () => {
                           }
                         }}
                         className="form-control"
+                        getPopupContainer={(trigger) => {
+                          return trigger.parentElement?.parentElement || document.body;
+                        }}
+                        disabledDate={() => false}
+                        allowClear
                       />
                     </li>
                   </ul>
                 </div>
+                {(dateRange[0] || dateRange[1]) && (
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => setDateRange([null, null])}
+                    title="Clear date filter"
+                  >
+                    <i className="ti ti-x" />
+                  </button>
+                )}
               </div>
             </div>
 
