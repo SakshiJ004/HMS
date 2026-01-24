@@ -1060,7 +1060,7 @@ import { all_routes } from "../../../../routes/all_routes";
 import Modal from "./modal/modals";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { getAllDoctorAppointments, type RecentAppointment } from "../../../../../api/doctorDashboardService";
 import dayjs from "dayjs";
 import type { Dayjs } from 'dayjs'; // ✅ ADD THIS
@@ -1260,28 +1260,39 @@ const DoctorAppointments = () => {
   };
 
   const downloadPDF = () => {
-    const doc = new jsPDF();
+    try {
+      const doc = new jsPDF();
 
-    // Add title
-    doc.setFontSize(16);
-    doc.text('Appointments Report', 14, 15);
+      // Add title
+      doc.setFontSize(16);
+      doc.text('Appointments Report', 14, 15);
 
-    const tableData = sortedAndFilteredAppointments.map((apt: any) => [
-      dayjs(apt.appointmentDate).format('DD MMM YYYY') + ' - ' + apt.appointmentTime,
-      apt.patient.fullName,
-      apt.appointmentType,
-      apt.status,
-    ]);
+      // Add date
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${dayjs().format('DD MMM YYYY HH:mm')}`, 14, 25);
 
-    (doc as any).autoTable({
-      head: [['Date & Time', 'Patient', 'Mode', 'Status']],
-      body: tableData,
-      startY: 20,
-      headStyles: { fillColor: [41, 98, 255] }, // Optional: styling
-      styles: { fontSize: 9 }
-    });
+      const tableData = sortedAndFilteredAppointments.map((apt: any) => [
+        dayjs(apt.appointmentDate).format('DD MMM YYYY'),
+        apt.appointmentTime,
+        apt.patient.fullName,
+        apt.appointmentType,
+        apt.status,
+      ]);
 
-    doc.save(`appointments-${dayjs().format('DD-MM-YYYY')}.pdf`);
+      autoTable(doc, {
+        head: [['Date', 'Time', 'Patient', 'Mode', 'Status']],
+        body: tableData,
+        startY: 30,
+        theme: 'grid',
+        headStyles: { fillColor: [41, 98, 255] },
+        styles: { fontSize: 9 }
+      });
+
+      doc.save(`appointments-${dayjs().format('DD-MM-YYYY')}.pdf`);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      alert('Failed to download PDF. Please try again.');
+    }
   };
 
   const downloadExcel = () => {
@@ -1441,6 +1452,8 @@ const DoctorAppointments = () => {
                           }
                         }}
                         className="form-control"
+                        getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </li>
                   </ul>
