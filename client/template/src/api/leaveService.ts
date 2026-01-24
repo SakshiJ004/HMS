@@ -82,9 +82,27 @@ export const createLeave = async (leaveData: {
     reason: string;
 }) => {
     try {
+        // Get user data from localStorage
+        const userStr = localStorage.getItem('user');
+
+        if (!userStr) {
+            throw new Error('User not logged in');
+        }
+
+        const user = JSON.parse(userStr);
+
+        // Get doctor ID - handle both possible field names
+        const doctorId = user.id || user._id || user.userId;
+
+        if (!doctorId) {
+            throw new Error('Doctor ID not found. Please login again.');
+        }
+
+        console.log('Creating leave for doctor:', doctorId);
+
         const response = await axios.post(
             `${API_URL}/api/doctor/leaves`,
-            leaveData,
+            { ...leaveData, doctorId },
             getAuthHeader()
         );
         return response.data;

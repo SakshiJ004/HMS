@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const leaveSchema = new mongoose.Schema({
     doctorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Doctor',
+        ref: 'User',  // ✅ Reference to User model
         required: true
     },
     leaveType: {
@@ -55,7 +55,7 @@ const leaveSchema = new mongoose.Schema({
     adminResponse: {
         respondedBy: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Admin'
+            ref: 'User'  // ✅ Reference to User model for admin
         },
         respondedAt: Date,
         remarks: String
@@ -64,14 +64,23 @@ const leaveSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Virtual field to calculate days
+// Auto calculate number of days before saving
 leaveSchema.pre('save', function (next) {
     if (this.fromDate && this.toDate) {
-        const timeDiff = this.toDate - this.fromDate;
+        const timeDiff = this.toDate.getTime() - this.fromDate.getTime();
         const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-        this.numberOfDays = this.dayType === 'Half Day' ? 0.5 : daysDiff;
+
+        if (this.dayType === 'Half Day') {
+            this.numberOfDays = 0.5;
+        } else {
+            this.numberOfDays = daysDiff;
+        }
     }
     next();
 });
+
+// Index for faster queries
+leaveSchema.index({ doctorId: 1, status: 1 });
+leaveSchema.index({ appliedOn: -1 });
 
 module.exports = mongoose.model('Leave', leaveSchema);

@@ -1,6 +1,5 @@
 const Leave = require('../models/Leave');
-// const Doctor = require('../models/Doctor');
-const User = require('../models/User')
+const User = require('../models/User');
 
 // Get all leaves (Admin)
 exports.getAllLeaves = async (req, res) => {
@@ -39,7 +38,15 @@ exports.getAllLeaves = async (req, res) => {
 // Get doctor's own leaves
 exports.getDoctorLeaves = async (req, res) => {
     try {
-        const doctorId = req.user.id; // Assuming JWT auth middleware sets req.user
+        // Get doctorId from token or body
+        const doctorId = req.user?.id || req.body.doctorId || req.query.doctorId;
+
+        if (!doctorId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Doctor ID is required'
+            });
+        }
 
         const leaves = await Leave.find({ doctorId })
             .sort({ createdAt: -1 });
@@ -72,8 +79,10 @@ exports.getDoctorLeaves = async (req, res) => {
 // Create leave request (Doctor)
 exports.createLeave = async (req, res) => {
     try {
-        const { leaveType, fromDate, toDate, dayType, reason } = req.body;
-        const doctorId = req.user.id;
+        const { leaveType, fromDate, toDate, dayType, reason, doctorId } = req.body;
+
+        // Get doctorId from token or request body
+        const finalDoctorId = req.user?.id || doctorId;
 
         // Validation
         if (!leaveType || !fromDate || !toDate || !dayType || !reason) {
@@ -83,8 +92,15 @@ exports.createLeave = async (req, res) => {
             });
         }
 
+        if (!finalDoctorId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Doctor ID is required'
+            });
+        }
+
         // Check if doctor exists
-        const doctor = await Doctor.findById(doctorId);
+        const doctor = await Doctor.findById(finalDoctorId);
         if (!doctor) {
             return res.status(404).json({
                 success: false,
@@ -94,7 +110,7 @@ exports.createLeave = async (req, res) => {
 
         // Create leave
         const newLeave = new Leave({
-            doctorId,
+            doctorId: finalDoctorId,
             leaveType,
             fromDate: new Date(fromDate),
             toDate: new Date(toDate),
