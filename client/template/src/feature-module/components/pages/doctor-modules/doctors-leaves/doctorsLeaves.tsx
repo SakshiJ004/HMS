@@ -1,490 +1,20 @@
-// import { DatePicker, Select } from "antd";
-// import { Link } from "react-router";
-// import {
-//   Amount,
-//   Department,
-//   Designation,
-//   Doctor,
-//   Status,
-// } from "../../../../../core/common/selectOption";
-// import { useState } from "react";
-// import SearchInput from "../../../../../core/common/dataTable/dataTableSearch";
-// import { DoctorLeavesData } from "../../../../../core/json/doctorLeavesData";
-// import Datatable from "../../../../../core/common/dataTable";
-// import Modals from "./modals/modals";
-
-// const DoctorsLeaves = () => {
-//   const data = DoctorLeavesData;
-//   const columns = [
-//     {
-//       title: "Date",
-//       dataIndex: "Date",
-//       sorter: (a: any, b: any) => a.Date.length - b.Date.length,
-//     },
-//     {
-//       title: "Leave Type",
-//       dataIndex: "Leave_Type",
-//       sorter: (a: any, b: any) => a.Leave_Type.length - b.Leave_Type.length,
-//     },
-//     {
-//       title: "Day",
-//       dataIndex: "Day",
-//       sorter: (a: any, b: any) => a.Day.length - b.Day.length,
-//     },
-//     {
-//       title: "Applied On",
-//       dataIndex: "Applied_On",
-//       sorter: (a: any, b: any) => a.Applied_On.length - b.Applied_On.length,
-//     },
-//     {
-//       title: "Status",
-//       dataIndex: "Status",
-//       render: (text: any) => (
-//         <span
-//           className={`badge badge-sm border rounded
-//     ${
-//       text === "Applied"
-//         ? "badge-info text-info border-info"
-//         : text === "Approved"
-//         ? "badge-success text-success border-success"
-//         : "badge-danger text-danger border-danger"
-//     }`}
-//         >
-//           {text}
-//         </span>
-//       ),
-//       sorter: (a: any, b: any) => a.Status.length - b.Status.length,
-//     },
-//     {
-//       title: "",
-//       render: () => (
-//         <div className="action-item">
-//           <>
-//             <Link to="#" data-bs-toggle="dropdown">
-//               <i className="ti ti-dots-vertical" />
-//             </Link>
-//             <ul className="dropdown-menu p-2">
-//               <li>
-//                 <Link
-//                   to="#"
-//                   className="dropdown-item d-flex align-items-center"
-//                   data-bs-toggle="modal"
-//                   data-bs-target="#edit-leave"
-//                 >
-//                   Edit
-//                 </Link>
-//               </li>
-//               <li>
-//                 <Link
-//                   to="#"
-//                   className="dropdown-item d-flex align-items-center"
-//                   data-bs-toggle="modal"
-//                   data-bs-target="#delete_modal"
-//                 >
-//                   Delete
-//                 </Link>
-//               </li>
-//             </ul>
-//           </>
-//         </div>
-//       ),
-//       sorter: (a: any, b: any) => a.Status.length - b.Status.length,
-//     },
-//   ];
-//   const [searchText, setSearchText] = useState<string>("");
-
-//   const handleSearch = (value: string) => {
-//     setSearchText(value);
-//   };
-
-//   const getModalContainer = () => {
-//     const modalElement = document.getElementById("modal-datepicker");
-//     return modalElement ? modalElement : document.body; // Fallback to document.body if modalElement is null
-//   };
-//   return (
-//     <>
-//       {/* ========================
-// 			Start Page Content
-// 		========================= */}
-//       <div className="page-wrapper">
-//         {/* Start Content */}
-//         <div className="content">
-//           {/* Start Page Header */}
-//           <div className="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-1 border-bottom">
-//             <div className="flex-grow-1">
-//               <h4 className="fw-bold mb-0"> Leaves </h4>
-//             </div>
-//             <div className="text-end d-flex">
-//               {/* dropdown*/}
-//               <div className="dropdown me-1">
-//                 <Link
-//                   to="#"
-//                   className="btn btn-md fs-14 fw-normal border bg-white rounded text-dark d-inline-flex align-items-center"
-//                   data-bs-toggle="dropdown"
-//                 >
-//                   Export
-//                   <i className="ti ti-chevron-down ms-2" />
-//                 </Link>
-//                 <ul className="dropdown-menu p-2">
-//                   <li>
-//                     <Link className="dropdown-item" to="#">
-//                       Download as PDF
-//                     </Link>
-//                   </li>
-//                   <li>
-//                     <Link className="dropdown-item" to="#">
-//                       Download as Excel
-//                     </Link>
-//                   </li>
-//                 </ul>
-//               </div>
-//               <Link
-//                 to="#"
-//                 className="btn btn-primary ms-2 fs-13 btn-md"
-//                 data-bs-toggle="modal"
-//                 data-bs-target="#add-leave"
-//               >
-//                 <i className="ti ti-plus me-1" />
-//                 Add New Leave
-//               </Link>
-//             </div>
-//           </div>
-//           {/* End Page Header */}
-//           {/* Start Filter */}
-//           <div className=" d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-//             <div className="search-set mb-3">
-//               <div className="d-flex align-items-center flex-wrap gap-2">
-//                 <div className="table-search d-flex align-items-center mb-0">
-//                   <div className="search-input">
-//                     <SearchInput value={searchText} onChange={handleSearch} />
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//             <div className="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">
-//               <div className="dropdown me-2">
-//                 <Link
-//                   to="#"
-//                   className="bg-white border rounded btn btn-md text-dark fs-14 py-1 align-items-center d-flex fw-normal"
-//                   data-bs-toggle="dropdown"
-//                   data-bs-auto-close="outside"
-//                 >
-//                   <i className="ti ti-filter text-gray-5 me-1" />
-//                   Filters
-//                 </Link>
-//                 <div
-//                   className="dropdown-menu dropdown-lg dropdown-menu-end filter-dropdown p-0"
-//                   id="filter-dropdown"
-//                 >
-//                   <div className="d-flex align-items-center justify-content-between border-bottom filter-header">
-//                     <h4 className="mb-0 fw-bold">Filter</h4>
-//                     <div className="d-flex align-items-center">
-//                       <Link
-//                         to="#"
-//                         className="link-danger text-decoration-underline"
-//                       >
-//                         Clear All
-//                       </Link>
-//                     </div>
-//                   </div>
-//                   <form action="#">
-//                     <div className="filter-body pb-0">
-//                       <div className="mb-3">
-//                         <div className="d-flex align-items-center justify-content-between">
-//                           <label className="form-label mb-1">Doctor</label>
-//                           <Link to="#" className="link-primary mb-1">
-//                             Reset
-//                           </Link>
-//                         </div>
-//                         <Select
-//                           mode="multiple"
-//                           allowClear
-//                           style={{ width: "100%" }}
-//                           placeholder="Please select"
-//                           defaultValue={[]}
-//                           options={Doctor}
-//                         />
-//                       </div>
-//                       <div className="mb-3">
-//                         <div className="d-flex align-items-center justify-content-between">
-//                           <label className="form-label">Designation</label>
-//                           <Link to="#" className="link-primary mb-1">
-//                             Reset
-//                           </Link>
-//                         </div>
-//                         <Select
-//                           mode="multiple"
-//                           allowClear
-//                           style={{ width: "100%" }}
-//                           placeholder="Please select"
-//                           defaultValue={[]}
-//                           options={Designation}
-//                         />
-//                       </div>
-//                       <div className="mb-3">
-//                         <div className="d-flex align-items-center justify-content-between">
-//                           <label className="form-label">Department</label>
-//                           <Link to="#" className="link-primary mb-1">
-//                             Reset
-//                           </Link>
-//                         </div>
-//                         <Select
-//                           mode="multiple"
-//                           allowClear
-//                           style={{ width: "100%" }}
-//                           placeholder="Please select"
-//                           defaultValue={[]}
-//                           options={Department}
-//                         />
-//                       </div>
-//                       <div className="mb-3">
-//                         <label className="form-label mb-1 text-dark fs-14 fw-medium">
-//                           Date<span className="text-danger">*</span>
-//                         </label>
-//                         <div className="input-icon-end position-relative">
-//                           <DatePicker
-//                             className="form-control datetimepicker"
-//                             format={{
-//                               format: "DD-MM-YYYY",
-//                               type: "mask",
-//                             }}
-//                             getPopupContainer={getModalContainer}
-//                             placeholder="DD-MM-YYYY"
-//                             suffixIcon={null}
-//                           />
-//                           <span className="input-icon-addon">
-//                             <i className="ti ti-calendar" />
-//                           </span>
-//                         </div>
-//                       </div>
-//                       <div className="mb-3">
-//                         <div className="d-flex align-items-center justify-content-between">
-//                           <label className="form-label">Amount</label>
-//                           <Link to="#" className="link-primary mb-1">
-//                             Reset
-//                           </Link>
-//                         </div>
-//                         <Select
-//                           mode="multiple"
-//                           allowClear
-//                           style={{ width: "100%" }}
-//                           placeholder="Please select"
-//                           defaultValue={[]}
-//                           options={Amount}
-//                         />
-//                       </div>
-//                       <div className="mb-3">
-//                         <div className="d-flex align-items-center justify-content-between">
-//                           <label className="form-label">Status</label>
-//                           <Link to="#" className="link-primary mb-1">
-//                             Reset
-//                           </Link>
-//                         </div>
-//                         <Select
-//                           mode="multiple"
-//                           allowClear
-//                           style={{ width: "100%" }}
-//                           placeholder="Please select"
-//                           defaultValue={[]}
-//                           options={Status}
-//                         />
-//                       </div>
-//                     </div>
-//                     <div className="filter-footer d-flex align-items-center justify-content-end border-top">
-//                       <Link
-//                         to="#"
-//                         className="btn btn-light btn-md me-2 fw-medium"
-//                         id="close-filter"
-//                       >
-//                         Close
-//                       </Link>
-//                       <button
-//                         type="submit"
-//                         className="btn btn-primary btn-md fw-medium"
-//                       >
-//                         Filter
-//                       </button>
-//                     </div>
-//                   </form>
-//                 </div>
-//               </div>
-//               <div className="dropdown">
-//                 <Link
-//                   to="#"
-//                   className="dropdown-toggle btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14"
-//                   data-bs-toggle="dropdown"
-//                 >
-//                   <span className="me-1"> Sort By : </span> Recent
-//                 </Link>
-//                 <ul className="dropdown-menu  dropdown-menu-end p-2">
-//                   <li>
-//                     <Link to="#" className="dropdown-item rounded-1">
-//                       Recent
-//                     </Link>
-//                   </li>
-//                   <li>
-//                     <Link to="#" className="dropdown-item rounded-1">
-//                       Oldest
-//                     </Link>
-//                   </li>
-//                 </ul>
-//               </div>
-//             </div>
-//           </div>
-//           {/* End Filter */}
-//           {/* Start Table */}
-//           <div className="table-responsive">
-//             <Datatable
-//               columns={columns}
-//               dataSource={data}
-//               Selection={false}
-//               searchText={searchText}
-//             />
-//           </div>
-//           {/* End Table */}
-//         </div>
-//         {/* End Content */}
-//         {/* Footer Start */}
-//         <div className="footer text-center bg-white p-2 border-top">
-//           <p className="text-dark mb-0">
-//             2025 ©
-//             <Link to="#" className="link-primary">
-//               Preclinic
-//             </Link>
-//             , All Rights Reserved
-//           </p>
-//         </div>
-//         {/* Footer End */}
-//       </div>
-//       {/* ========================
-// 			End Page Content
-// 		========================= */}
-//       <Modals />
-//     </>
-//   );
-// };
-
-// export default DoctorsLeaves;
-
-
-
 import { DatePicker, Select } from "antd";
 import { Link } from "react-router";
 import {
+  Amount,
   Department,
   Designation,
   Doctor,
   Status,
 } from "../../../../../core/common/selectOption";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import SearchInput from "../../../../../core/common/dataTable/dataTableSearch";
+import { DoctorLeavesData } from "../../../../../core/json/doctorLeavesData";
 import Datatable from "../../../../../core/common/dataTable";
 import Modals from "./modals/modals";
-import { getAllLeaves, updateLeave, deleteLeave } from "../../../../../api/leaveService";
-import dayjs from "dayjs";
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
-
-interface LeaveData {
-  _id: string;
-  Date: string;
-  Leave_Type: string;
-  Day: string;
-  Applied_On: string;
-  Status: string;
-  doctorName?: string;
-  doctorSpecialization?: string;
-  reason?: string;
-}
 
 const DoctorsLeaves = () => {
-  const [data, setData] = useState<LeaveData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchText, setSearchText] = useState<string>("");
-
-  // Modal states
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [currentLeave, setCurrentLeave] = useState<any>(null);
-
-  // Filter states
-  const [filterDoctor, setFilterDoctor] = useState<string[]>([]);
-  const [filterDesignation, setFilterDesignation] = useState<string[]>([]);
-  const [filterDepartment, setFilterDepartment] = useState<string[]>([]);
-  const [filterDate, setFilterDate] = useState<any>(null);
-  const [filterStatus, setFilterStatus] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<'recent' | 'oldest'>('recent');
-
-  // Fetch leaves on mount
-  useEffect(() => {
-    fetchLeaves();
-  }, []);
-
-  const fetchLeaves = async () => {
-    try {
-      setLoading(true);
-      const response = await getAllLeaves();
-      if (response.success) {
-        setData(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching leaves:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Apply filters
-  const applyFilters = () => {
-    let filtered = [...data];
-
-    // Doctor filter
-    if (filterDoctor.length > 0) {
-      filtered = filtered.filter(item =>
-        filterDoctor.some(doc => item.doctorName?.toLowerCase().includes(doc.toLowerCase()))
-      );
-    }
-
-    // Date filter
-    if (filterDate) {
-      const selectedDate = dayjs(filterDate).format('DD MMM YYYY');
-      filtered = filtered.filter(item => {
-        const dateRange = item.Date.split(' - ');
-        return dateRange.some(d => d === selectedDate);
-      });
-    }
-
-    // Status filter
-    if (filterStatus.length > 0) {
-      filtered = filtered.filter(item =>
-        filterStatus.includes(item.Status)
-      );
-    }
-
-    return applySorting(filtered);
-  };
-
-  const applySorting = (dataToSort: LeaveData[]) => {
-    const sorted = [...dataToSort];
-
-    if (sortBy === 'recent') {
-      sorted.sort((a, b) =>
-        dayjs(b.Applied_On, 'DD MMM YYYY').valueOf() -
-        dayjs(a.Applied_On, 'DD MMM YYYY').valueOf()
-      );
-    } else {
-      sorted.sort((a, b) =>
-        dayjs(a.Applied_On, 'DD MMM YYYY').valueOf() -
-        dayjs(b.Applied_On, 'DD MMM YYYY').valueOf()
-      );
-    }
-
-    return sorted;
-  };
-
-  const filteredData = applyFilters();
-
+  const data = DoctorLeavesData;
   const columns = [
     {
       title: "Date",
@@ -512,12 +42,13 @@ const DoctorsLeaves = () => {
       render: (text: any) => (
         <span
           className={`badge badge-sm border rounded
-    ${text === "Applied"
-              ? "badge-info text-info border-info"
-              : text === "Approved"
-                ? "badge-success text-success border-success"
-                : "badge-danger text-danger border-danger"
-            }`}
+    ${
+      text === "Applied"
+        ? "badge-info text-info border-info"
+        : text === "Approved"
+        ? "badge-success text-success border-success"
+        : "badge-danger text-danger border-danger"
+    }`}
         >
           {text}
         </span>
@@ -526,7 +57,7 @@ const DoctorsLeaves = () => {
     },
     {
       title: "",
-      render: (_: any, record: any) => (
+      render: () => (
         <div className="action-item">
           <>
             <Link to="#" data-bs-toggle="dropdown">
@@ -537,11 +68,8 @@ const DoctorsLeaves = () => {
                 <Link
                   to="#"
                   className="dropdown-item d-flex align-items-center"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCurrentLeave(record);
-                    setShowEditModal(true);
-                  }}
+                  data-bs-toggle="modal"
+                  data-bs-target="#edit-leave"
                 >
                   Edit
                 </Link>
@@ -550,11 +78,8 @@ const DoctorsLeaves = () => {
                 <Link
                   to="#"
                   className="dropdown-item d-flex align-items-center"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCurrentLeave(record);
-                    setShowDeleteModal(true);
-                  }}
+                  data-bs-toggle="modal"
+                  data-bs-target="#delete_modal"
                 >
                   Delete
                 </Link>
@@ -566,6 +91,7 @@ const DoctorsLeaves = () => {
       sorter: (a: any, b: any) => a.Status.length - b.Status.length,
     },
   ];
+  const [searchText, setSearchText] = useState<string>("");
 
   const handleSearch = (value: string) => {
     setSearchText(value);
@@ -573,126 +99,23 @@ const DoctorsLeaves = () => {
 
   const getModalContainer = () => {
     const modalElement = document.getElementById("modal-datepicker");
-    return modalElement ? modalElement : document.body;
+    return modalElement ? modalElement : document.body; // Fallback to document.body if modalElement is null
   };
-
-  const handleClearFilters = () => {
-    setFilterDoctor([]);
-    setFilterDesignation([]);
-    setFilterDepartment([]);
-    setFilterDate(null);
-    setFilterStatus([]);
-  };
-
-  // Export to PDF
-  const exportToPDF = () => {
-    try {
-      const doc = new jsPDF();
-      doc.setFontSize(18);
-      doc.text('Doctor Leaves Report', 14, 20);
-      doc.setFontSize(11);
-      doc.text(`Generated on: ${dayjs().format('DD-MM-YYYY HH:mm')}`, 14, 30);
-
-      const tableData = filteredData.map(item => [
-        item.Date,
-        item.Leave_Type,
-        item.Day,
-        item.Applied_On,
-        item.Status
-      ]);
-
-      autoTable(doc, {
-        head: [['Date', 'Leave Type', 'Day', 'Applied On', 'Status']],
-        body: tableData,
-        startY: 35,
-        theme: 'grid',
-        headStyles: { fillColor: [79, 70, 229] },
-        styles: { fontSize: 9 }
-      });
-
-      doc.save(`doctor-leaves-${dayjs().format('YYYY-MM-DD')}.pdf`);
-    } catch (error) {
-      console.error('PDF export error:', error);
-    }
-  };
-
-  // Export to Excel
-  const exportToExcel = () => {
-    try {
-      const excelData = filteredData.map(item => ({
-        "Date": item.Date,
-        "Leave Type": item.Leave_Type,
-        "Day": item.Day,
-        "Applied On": item.Applied_On,
-        "Status": item.Status
-      }));
-
-      const ws = XLSX.utils.json_to_sheet(excelData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Leaves");
-      XLSX.writeFile(wb, `doctor-leaves-${dayjs().format('YYYY-MM-DD')}.xlsx`);
-    } catch (error) {
-      console.error('Excel export error:', error);
-    }
-  };
-
-  // Handle edit leave
-  const handleEditLeave = async (leaveData: any) => {
-    try {
-      if (currentLeave) {
-        const response = await updateLeave(currentLeave._id, leaveData);
-        if (response.success) {
-          await fetchLeaves();
-          setShowEditModal(false);
-          setCurrentLeave(null);
-        }
-      }
-    } catch (error) {
-      console.error('Edit leave error:', error);
-      alert('Failed to update leave');
-    }
-  };
-
-  // Handle delete leave
-  const handleDeleteLeave = async () => {
-    try {
-      if (currentLeave) {
-        const response = await deleteLeave(currentLeave._id);
-        if (response.success) {
-          await fetchLeaves();
-          setShowDeleteModal(false);
-          setCurrentLeave(null);
-        }
-      }
-    } catch (error) {
-      console.error('Delete leave error:', error);
-      alert('Failed to delete leave');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="page-wrapper">
-        <div className="content">
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
+      {/* ========================
+			Start Page Content
+		========================= */}
       <div className="page-wrapper">
+        {/* Start Content */}
         <div className="content">
+          {/* Start Page Header */}
           <div className="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-1 border-bottom">
             <div className="flex-grow-1">
               <h4 className="fw-bold mb-0"> Leaves </h4>
             </div>
             <div className="text-end d-flex">
+              {/* dropdown*/}
               <div className="dropdown me-1">
                 <Link
                   to="#"
@@ -704,12 +127,12 @@ const DoctorsLeaves = () => {
                 </Link>
                 <ul className="dropdown-menu p-2">
                   <li>
-                    <Link className="dropdown-item" to="#" onClick={(e) => { e.preventDefault(); exportToPDF(); }}>
+                    <Link className="dropdown-item" to="#">
                       Download as PDF
                     </Link>
                   </li>
                   <li>
-                    <Link className="dropdown-item" to="#" onClick={(e) => { e.preventDefault(); exportToExcel(); }}>
+                    <Link className="dropdown-item" to="#">
                       Download as Excel
                     </Link>
                   </li>
@@ -726,7 +149,8 @@ const DoctorsLeaves = () => {
               </Link>
             </div>
           </div>
-
+          {/* End Page Header */}
+          {/* Start Filter */}
           <div className=" d-flex align-items-center justify-content-between flex-wrap row-gap-3">
             <div className="search-set mb-3">
               <div className="d-flex align-items-center flex-wrap gap-2">
@@ -758,10 +182,6 @@ const DoctorsLeaves = () => {
                       <Link
                         to="#"
                         className="link-danger text-decoration-underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleClearFilters();
-                        }}
                       >
                         Clear All
                       </Link>
@@ -772,14 +192,7 @@ const DoctorsLeaves = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label mb-1">Doctor</label>
-                          <Link
-                            to="#"
-                            className="link-primary mb-1"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setFilterDoctor([]);
-                            }}
-                          >
+                          <Link to="#" className="link-primary mb-1">
                             Reset
                           </Link>
                         </div>
@@ -788,22 +201,14 @@ const DoctorsLeaves = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          value={filterDoctor}
-                          onChange={setFilterDoctor}
+                          defaultValue={[]}
                           options={Doctor}
                         />
                       </div>
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Designation</label>
-                          <Link
-                            to="#"
-                            className="link-primary mb-1"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setFilterDesignation([]);
-                            }}
-                          >
+                          <Link to="#" className="link-primary mb-1">
                             Reset
                           </Link>
                         </div>
@@ -812,22 +217,14 @@ const DoctorsLeaves = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          value={filterDesignation}
-                          onChange={setFilterDesignation}
+                          defaultValue={[]}
                           options={Designation}
                         />
                       </div>
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
                           <label className="form-label">Department</label>
-                          <Link
-                            to="#"
-                            className="link-primary mb-1"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setFilterDepartment([]);
-                            }}
-                          >
+                          <Link to="#" className="link-primary mb-1">
                             Reset
                           </Link>
                         </div>
@@ -836,8 +233,7 @@ const DoctorsLeaves = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          value={filterDepartment}
-                          onChange={setFilterDepartment}
+                          defaultValue={[]}
                           options={Department}
                         />
                       </div>
@@ -852,8 +248,6 @@ const DoctorsLeaves = () => {
                               format: "DD-MM-YYYY",
                               type: "mask",
                             }}
-                            value={filterDate}
-                            onChange={setFilterDate}
                             getPopupContainer={getModalContainer}
                             placeholder="DD-MM-YYYY"
                             suffixIcon={null}
@@ -865,15 +259,8 @@ const DoctorsLeaves = () => {
                       </div>
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between">
-                          <label className="form-label">Status</label>
-                          <Link
-                            to="#"
-                            className="link-primary mb-1"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setFilterStatus([]);
-                            }}
-                          >
+                          <label className="form-label">Amount</label>
+                          <Link to="#" className="link-primary mb-1">
                             Reset
                           </Link>
                         </div>
@@ -882,8 +269,23 @@ const DoctorsLeaves = () => {
                           allowClear
                           style={{ width: "100%" }}
                           placeholder="Please select"
-                          value={filterStatus}
-                          onChange={setFilterStatus}
+                          defaultValue={[]}
+                          options={Amount}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <div className="d-flex align-items-center justify-content-between">
+                          <label className="form-label">Status</label>
+                          <Link to="#" className="link-primary mb-1">
+                            Reset
+                          </Link>
+                        </div>
+                        <Select
+                          mode="multiple"
+                          allowClear
+                          style={{ width: "100%" }}
+                          placeholder="Please select"
+                          defaultValue={[]}
                           options={Status}
                         />
                       </div>
@@ -912,30 +314,16 @@ const DoctorsLeaves = () => {
                   className="dropdown-toggle btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14"
                   data-bs-toggle="dropdown"
                 >
-                  <span className="me-1"> Sort By : </span> {sortBy === 'recent' ? 'Recent' : 'Oldest'}
+                  <span className="me-1"> Sort By : </span> Recent
                 </Link>
                 <ul className="dropdown-menu  dropdown-menu-end p-2">
                   <li>
-                    <Link
-                      to="#"
-                      className="dropdown-item rounded-1"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setSortBy('recent');
-                      }}
-                    >
+                    <Link to="#" className="dropdown-item rounded-1">
                       Recent
                     </Link>
                   </li>
                   <li>
-                    <Link
-                      to="#"
-                      className="dropdown-item rounded-1"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setSortBy('oldest');
-                      }}
-                    >
+                    <Link to="#" className="dropdown-item rounded-1">
                       Oldest
                     </Link>
                   </li>
@@ -943,17 +331,20 @@ const DoctorsLeaves = () => {
               </div>
             </div>
           </div>
-
+          {/* End Filter */}
+          {/* Start Table */}
           <div className="table-responsive">
             <Datatable
               columns={columns}
-              dataSource={filteredData}
+              dataSource={data}
               Selection={false}
               searchText={searchText}
             />
           </div>
+          {/* End Table */}
         </div>
-
+        {/* End Content */}
+        {/* Footer Start */}
         <div className="footer text-center bg-white p-2 border-top">
           <p className="text-dark mb-0">
             2025 ©
@@ -963,28 +354,16 @@ const DoctorsLeaves = () => {
             , All Rights Reserved
           </p>
         </div>
+        {/* Footer End */}
       </div>
-
-      <Modals
-        showEditModal={showEditModal}
-        showDeleteModal={showDeleteModal}
-        currentLeave={currentLeave}
-        onCloseEdit={() => {
-          setShowEditModal(false);
-          setCurrentLeave(null);
-        }}
-        onCloseDelete={() => {
-          setShowDeleteModal(false);
-          setCurrentLeave(null);
-        }}
-        onEdit={handleEditLeave}
-        onDelete={handleDeleteLeave}
-        onAdd={async () => {
-          await fetchLeaves();
-        }}
-      />
+      {/* ========================
+			End Page Content
+		========================= */}
+      <Modals />
     </>
   );
 };
 
 export default DoctorsLeaves;
+
+
