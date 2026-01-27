@@ -517,7 +517,7 @@
 
 
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // ✅ BASE USER SCHEMA - Common fields for all users
 const baseOptions = {

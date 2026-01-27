@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const User = require('./User');
+const User = require('../models/User');
 
 // ✅ PATIENT-SPECIFIC SCHEMA
 const patientSchema = new mongoose.Schema({
