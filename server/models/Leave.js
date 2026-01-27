@@ -63,7 +63,7 @@ const leaveSchema = new mongoose.Schema({
 });
 
 // Calculate number of days before saving
-leaveSchema.pre('save', function (next) {
+leaveSchema.pre('validate', function (next) {
     if (this.fromDate && this.toDate) {
         const diffTime = Math.abs(this.toDate - this.fromDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both days
