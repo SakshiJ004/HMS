@@ -198,6 +198,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../models/User');
 const fs = require('fs');
+const Patient = require('../models/Patient')
 
 /**
  * Serialize user for session
@@ -259,7 +260,7 @@ passport.use(
 
                 // Create new user - EXPLICITLY set role to 'patient'
                 console.log('➕ Creating new Google user with role: patient');
-                user = await User.create({
+                user = await Patient.create({
                     fullName: profile.displayName,
                     email: profile.emails[0].value,
                     provider: 'google',

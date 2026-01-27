@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Doctor = require('../models/Doctor')
+const Patient = require('../models/Patient')
 
 // Generate token with dynamic expiration
 const generateToken = (id, role, rememberMe = false) => {
@@ -84,15 +86,23 @@ const registerUser = async (req, res) => {
             });
         }
 
-        const user = await User.create({
+        // const user = await User.create({
+        //     fullName,
+        //     email: email.toLowerCase(),
+        //     password,
+        //     role: 'patient',
+        // });
+
+        // console.log('✅ User created successfully:', user._id);
+
+        const user = await Patient.create({
             fullName,
             email: email.toLowerCase(),
             password,
-            role: 'patient',
+            role: 'patient', // ✅ Explicitly set role
         });
 
-        console.log('✅ User created successfully:', user._id);
-
+        console.log('✅ Patient created successfully:', user._id);
         const token = generateToken(user._id, user.role);
 
         const nameParts = fullName.trim().split(' ');

@@ -1,5 +1,8 @@
 const User = require('../models/User');
+const Patient = require('../models/Patient');
+const Doctor = require('../models/Doctor')
 const Appointment = require('../models/Appointment');
+
 
 /**
  * Get dashboard statistics

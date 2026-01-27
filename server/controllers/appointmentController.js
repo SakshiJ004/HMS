@@ -1,5 +1,6 @@
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const Patient = require('../models/Patient')
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -50,7 +51,7 @@ const getDoctors = async (req, res) => {
  */
 const getPatients = async (req, res) => {
     try {
-        const patients = await User.find({ role: 'patient' })
+        const patients = await Patient.find({ role: 'patient' })
             .select('fullName email profileImage')
             .sort({ fullName: 1 });
 

@@ -377,7 +377,8 @@
 // ============================================
 // FILE: backend/controllers/doctorController.js (FIXED)
 // ============================================
-const User = require('../models/User');
+const Doctor = require('../models/Doctor');
+const User = require('../models/User')
 const bcrypt = require('bcryptjs');
 
 /**
@@ -536,7 +537,7 @@ const createDoctor = async (req, res) => {
 
         const fullName = `${firstName} ${lastName}`;
 
-        const doctor = await User.create({
+        const doctor = await Doctor.create({
             firstName,
             lastName,
             fullName,

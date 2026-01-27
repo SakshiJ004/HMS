@@ -58,8 +58,6 @@ const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { getDashboardStats, getAppointmentStats, getTopDoctors, getDepartmentStats, getDoctorsSchedule, getTopPatients } = require('../controllers/dashboardController');
 
-
-
 // @route   GET /api/dashboard/admin
 // @desc    Access admin dashboard
 // @access  Private (Admin only)
