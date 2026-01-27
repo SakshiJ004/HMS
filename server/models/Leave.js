@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const leaveSchema = new mongoose.Schema({
     doctor: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Doctor',
+        ref: 'doctor',
         required: true
     },
     leaveType: {
