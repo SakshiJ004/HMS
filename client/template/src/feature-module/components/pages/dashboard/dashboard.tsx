@@ -2949,15 +2949,18 @@ const Dashboard = () => {
     try {
       const response = await updateLeaveStatus(leaveId, 'Approved', '');
 
-      if (response.data.success) {
-        // Refresh leave requests
-        await fetchLeaveRequests();
-        // Optional: Show success message
+      if (response.success) {
+        // Remove approved leave from the list immediately
+        setLeaveRequests(prevRequests =>
+          prevRequests.filter(leave => leave._id !== leaveId)
+        );
+
         console.log('Leave approved successfully');
       }
     } catch (error) {
       console.error("Error approving leave:", error);
-      // Optional: Show error message
+      // Refresh on error to ensure correct state
+      await fetchLeaveRequests();
     }
   };
 
@@ -2973,15 +2976,18 @@ const Dashboard = () => {
 
       const response = await updateLeaveStatus(leaveId, 'Rejected', remarks);
 
-      if (response.data.success) {
-        // Refresh leave requests
-        await fetchLeaveRequests();
-        // Optional: Show success message
+      if (response.success) {
+        // Remove rejected leave from the list immediately
+        setLeaveRequests(prevRequests =>
+          prevRequests.filter(leave => leave._id !== leaveId)
+        );
+
         console.log('Leave rejected successfully');
       }
     } catch (error) {
       console.error("Error rejecting leave:", error);
-      // Optional: Show error message
+      // Refresh on error to ensure correct state
+      await fetchLeaveRequests();
     }
   };
 
