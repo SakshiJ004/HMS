@@ -32,9 +32,12 @@ exports.getAllLeaves = async (req, res) => {
     try {
         const leaves = await Leave.find()
             .populate('doctor', 'fullName specialization profileImage department')
-            .populate('approvedBy', 'fullName')
-            .sort({ createdAt: -1 });
+            .populate('approvedBy', 'fullName email')
+            .sort({ appliedOn: -1 });
 
+        console.log('📋 Total Leaves Found:', leaves.length);  // ✅ Debug log
+        console.log('📋 Sample Leave:', leaves[0]);
+        
         res.status(200).json({
             success: true,
             data: leaves,

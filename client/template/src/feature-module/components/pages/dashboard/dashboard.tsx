@@ -2883,43 +2883,62 @@ const Dashboard = () => {
   //   fetchAppointments();
   // }, []);
 
-  // Fetch leave requests
+  // Fetch leave requests - IMPROVED VERSION with DETAILED LOGGING
   const fetchLeaveRequests = async () => {
     try {
       setLoadingLeaves(true);
+      console.log('🔵 [LEAVE] Fetching leave requests...');
+
       const response = await getAllLeaves();
+      console.log('🔵 [LEAVE] API Response:', response);
 
-      if (response.data.success) {
-        // Filter only "Applied" status leaves
-        let filteredLeaves = response.data.data.filter(
-          (leave: any) => leave.status === 'Applied'
-        );
+      if (response.success) {  // ✅ Changed from response.data.success
+        const allLeaves = response.data;
+        console.log('🔵 [LEAVE] All Leaves Count:', allLeaves.length);
+        console.log('🔵 [LEAVE] Sample Leave:', allLeaves[0]);
 
-        // Apply date filter
+        // Filter only "Applied" status leaves (case-insensitive)
+        let filteredLeaves = allLeaves.filter((leave: any) => {
+          const status = leave.status?.toLowerCase();
+          return status === 'applied';
+        });
+
+        console.log('🔵 [LEAVE] Applied Leaves Count:', filteredLeaves.length);
+        console.log('🔵 [LEAVE] Applied Leaves:', filteredLeaves);
+
+        // Apply date filter based on appliedOn date
         const now = dayjs();
+
         if (selectedLeaveFilter === 'today') {
-          filteredLeaves = filteredLeaves.filter((leave: any) =>
-            dayjs(leave.appliedOn).isSame(now, 'day')
-          );
+          filteredLeaves = filteredLeaves.filter((leave: any) => {
+            const appliedDate = dayjs(leave.appliedOn);
+            return appliedDate.isSame(now, 'day');
+          });
         } else if (selectedLeaveFilter === 'thisWeek') {
-          filteredLeaves = filteredLeaves.filter((leave: any) =>
-            dayjs(leave.appliedOn).isSame(now, 'week')
-          );
+          filteredLeaves = filteredLeaves.filter((leave: any) => {
+            const appliedDate = dayjs(leave.appliedOn);
+            return appliedDate.isSame(now, 'week');
+          });
         } else if (selectedLeaveFilter === 'thisMonth') {
-          filteredLeaves = filteredLeaves.filter((leave: any) =>
-            dayjs(leave.appliedOn).isSame(now, 'month')
-          );
+          filteredLeaves = filteredLeaves.filter((leave: any) => {
+            const appliedDate = dayjs(leave.appliedOn);
+            return appliedDate.isSame(now, 'month');
+          });
         }
+
+        console.log('🔵 [LEAVE] After Date Filter:', filteredLeaves.length, 'leaves');
 
         // Sort by most recent
         filteredLeaves.sort((a: any, b: any) =>
           new Date(b.appliedOn).getTime() - new Date(a.appliedOn).getTime()
         );
 
-        setLeaveRequests(filteredLeaves.slice(0, 5)); // Top 5
+        setLeaveRequests(filteredLeaves.slice(0, 5));
+        console.log('🔵 [LEAVE] Final Requests Set:', filteredLeaves.slice(0, 5));
       }
     } catch (error) {
-      console.error("Error fetching leave requests:", error);
+      console.error("❌ [LEAVE] Error fetching leave requests:", error);
+      setLeaveRequests([]);
     } finally {
       setLoadingLeaves(false);
     }
