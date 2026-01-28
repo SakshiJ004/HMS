@@ -2696,6 +2696,8 @@ import { Calendar, type CalendarProps } from "antd";
 import type { Dayjs } from "dayjs";
 import Chart from "react-apexcharts";
 import { getDashboardStats, getAppointmentStats, getTopDoctors, getDepartmentStats, getDoctorsSchedule, type DashboardStats, type AppointmentStatsResponse, type TopDoctor, type DepartmentStat, type DoctorsScheduleResponse } from "../../../../api/dashboardService";
+import { getAllLeaves, updateLeaveStatus } from "../../../../api/leaveService";
+import dayjs from "dayjs";
 import axios from "axios";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -2753,6 +2755,10 @@ const Dashboard = () => {
     counts: { available: 0, unavailable: 0, onLeave: 0 }
   });
   const [topPatients, setTopPatients] = useState<any[]>([]);
+  // Leave Requests states
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [loadingLeaves, setLoadingLeaves] = useState(false);
+  const [selectedLeaveFilter, setSelectedLeaveFilter] = useState<'today' | 'thisWeek' | 'thisMonth'>('today');
 
   // const [_loading, setLoading] = useState(true);
 
@@ -2877,6 +2883,93 @@ const Dashboard = () => {
   //   fetchAppointments();
   // }, []);
 
+  // Fetch leave requests
+  const fetchLeaveRequests = async () => {
+    try {
+      setLoadingLeaves(true);
+      const response = await getAllLeaves();
+
+      if (response.data.success) {
+        // Filter only "Applied" status leaves
+        let filteredLeaves = response.data.data.filter(
+          (leave: any) => leave.status === 'Applied'
+        );
+
+        // Apply date filter
+        const now = dayjs();
+        if (selectedLeaveFilter === 'today') {
+          filteredLeaves = filteredLeaves.filter((leave: any) =>
+            dayjs(leave.appliedOn).isSame(now, 'day')
+          );
+        } else if (selectedLeaveFilter === 'thisWeek') {
+          filteredLeaves = filteredLeaves.filter((leave: any) =>
+            dayjs(leave.appliedOn).isSame(now, 'week')
+          );
+        } else if (selectedLeaveFilter === 'thisMonth') {
+          filteredLeaves = filteredLeaves.filter((leave: any) =>
+            dayjs(leave.appliedOn).isSame(now, 'month')
+          );
+        }
+
+        // Sort by most recent
+        filteredLeaves.sort((a: any, b: any) =>
+          new Date(b.appliedOn).getTime() - new Date(a.appliedOn).getTime()
+        );
+
+        setLeaveRequests(filteredLeaves.slice(0, 5)); // Top 5
+      }
+    } catch (error) {
+      console.error("Error fetching leave requests:", error);
+    } finally {
+      setLoadingLeaves(false);
+    }
+  };
+
+  // Handle approve leave
+  const handleApproveLeave = async (leaveId: string) => {
+    try {
+      const response = await updateLeaveStatus(leaveId, 'Approved', '');
+
+      if (response.data.success) {
+        // Refresh leave requests
+        await fetchLeaveRequests();
+        // Optional: Show success message
+        console.log('Leave approved successfully');
+      }
+    } catch (error) {
+      console.error("Error approving leave:", error);
+      // Optional: Show error message
+    }
+  };
+
+  // Handle reject leave
+  const handleRejectLeave = async (leaveId: string) => {
+    try {
+      const remarks = prompt('Please enter rejection reason:');
+
+      if (!remarks || remarks.trim() === '') {
+        alert('Rejection reason is mandatory!');
+        return;
+      }
+
+      const response = await updateLeaveStatus(leaveId, 'Rejected', remarks);
+
+      if (response.data.success) {
+        // Refresh leave requests
+        await fetchLeaveRequests();
+        // Optional: Show success message
+        console.log('Leave rejected successfully');
+      }
+    } catch (error) {
+      console.error("Error rejecting leave:", error);
+      // Optional: Show error message
+    }
+  };
+
+  // Fetch leave requests when filter changes
+  useEffect(() => {
+    fetchLeaveRequests();
+  }, [selectedLeaveFilter]);
 
   // Fetch all dashboard data at once for instant loading
   useEffect(() => {
@@ -4199,7 +4292,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="col-xl-4 col-lg-6 d-flex">
+            {/* <div className="col-xl-4 col-lg-6 d-flex">
               <div className="card shadow-sm flex-fill w-100">
                 <div className="card-header d-flex align-items-center justify-content-between">
                   <h5 className="fw-bold mb-0">Leave Requests</h5>
@@ -4431,6 +4524,155 @@ const Dashboard = () => {
                       </Link>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div> */}
+
+            <div className="col-xl-4 col-lg-6 d-flex">
+              <div className="card shadow-sm flex-fill w-100">
+                <div className="card-header d-flex align-items-center justify-content-between">
+                  <h5 className="fw-bold mb-0">Leave Requests</h5>
+                  <div className="dropdown">
+                    <Link
+                      to="#"
+                      className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
+                      data-bs-toggle="dropdown"
+                    >
+                      {selectedLeaveFilter === 'today' ? 'Today' :
+                        selectedLeaveFilter === 'thisWeek' ? 'This Week' :
+                          'This Month'} <i className="ti ti-chevron-down ms-1" />
+                    </Link>
+                    <ul className="dropdown-menu">
+                      <li>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedLeaveFilter('today');
+                          }}
+                        >
+                          Today
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedLeaveFilter('thisWeek');
+                          }}
+                        >
+                          This Week
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedLeaveFilter('thisMonth');
+                          }}
+                        >
+                          This Month
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="card-body">
+                  {loadingLeaves ? (
+                    <div className="text-center py-3">
+                      <div className="spinner-border spinner-border-sm text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  ) : leaveRequests.length > 0 ? (
+                    leaveRequests.map((leave, index) => {
+                      const doctor = leave.doctor;
+                      const doctorName = doctor?.fullName || doctor?.name || 'Unknown Doctor';
+                      const doctorImage = doctor?.profileImage || doctor?.profilePicture;
+
+                      return (
+                        <div
+                          key={leave._id}
+                          className={`d-flex justify-content-between ${index < leaveRequests.length - 1 ? 'mb-3' : 'mb-0'}`}
+                        >
+                          <div className="d-flex align-items-center">
+                            <Link
+                              to={`${all_routes.doctordetails}?id=${doctor?._id}`}
+                              className="avatar flex-shrink-0"
+                              style={{ width: '40px', height: '40px' }}
+                            >
+                              {doctorImage && (
+                                doctorImage.includes('googleusercontent.com') ||
+                                doctorImage.startsWith('http://') ||
+                                doctorImage.startsWith('https://') ||
+                                doctorImage.startsWith('data:')
+                              ) ? (
+                                <img
+                                  src={doctorImage}
+                                  className="rounded-circle"
+                                  alt={doctorName}
+                                  style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      const initials = getInitials(doctorName, 'DR');
+                                      parent.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>`;
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white fw-bold"
+                                  style={{ width: '40px', height: '40px', fontSize: '14px' }}
+                                >
+                                  {getInitials(doctorName, 'DR')}
+                                </div>
+                              )}
+                            </Link>
+                            <div className="ms-2">
+                              <h6 className="fw-semibold text-truncate mb-1 fs-14">
+                                <Link to={`${all_routes.doctordetails}?id=${doctor?._id}`}>
+                                  Dr. {doctorName}
+                                </Link>
+                              </h6>
+                              <p className="fs-13 mb-0 text-truncate">
+                                {leave.numberOfDays} {leave.numberOfDays === 1 ? 'Day' : 'Days'} - {leave.leaveType}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="d-flex align-items-center">
+                            <button
+                              onClick={() => handleRejectLeave(leave._id)}
+                              className="btn btn-link d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"
+                              style={{ border: 'none' }}
+                              title="Reject"
+                            >
+                              <i className="ti ti-x fw-bold" />
+                            </button>
+                            <button
+                              onClick={() => handleApproveLeave(leave._id)}
+                              className="btn btn-link d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"
+                              style={{ border: 'none' }}
+                              title="Approve"
+                            >
+                              <i className="ti ti-check fw-bold" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-3">
+                      <p className="text-muted mb-0">No pending leave requests</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
