@@ -424,9 +424,13 @@ const LeavesList = () => {
   // Statistics
   const [stats, setStats] = useState({
     totalPresent: 0,
+    totalPresentPercentage: '0',
     plannedLeaves: 0,
+    plannedPercentage: '0',
     unplannedLeaves: 0,
-    pendingRequests: 0
+    unplannedPercentage: '0',
+    pendingRequests: 0,
+    pendingPercentage: '0'
   });
 
   // Filters
@@ -493,7 +497,14 @@ const LeavesList = () => {
     }
   };
 
+  // calculateStatistics function update करा - Line ~135 च्या आसपास
+
   const calculateStatistics = (leaves: LeaveData[]) => {
+    // Current month's data
+    const currentMonth = dayjs();
+    const lastMonth = currentMonth.subtract(1, 'month');
+
+    // Current stats
     const approved = leaves.filter(l => l.Status === 'Approved').length;
     const pending = leaves.filter(l => l.Status === 'Applied').length;
     const planned = leaves.filter(l =>
@@ -505,11 +516,44 @@ const LeavesList = () => {
       ['Sick Leave', 'Emergency Leave'].includes(l.LeaveType)
     ).length;
 
+    // Last month stats (for percentage calculation)
+    const lastMonthApproved = leaves.filter(l =>
+      l.Status === 'Approved' &&
+      dayjs(l.AppliedOn, 'DD MMM YYYY').isSame(lastMonth, 'month')
+    ).length;
+
+    const lastMonthPending = leaves.filter(l =>
+      l.Status === 'Applied' &&
+      dayjs(l.AppliedOn, 'DD MMM YYYY').isSame(lastMonth, 'month')
+    ).length;
+
+    const lastMonthPlanned = leaves.filter(l =>
+      l.Status === 'Approved' &&
+      ['Casual Leave', 'Paid Leave'].includes(l.LeaveType) &&
+      dayjs(l.AppliedOn, 'DD MMM YYYY').isSame(lastMonth, 'month')
+    ).length;
+
+    const lastMonthUnplanned = leaves.filter(l =>
+      l.Status === 'Approved' &&
+      ['Sick Leave', 'Emergency Leave'].includes(l.LeaveType) &&
+      dayjs(l.AppliedOn, 'DD MMM YYYY').isSame(lastMonth, 'month')
+    ).length;
+
+    // Calculate percentages
+    const calculatePercentage = (current: number, last: number) => {
+      if (last === 0) return current > 0 ? '100' : '0';
+      return ((current - last) / last * 100).toFixed(2);
+    };
+
     setStats({
-      totalPresent: 180 - approved, // Assuming 180 total employees
+      totalPresent: 180 - approved,
+      totalPresentPercentage: calculatePercentage(180 - approved, 180 - lastMonthApproved),
       plannedLeaves: planned,
+      plannedPercentage: calculatePercentage(planned, lastMonthPlanned),
       unplannedLeaves: unplanned,
-      pendingRequests: pending
+      unplannedPercentage: calculatePercentage(unplanned, lastMonthUnplanned),
+      pendingRequests: pending,
+      pendingPercentage: calculatePercentage(pending, lastMonthPending)
     });
   };
 
@@ -857,9 +901,16 @@ const LeavesList = () => {
                         <p className="mb-0 me-2">
                           <span className="text-dark fw-bold">{stats.totalPresent}</span>
                         </p>
-                        <span className="badge badge-soft-success fs-12 fw-normal">
-                          +10.6%
-                          <i className="ti ti-arrow-up-right ms-1" />
+                        <span className={`badge fs-12 fw-normal ${parseFloat(stats.totalPresentPercentage) >= 0
+                          ? 'badge-soft-success'
+                          : 'badge-soft-danger'
+                          }`}>
+                          {parseFloat(stats.totalPresentPercentage) >= 0 ? '+' : ''}
+                          {stats.totalPresentPercentage}%
+                          <i className={`ti ${parseFloat(stats.totalPresentPercentage) >= 0
+                            ? 'ti-arrow-up-right'
+                            : 'ti-arrow-down-right'
+                            } ms-1`} />
                         </span>
                       </div>
                     </div>
