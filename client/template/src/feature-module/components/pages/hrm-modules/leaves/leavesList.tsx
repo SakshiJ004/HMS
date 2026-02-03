@@ -376,7 +376,6 @@
 // export default LeavesList;
 
 
-
 // Admin/leaves/leavesList.tsx
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
@@ -385,7 +384,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from "dayjs";
 import isBetween from 'dayjs/plugin/isBetween';
 import PredefinedDatePicker from "../../../../../core/common/datePicker";
-import FilterIndex from "../../../../../core/common/filter/filterIndex";
+// import FilterIndex from "../../../../../core/common/filter/filterIndex"; // ← REMOVED (not used)
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import SearchInput from "../../../../../core/common/dataTable/dataTableSearch";
 import Datatable from "../../../../../core/common/dataTable";
@@ -420,7 +419,6 @@ const LeavesList = () => {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState<string>("");
   const [selectedLeave, setSelectedLeave] = useState<LeaveData | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Statistics
@@ -612,10 +610,10 @@ const LeavesList = () => {
       render: (text: string) => (
         <span
           className={`badge border ${text === "Applied"
-              ? "badge-soft-info border-info"
-              : text === "Approved"
-                ? "badge-soft-success border-success"
-                : "badge-soft-danger border-danger"
+            ? "badge-soft-info border-info"
+            : text === "Approved"
+              ? "badge-soft-success border-success"
+              : "badge-soft-danger border-danger"
             } px-2 py-1 fs-13 fw-medium`}
         >
           {text}
@@ -767,6 +765,20 @@ const LeavesList = () => {
     } catch (error) {
       console.error('Excel export error:', error);
       alert('Failed to export Excel');
+    }
+  };
+
+  // Delete leave handler
+  const handleDeleteLeave = async (leaveId: string) => {
+    try {
+      // TODO: Implement delete API call
+      console.log('Deleting leave:', leaveId);
+      alert('Delete functionality will be implemented soon');
+      setShowDeleteModal(false);
+      setSelectedLeave(null);
+    } catch (error) {
+      console.error('Error deleting leave:', error);
+      alert('Failed to delete leave');
     }
   };
 
@@ -1156,11 +1168,7 @@ const LeavesList = () => {
         showDeleteModal={showDeleteModal}
         onCloseDelete={() => setShowDeleteModal(false)}
         selectedLeave={selectedLeave}
-        onDelete={async (id: string) => {
-          // Implement delete API call here if needed
-          alert('Delete functionality not implemented yet');
-          setShowDeleteModal(false);
-        }}
+        onDelete={handleDeleteLeave}
       />
     </>
   );
