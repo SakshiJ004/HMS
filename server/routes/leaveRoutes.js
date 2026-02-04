@@ -6,7 +6,8 @@ const {
     getAllLeaves,
     createLeave,
     updateLeaveStatus,
-    getLeaveStatistics
+    getLeaveStatistics,
+    getAdminLeaveStatistics
 } = require('../controllers/leaveController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -17,6 +18,7 @@ router.get('/statistics', protect, authorize('doctor'), getLeaveStatistics);
 
 // Admin routes
 router.get('/all', protect, authorize('admin'), getAllLeaves);
+router.get('/admin-statistics', protect, authorize('admin'), getAdminLeaveStatistics)
 router.put('/status/:leaveId', protect, authorize('admin'), updateLeaveStatus);
 
 module.exports = router;

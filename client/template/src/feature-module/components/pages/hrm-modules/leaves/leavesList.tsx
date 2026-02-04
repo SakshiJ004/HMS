@@ -389,11 +389,10 @@ import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import SearchInput from "../../../../../core/common/dataTable/dataTableSearch";
 import Datatable from "../../../../../core/common/dataTable";
 import LeavesModal from "./modal/leavesModal";
-import { getAllLeaves, updateLeaveStatus } from "../../../../../api/leaveService";
+import { getAllLeaves, updateLeaveStatus, getAdminLeaveStatistics } from "../../../../../api/leaveService";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { getLeaveStatistics } from "../../../../../api/leaveTypeService";
 
 dayjs.extend(isBetween);
 
@@ -468,14 +467,14 @@ const LeavesList = () => {
       setLoading(true);
       const [leavesResponse, statsResponse] = await Promise.all([
         getAllLeaves(),
-        getLeaveStatistics() // ← Add this
+        getAdminLeaveStatistics() // ← Add this
       ]);
 
       if (leavesResponse.success) {
         const formattedData = leavesResponse.data.map((leave: any, index: number) => ({
           key: leave._id,
           _id: leave._id,
-          ID: `#EMP${String(index + 1).padStart(3, '0')}`,
+          ID: leave.doctor?.employeeId || `#EMP${String(index + 1).padStart(3, '0')}`,
           Employee: leave.doctor?.fullName || 'Unknown',
           Image: leave.doctor?.profileImage ? leave.doctor.profileImage : 'assets/img/users/user-01.jpg',
           LeaveType: leave.leaveType,

@@ -1,6 +1,7 @@
 // controllers/leaveController.js
 const Leave = require('../models/Leave');
 const Doctor = require('../models/Doctor');
+const User = require('../models/User')
 
 // Get all leaves for a specific doctor
 exports.getDoctorLeaves = async (req, res) => {
@@ -37,7 +38,7 @@ exports.getAllLeaves = async (req, res) => {
 
         console.log('📋 Total Leaves Found:', leaves.length);  // ✅ Debug log
         console.log('📋 Sample Leave:', leaves[0]);
-        
+
         res.status(200).json({
             success: true,
             data: leaves,
@@ -225,6 +226,42 @@ exports.getLeaveStatistics = async (req, res) => {
         });
     } catch (error) {
         console.error('Get leave statistics error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch statistics',
+            error: error.message
+        });
+    }
+};
+
+// Admin Statistics (for admin dashboard cards)
+exports.getAdminLeaveStatistics = async (req, res) => {
+    try {
+        const User = require('../models/User'); // Import User model
+
+        // Total active employees who can take leaves
+        const totalEmployees = await User.countDocuments({
+            role: { $in: ['doctor', 'nurse', 'staff', 'receptionist'] },
+            status: 'Active'
+        });
+
+        // Current approved leaves (people on leave today)
+        const today = new Date();
+        const currentApprovedLeaves = await Leave.countDocuments({
+            status: 'Approved',
+            fromDate: { $lte: today },
+            toDate: { $gte: today }
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalEmployees,
+                totalPresent: totalEmployees - currentApprovedLeaves
+            }
+        });
+    } catch (error) {
+        console.error('Get admin statistics error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch statistics',

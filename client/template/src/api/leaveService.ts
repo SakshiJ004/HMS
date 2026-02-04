@@ -94,3 +94,18 @@ export const getLeaveStatistics = async () => {
         throw error.response?.data || error.message;
     }
 };
+
+// Get admin leave statistics (Admin only)
+export const getAdminLeaveStatistics = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_URL}/api/leaves/admin-statistics`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw error.response?.data || error.message;
+    }
+};

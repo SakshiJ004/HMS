@@ -83,17 +83,3 @@ export const deleteLeaveType = async (id: string) => {
         throw error.response?.data || error.message;
     }
 };
-
-export const getLeaveStatistics = async () => {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/api/leaves/statistics`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-        return response.data;
-    } catch (error: any) {
-        throw error.response?.data || error.message;
-    }
-};
