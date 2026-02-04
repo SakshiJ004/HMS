@@ -393,6 +393,7 @@ import { getAllLeaves, updateLeaveStatus } from "../../../../../api/leaveService
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { getLeaveStatistics } from "../../../../../api/leaveTypeService";
 
 dayjs.extend(isBetween);
 
@@ -465,15 +466,18 @@ const LeavesList = () => {
   const fetchLeaves = async () => {
     try {
       setLoading(true);
-      const response = await getAllLeaves();
+      const [leavesResponse, statsResponse] = await Promise.all([
+        getAllLeaves(),
+        getLeaveStatistics() // ← Add this
+      ]);
 
-      if (response.success) {
-        const formattedData = response.data.map((leave: any, index: number) => ({
+      if (leavesResponse.success) {
+        const formattedData = leavesResponse.data.map((leave: any, index: number) => ({
           key: leave._id,
           _id: leave._id,
           ID: `#EMP${String(index + 1).padStart(3, '0')}`,
           Employee: leave.doctor?.fullName || 'Unknown',
-          Image: leave.doctor?.profileImage || 'user-01.jpg',
+          Image: leave.doctor?.profileImage ? leave.doctor.profileImage : 'assets/img/users/user-01.jpg',
           LeaveType: leave.leaveType,
           Date: `${dayjs(leave.fromDate).format('DD MMM YYYY')} - ${dayjs(leave.toDate).format('DD MMM YYYY')}`,
           Day: `${leave.numberOfDays} ${leave.numberOfDays > 1 ? 'Days' : 'Day'}`,
@@ -487,7 +491,7 @@ const LeavesList = () => {
         }));
 
         setData(formattedData);
-        calculateStatistics(formattedData);
+        calculateStatistics(formattedData, statsResponse.data);
       }
     } catch (error) {
       console.error('Error fetching leaves:', error);
@@ -499,8 +503,7 @@ const LeavesList = () => {
 
   // calculateStatistics function update करा - Line ~135 च्या आसपास
 
-  const calculateStatistics = (leaves: LeaveData[]) => {
-    // Current month's data
+  const calculateStatistics = (leaves: LeaveData[], apiStats?: any) => {
     const currentMonth = dayjs();
     const lastMonth = currentMonth.subtract(1, 'month');
 
@@ -516,7 +519,7 @@ const LeavesList = () => {
       ['Sick Leave', 'Emergency Leave'].includes(l.LeaveType)
     ).length;
 
-    // Last month stats (for percentage calculation)
+    // Last month stats
     const lastMonthApproved = leaves.filter(l =>
       l.Status === 'Approved' &&
       dayjs(l.AppliedOn, 'DD MMM YYYY').isSame(lastMonth, 'month')
@@ -540,14 +543,18 @@ const LeavesList = () => {
     ).length;
 
     // Calculate percentages
-    const calculatePercentage = (current: number, last: number) => {
+    const calculatePercentage = (current: number, last: number): string => {
       if (last === 0) return current > 0 ? '100' : '0';
       return ((current - last) / last * 100).toFixed(2);
     };
 
+    // Use API stats if available, otherwise fallback to 180
+    const totalPresent = apiStats?.totalPresent || (180 - approved);
+    const lastMonthPresent = 180 - lastMonthApproved;
+
     setStats({
-      totalPresent: 180 - approved,
-      totalPresentPercentage: calculatePercentage(180 - approved, 180 - lastMonthApproved),
+      totalPresent,
+      totalPresentPercentage: calculatePercentage(totalPresent, lastMonthPresent),
       plannedLeaves: planned,
       plannedPercentage: calculatePercentage(planned, lastMonthPlanned),
       unplannedLeaves: unplanned,
@@ -613,11 +620,20 @@ const LeavesList = () => {
       render: (text: string, record: LeaveData) => (
         <div className="d-flex align-items-center">
           <Link to="#" className="avatar me-2">
-            <ImageWithBasePath
-              src={`assets/img/users/${record.Image}`}
-              alt="Doctor"
-              className="rounded-circle"
-            />
+            {record.Image.startsWith('http') || record.Image.startsWith('data:') ? (
+              <img
+                src={record.Image}
+                alt="Doctor"
+                className="rounded-circle"
+                style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+              />
+            ) : (
+              <ImageWithBasePath
+                src={record.Image}
+                alt="Doctor"
+                className="rounded-circle"
+              />
+            )}
           </Link>
           <div>
             <h6 className="mb-0 fs-14 fw-semibold">
@@ -937,9 +953,16 @@ const LeavesList = () => {
                         <p className="mb-0 me-2">
                           <span className="text-dark fw-bold">{stats.plannedLeaves}</span>
                         </p>
-                        <span className="badge badge-soft-success fs-12 fw-normal">
-                          +8.95%
-                          <i className="ti ti-arrow-up-right ms-1" />
+                        <span className={`badge fs-12 fw-normal ${parseFloat(stats.plannedPercentage) >= 0
+                          ? 'badge-soft-success'
+                          : 'badge-soft-danger'
+                          }`}>
+                          {parseFloat(stats.plannedPercentage) >= 0 ? '+' : ''}
+                          {stats.plannedPercentage}%
+                          <i className={`ti ${parseFloat(stats.plannedPercentage) >= 0
+                            ? 'ti-arrow-up-right'
+                            : 'ti-arrow-down-right'
+                            } ms-1`} />
                         </span>
                       </div>
                     </div>
@@ -966,9 +989,16 @@ const LeavesList = () => {
                         <p className="mb-0 me-2">
                           <span className="text-dark fw-bold">{stats.unplannedLeaves}</span>
                         </p>
-                        <span className="badge badge-soft-success fs-12 fw-normal">
-                          +3.78%
-                          <i className="ti ti-arrow-up-right ms-1" />
+                        <span className={`badge fs-12 fw-normal ${parseFloat(stats.unplannedPercentage) >= 0
+                          ? 'badge-soft-success'
+                          : 'badge-soft-danger'
+                          }`}>
+                          {parseFloat(stats.unplannedPercentage) >= 0 ? '+' : ''}
+                          {stats.unplannedPercentage}%
+                          <i className={`ti ${parseFloat(stats.unplannedPercentage) >= 0
+                            ? 'ti-arrow-up-right'
+                            : 'ti-arrow-down-right'
+                            } ms-1`} />
                         </span>
                       </div>
                     </div>
@@ -995,9 +1025,16 @@ const LeavesList = () => {
                         <p className="mb-0 me-2">
                           <span className="text-dark fw-bold">{stats.pendingRequests}</span>
                         </p>
-                        <span className="badge badge-soft-success fs-12 fw-normal">
-                          +7.65%
-                          <i className="ti ti-arrow-up-right ms-1" />
+                        <span className={`badge fs-12 fw-normal ${parseFloat(stats.pendingPercentage) >= 0
+                          ? 'badge-soft-success'
+                          : 'badge-soft-danger'
+                          }`}>
+                          {parseFloat(stats.pendingPercentage) >= 0 ? '+' : ''}
+                          {stats.pendingPercentage}%
+                          <i className={`ti ${parseFloat(stats.pendingPercentage) >= 0
+                            ? 'ti-arrow-up-right'
+                            : 'ti-arrow-down-right'
+                            } ms-1`} />
                         </span>
                       </div>
                     </div>
@@ -1029,7 +1066,24 @@ const LeavesList = () => {
                     <span className="input-icon-addon fs-14 text-dark">
                       <i className="ti ti-calendar" />
                     </span>
-                    <PredefinedDatePicker />
+                    <DatePicker.RangePicker
+                      className="form-control"
+                      format="DD-MM-YYYY"
+                      onChange={(dates) => {
+                        if (dates && dates[0] && dates[1]) {
+                          // Apply date range filter
+                          const filtered = data.filter(item => {
+                            const appliedDate = dayjs(item.AppliedOn, 'DD MMM YYYY');
+                            return appliedDate.isBetween(dates[0], dates[1], 'day', '[]');
+                          });
+                          setData(filtered);
+                        } else {
+                          // Reset filter
+                          fetchLeaves();
+                        }
+                      }}
+                      style={{ width: '250px' }}
+                    />
                   </div>
                 </div>
               </div>

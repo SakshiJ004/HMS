@@ -1,5 +1,5 @@
 // @ts-nocheck
-const LeaveType = require('../models/LeaveType'); 
+const LeaveType = require('../models/LeaveType');
 
 
 // Get all leave types
@@ -121,6 +121,37 @@ exports.deleteLeaveType = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to delete leave type',
+            error: error.message
+        });
+    }
+};
+
+// controllers/leaveController.js मध्ये add करा
+
+exports.getLeaveStatistics = async (req, res) => {
+    try {
+        // Total doctors count
+        const totalDoctors = await User.countDocuments({ role: 'doctor', status: 'Active' });
+
+        // Current approved leaves
+        const currentApprovedLeaves = await Leave.countDocuments({
+            status: 'Approved',
+            fromDate: { $lte: new Date() },
+            toDate: { $gte: new Date() }
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalDoctors,
+                totalPresent: totalDoctors - currentApprovedLeaves
+            }
+        });
+    } catch (error) {
+        console.error('Get statistics error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch statistics',
             error: error.message
         });
     }
