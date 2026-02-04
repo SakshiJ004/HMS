@@ -5,7 +5,8 @@ const {
     getLeaveTypes,
     createLeaveType,
     updateLeaveType,
-    deleteLeaveType
+    deleteLeaveType,
+    getLeaveStatistics
 } = require('../controllers/leaveTypeController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
