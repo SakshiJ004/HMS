@@ -468,8 +468,9 @@ const getDoctorSchedule = async (req, res) => {
         const { doctorId } = req.params;
         console.log('🔍 Fetching schedule for:', doctorId);
 
-        // ✅ Use Doctor model for discriminator fields
         const Doctor = require('../models/Doctor');
+        const Appointment = require('../models/Appointment');
+
         const doctor = await Doctor.findById(doctorId);
 
         if (!doctor) {
@@ -480,9 +481,6 @@ const getDoctorSchedule = async (req, res) => {
         }
 
         console.log('✅ Found:', doctor.fullName);
-        console.log('📋 Schedules:', doctor.schedules?.length || 0);
-        console.log('📅 fromDate:', doctor.fromDate);
-        console.log('📅 toDate:', doctor.toDate);
 
         if (!doctor.schedules || doctor.schedules.length === 0) {
             return res.json({
@@ -497,7 +495,25 @@ const getDoctorSchedule = async (req, res) => {
             });
         }
 
-        // Rest of your schedule generation logic stays the same...
+        // ✅ CRITICAL: Fetch all existing appointments for this doctor
+        const existingAppointments = await Appointment.find({
+            doctor: doctorId,
+            status: { $nin: ['Cancelled', 'Checked Out'] } // Exclude cancelled and completed
+        }).select('appointmentDate appointmentTime');
+
+        console.log('📅 Existing appointments:', existingAppointments.length);
+
+        // ✅ Create a Set of booked slots for fast lookup
+        const bookedSlots = new Set();
+        existingAppointments.forEach(apt => {
+            const dateStr = new Date(apt.appointmentDate).toISOString().split('T')[0];
+            const timeStr = apt.appointmentTime;
+            const slotKey = `${dateStr}_${timeStr}`;
+            bookedSlots.add(slotKey);
+        });
+
+        console.log('🔒 Booked slots:', Array.from(bookedSlots));
+
         const availableDates = [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -508,14 +524,12 @@ const getDoctorSchedule = async (req, res) => {
         if (doctor.fromDate) {
             const docFromDate = new Date(doctor.fromDate);
             docFromDate.setHours(0, 0, 0, 0);
-            if (docFromDate > today) {
-                startDate = docFromDate;
-            }
+            startDate = docFromDate;
         }
 
         if (doctor.toDate) {
             endDate = new Date(doctor.toDate);
-            endDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
         } else {
             const maxDays = doctor.acceptBookingsDays || 30;
             endDate.setDate(startDate.getDate() + maxDays);
@@ -526,11 +540,15 @@ const getDoctorSchedule = async (req, res) => {
         for (let i = 0; i <= daysToGenerate; i++) {
             const date = new Date(startDate);
             date.setDate(startDate.getDate() + i);
+            date.setHours(0, 0, 0, 0);
 
-            if (date < today) continue;
-
-            const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
             const dateStr = date.toISOString().split('T')[0];
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+            // Skip past dates
+            if (date < today) {
+                continue;
+            }
 
             const daySchedule = doctor.schedules.find(s => s.day === dayName);
 
@@ -538,11 +556,24 @@ const getDoctorSchedule = async (req, res) => {
                 continue;
             }
 
+            const hasValidSlots = daySchedule.timeSlots.some(
+                slot => slot.startTime !== "00:00:00" && slot.endTime !== "00:00:00" &&
+                    slot.startTime !== "00:00" && slot.endTime !== "00:00"
+            );
+
+            if (!hasValidSlots) {
+                continue;
+            }
+
+            // Generate time slots
             const allTimeSlots = [];
             const duration = doctor.appointmentDuration || 30;
 
             for (const slot of daySchedule.timeSlots) {
-                if (slot.startTime === "00:00:00" || slot.endTime === "00:00:00") continue;
+                if (slot.startTime === "00:00:00" || slot.endTime === "00:00:00" ||
+                    slot.startTime === "00:00" || slot.endTime === "00:00") {
+                    continue;
+                }
 
                 const [startHour, startMin] = slot.startTime.split(':').map(Number);
                 const [endHour, endMin] = slot.endTime.split(':').map(Number);
@@ -559,23 +590,39 @@ const getDoctorSchedule = async (req, res) => {
                     const endSlotHour = Math.floor(endMins / 60);
                     const endSlotMin = endMins % 60;
 
-                    allTimeSlots.push({
-                        startTime: `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`,
-                        endTime: `${String(endSlotHour).padStart(2, '0')}:${String(endSlotMin).padStart(2, '0')}`
-                    });
+                    const slotStart = `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`;
+                    const slotEnd = `${String(endSlotHour).padStart(2, '0')}:${String(endSlotMin).padStart(2, '0')}`;
+
+                    // ✅ CRITICAL: Check if this slot is already booked
+                    const slotKey = `${dateStr}_${slotStart}`;
+
+                    if (!bookedSlots.has(slotKey)) {
+                        // ✅ Slot is available
+                        allTimeSlots.push({
+                            startTime: slotStart,
+                            endTime: slotEnd,
+                            isBooked: false
+                        });
+                    } else {
+                        console.log(`🔒 BLOCKED: ${dateStr} ${slotStart} - Already booked`);
+                    }
                 }
             }
 
+            // ✅ Only add date if it has at least one available slot
             if (allTimeSlots.length > 0) {
                 availableDates.push({
                     date: dateStr,
                     day: dayName,
                     timeSlots: allTimeSlots
                 });
+                console.log(`✅ ${dateStr} (${dayName}): ${allTimeSlots.length} available slots`);
+            } else {
+                console.log(`⚠️ ${dateStr} (${dayName}): All slots booked`);
             }
         }
 
-        console.log('✅ Generated:', availableDates.length, 'dates');
+        console.log(`\n📊 RESULT: ${availableDates.length} dates with available slots`);
 
         res.json({
             success: true,
