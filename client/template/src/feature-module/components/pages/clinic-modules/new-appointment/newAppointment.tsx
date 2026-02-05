@@ -962,6 +962,9 @@ const NewAppointment = () => {
                                   const scheduleData = await getDoctorSchedule(selectedDoctorId);
 
                                   console.log("✅ Schedule data received:", scheduleData);
+                                  console.log('📅 Full schedule response:', scheduleData);
+                                  console.log('📅 Schedule array:', scheduleData.schedule);
+                                  console.log('📅 Number of available dates:', scheduleData.schedule?.length || 0);
 
                                   setDoctorSchedule(scheduleData);
 
@@ -1034,35 +1037,32 @@ const NewAppointment = () => {
                               disabledDate={(current) => {
                                 if (!current) return true;
 
-                                // ✅ If doctor schedule exists, check both availability and past status
-                                if (doctorSchedule && doctorSchedule.schedule && doctorSchedule.schedule.length > 0) {
-                                  const currentDateStr = current.format('YYYY-MM-DD');
+                                // ✅ FIXED: Simpler and more reliable validation
+                                const currentDateStr = current.format('YYYY-MM-DD');
+                                const today = dayjs().startOf('day');
 
-                                  // Find this date in schedule
-                                  const dateSchedule = doctorSchedule.schedule.find(
-                                    (s: any) => s.date === currentDateStr
-                                  );
-
-                                  if (!dateSchedule) {
-                                    // Date not in schedule - disable it
-                                    console.log(`🚫 ${currentDateStr}: Not in doctor's schedule`);
-                                    return true;
-                                  }
-
-                                  // Check if it's marked as past
-                                  if (dateSchedule.isPast) {
-                                    console.log(`⏮️ ${currentDateStr}: Past date - disabled`);
-                                    return true;
-                                  }
-
-                                  // Date is in schedule and not past - enable it
-                                  console.log(`✅ ${currentDateStr}: Available`);
-                                  return false;
+                                // Disable all past dates
+                                if (current.isBefore(today, 'day')) {
+                                  return true;
                                 }
 
-                                // ✅ If no doctor selected yet, disable all dates
-                                console.log(`⚠️ No schedule loaded - disabling all dates`);
-                                return true;
+                                // If no schedule loaded, disable all dates
+                                if (!doctorSchedule || !doctorSchedule.schedule || doctorSchedule.schedule.length === 0) {
+                                  return true;
+                                }
+
+                                // Check if this date exists in doctor's schedule
+                                const dateSchedule = doctorSchedule.schedule.find(
+                                  (s: any) => s.date === currentDateStr
+                                );
+
+                                // If date not in schedule, disable it
+                                if (!dateSchedule) {
+                                  return true;
+                                }
+
+                                // Date exists in schedule and is not past - enable it
+                                return false;
                               }}
                               onChange={(date) => {
                                 console.log('📅 Date selected:', date?.format('YYYY-MM-DD'));

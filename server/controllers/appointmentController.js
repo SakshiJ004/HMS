@@ -548,10 +548,15 @@ const getDoctorSchedule = async (req, res) => {
             const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
             const dateStr = date.toISOString().split('T')[0];
 
-            // ✅ Check if date is in the past
-            const isPast = date < today;
+            // ✅ FIXED: Better past date checking
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            const isPast = date < now;
+
             if (isPast) {
-                console.log(`⏮️ ${dateStr} (${dayName}) is in the past - marking as disabled`);
+                console.log(`⏮️ ${dateStr} (${dayName}) is in the past - disabled`);
+                // Don't add past dates to available dates at all
+                continue; // Skip this date entirely
             }
 
             // ✅ Find schedule for this day
@@ -620,16 +625,14 @@ const getDoctorSchedule = async (req, res) => {
                 }
             }
 
-            // ✅ Only add if we have generated time slots
-            if (allTimeSlots.length > 0) {
+            // Only add if NOT past and has valid slots
+            if (!isPast && allTimeSlots.length > 0) {
                 availableDates.push({
                     date: dateStr,
                     day: dayName,
-                    timeSlots: allTimeSlots,
-                    isPast: isPast  // ✅ Add isPast flag
+                    timeSlots: allTimeSlots
                 });
-
-                console.log(`✅ Added ${dayName} (${dateStr}) with ${allTimeSlots.length} slots${isPast ? ' [PAST DATE]' : ''}`);
+                console.log(`✅ Added ${dayName} (${dateStr}) with ${allTimeSlots.length} slots`);
             }
         }
 
