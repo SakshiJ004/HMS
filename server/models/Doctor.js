@@ -35,6 +35,21 @@ const doctorSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    fromDate: {
+        type: Date,
+        default: null,
+    },
+    toDate: {
+        type: Date,
+        default: null,
+    },
+    schedules: [{
+        day: String,
+        timeSlots: [{
+            startTime: String,
+            endTime: String,
+        }],
+    }],
     education: [{
         degree: String,
         institution: String,
@@ -48,13 +63,6 @@ const doctorSchema = new mongoose.Schema({
         name: String,
         issuedBy: String,
         year: Number,
-    }],
-    schedules: [{
-        day: String,
-        timeSlots: [{
-            startTime: String,
-            endTime: String,
-        }],
     }],
 });
 

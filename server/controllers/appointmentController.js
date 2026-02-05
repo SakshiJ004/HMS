@@ -466,13 +466,11 @@ const deleteAppointment = async (req, res) => {
 const getDoctorSchedule = async (req, res) => {
     try {
         const { doctorId } = req.params;
+        console.log('🔍 Fetching schedule for:', doctorId);
 
-        console.log('🔍 Fetching schedule for doctor:', doctorId);
-
-        // Find doctor with schedule data - ✅ IMPORTANT: Include fromDate and toDate
-        const doctor = await User.findById(doctorId).select(
-            'schedules acceptBookingsDays appointmentDuration fullName department fromDate toDate'
-        );
+        // ✅ Use Doctor model for discriminator fields
+        const Doctor = require('../models/Doctor');
+        const doctor = await Doctor.findById(doctorId);
 
         if (!doctor) {
             return res.status(404).json({
@@ -481,15 +479,12 @@ const getDoctorSchedule = async (req, res) => {
             });
         }
 
-        console.log('✅ Doctor Found:', doctor.fullName);
-        console.log('📋 Doctor schedules from DB:', JSON.stringify(doctor.schedules, null, 2));
+        console.log('✅ Found:', doctor.fullName);
+        console.log('📋 Schedules:', doctor.schedules?.length || 0);
         console.log('📅 fromDate:', doctor.fromDate);
         console.log('📅 toDate:', doctor.toDate);
-        console.log('📅 acceptBookingsDays:', doctor.acceptBookingsDays);
 
-        // Check if doctor has schedules
         if (!doctor.schedules || doctor.schedules.length === 0) {
-            console.log('⚠️ Doctor has no schedule set');
             return res.json({
                 success: true,
                 data: {
@@ -502,95 +497,52 @@ const getDoctorSchedule = async (req, res) => {
             });
         }
 
-        // ✅ Generate available dates based on doctor's schedule
+        // Rest of your schedule generation logic stays the same...
         const availableDates = [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // ✅ Determine start and end dates
         let startDate = new Date(today);
         let endDate = new Date(today);
 
-        // If doctor has fromDate set, use it (but not if it's in the past)
         if (doctor.fromDate) {
             const docFromDate = new Date(doctor.fromDate);
             docFromDate.setHours(0, 0, 0, 0);
-
             if (docFromDate > today) {
                 startDate = docFromDate;
-                console.log(`📅 Using doctor's fromDate: ${docFromDate.toISOString().split('T')[0]}`);
-            } else {
-                console.log(`⚠️ Doctor's fromDate is in the past, using today`);
             }
         }
 
-        // If doctor has toDate set, use it as the end date
         if (doctor.toDate) {
             endDate = new Date(doctor.toDate);
             endDate.setHours(0, 0, 0, 0);
-            console.log(`📅 Using doctor's toDate: ${endDate.toISOString().split('T')[0]}`);
         } else {
-            // Otherwise use acceptBookingsDays from start date
             const maxDays = doctor.acceptBookingsDays || 30;
             endDate.setDate(startDate.getDate() + maxDays);
-            console.log(`📅 Using acceptBookingsDays (${maxDays} days from start)`);
         }
 
-        // Calculate actual days to generate
         const daysToGenerate = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-        console.log(`📅 Generating schedule for ${daysToGenerate} days (from ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]})`);
 
-        // ✅ Loop through all days in the range
         for (let i = 0; i <= daysToGenerate; i++) {
             const date = new Date(startDate);
             date.setDate(startDate.getDate() + i);
 
+            if (date < today) continue;
+
             const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
             const dateStr = date.toISOString().split('T')[0];
 
-            // ✅ FIXED: Better past date checking
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            const isPast = date < now;
-
-            if (isPast) {
-                console.log(`⏮️ ${dateStr} (${dayName}) is in the past - disabled`);
-                // Don't add past dates to available dates at all
-                continue; // Skip this date entirely
-            }
-
-            // ✅ Find schedule for this day
             const daySchedule = doctor.schedules.find(s => s.day === dayName);
 
-            // ✅ Skip if no schedule for this day OR no valid time slots
             if (!daySchedule || !daySchedule.timeSlots || daySchedule.timeSlots.length === 0) {
-                console.log(`⚠️ ${dateStr} (${dayName}) - No schedule/slots, skipping`);
                 continue;
             }
 
-            // ✅ Check if all time slots are 00:00 (which means no real schedule)
-            const hasValidSlots = daySchedule.timeSlots.some(
-                slot => slot.startTime !== "00:00:00" && slot.endTime !== "00:00:00"
-            );
-
-            if (!hasValidSlots) {
-                console.log(`⚠️ ${dateStr} (${dayName}) - All slots are 00:00, skipping`);
-                continue;
-            }
-
-            console.log(`✅ Processing ${dateStr} (${dayName})`);
-
-            // ✅ Generate time slots based on appointment duration
             const allTimeSlots = [];
             const duration = doctor.appointmentDuration || 30;
 
             for (const slot of daySchedule.timeSlots) {
-                // Skip 00:00 slots
-                if (slot.startTime === "00:00:00" || slot.endTime === "00:00:00") {
-                    continue;
-                }
-
-                console.log(`  🕐 Processing slot: ${slot.startTime} - ${slot.endTime}`);
+                if (slot.startTime === "00:00:00" || slot.endTime === "00:00:00") continue;
 
                 const [startHour, startMin] = slot.startTime.split(':').map(Number);
                 const [endHour, endMin] = slot.endTime.split(':').map(Number);
@@ -598,54 +550,32 @@ const getDoctorSchedule = async (req, res) => {
                 const startMinutes = startHour * 60 + startMin;
                 const endMinutes = endHour * 60 + endMin;
 
-                // ✅ Generate slots with proper start and end times
                 for (let mins = startMinutes; mins < endMinutes; mins += duration) {
-                    // ✅ Don't create a slot if it would extend beyond the schedule
-                    if (mins + duration > endMinutes) {
-                        console.log(`    ⚠️ Skipping slot at ${Math.floor(mins / 60)}:${mins % 60} - would exceed end time`);
-                        break;
-                    }
+                    if (mins + duration > endMinutes) break;
 
                     const slotHour = Math.floor(mins / 60);
                     const slotMin = mins % 60;
-
                     const endMins = mins + duration;
                     const endSlotHour = Math.floor(endMins / 60);
                     const endSlotMin = endMins % 60;
 
-                    const slotStart = `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`;
-                    const slotEnd = `${String(endSlotHour).padStart(2, '0')}:${String(endSlotMin).padStart(2, '0')}`;
-
                     allTimeSlots.push({
-                        startTime: slotStart,
-                        endTime: slotEnd
+                        startTime: `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`,
+                        endTime: `${String(endSlotHour).padStart(2, '0')}:${String(endSlotMin).padStart(2, '0')}`
                     });
-
-                    console.log(`    ✅ Generated slot: ${slotStart} - ${slotEnd}`);
                 }
             }
 
-            // Only add if NOT past and has valid slots
-            if (!isPast && allTimeSlots.length > 0) {
+            if (allTimeSlots.length > 0) {
                 availableDates.push({
                     date: dateStr,
                     day: dayName,
                     timeSlots: allTimeSlots
                 });
-                console.log(`✅ Added ${dayName} (${dateStr}) with ${allTimeSlots.length} slots`);
             }
         }
 
-        console.log(`\n✅ Final result: Generated ${availableDates.length} available dates`);
-
-        // ✅ Debug: Show first and last dates
-        if (availableDates.length > 0) {
-            console.log('📊 Date range:', {
-                first: availableDates[0].date,
-                last: availableDates[availableDates.length - 1].date,
-                total: availableDates.length
-            });
-        }
+        console.log('✅ Generated:', availableDates.length, 'dates');
 
         res.json({
             success: true,
@@ -657,10 +587,10 @@ const getDoctorSchedule = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('❌ Error fetching doctor schedule:', error);
+        console.error('❌ Error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while fetching schedule',
+            message: 'Server error',
             error: error.message
         });
     }

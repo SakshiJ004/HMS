@@ -405,12 +405,6 @@ const generateDoctorPassword = (username, dob) => {
     const capitalizedUsername = lowerUsername.charAt(0).toUpperCase() + lowerUsername.slice(1);
     const password = `${capitalizedUsername}@${birthYear}`;
 
-    console.log('🔐 Password Generation Debug:');
-    console.log('  Username:', username, '→', lowerUsername);
-    console.log('  DOB:', dob);
-    console.log('  Birth Year:', birthYear);
-    console.log('  Generated Password:', password);
-
     return password;
 };
 
@@ -575,6 +569,8 @@ const createDoctor = async (req, res) => {
             awards: awards || [],
             certifications: certifications || [],
             schedules: schedules || [],
+            fromDate: null,
+            toDate: null,
         });
 
         const doctorResponse = doctor.toObject();
@@ -743,84 +739,90 @@ const deleteDoctor = async (req, res) => {
 const updateDoctorSchedule = async (req, res) => {
     try {
         const { id } = req.params;
-        const { schedules, location, fromDate, toDate, recuresEvery } = req.body;
+        const { schedules, fromDate, toDate } = req.body;
 
-        console.log('📝 Updating schedule for doctor:', id);
-        console.log('📅 Schedule data received:', {
-            schedulesCount: schedules?.length,
-            fromDate,
-            toDate,
-            location,
-            recuresEvery
-        });
+        console.log('📝 Updating schedule for:', id);
+        console.log('📅 Data:', { fromDate, toDate, schedulesCount: schedules?.length });
 
-        const doctor = await User.findById(id);
-        if (!doctor || doctor.role !== 'doctor') {
+        // ✅ Use Doctor model directly for proper discriminator field access
+        const doctor = await Doctor.findById(id);
+
+        if (!doctor) {
+            console.log('❌ Doctor not found');
             return res.status(404).json({
                 success: false,
                 message: 'Doctor not found'
             });
         }
 
-        // ✅ Update schedules
-        if (schedules) {
-            doctor.schedules = schedules;
+        console.log('✅ Found:', doctor.fullName);
+
+        // Clean schedules
+        if (schedules && Array.isArray(schedules)) {
+            const cleaned = schedules
+                .map(day => ({
+                    day: day.day,
+                    timeSlots: (day.timeSlots || [])
+                        .filter(slot =>
+                            slot.startTime && slot.endTime &&
+                            slot.startTime !== "00:00:00" && slot.endTime !== "00:00:00" &&
+                            slot.startTime !== "00:00" && slot.endTime !== "00:00"
+                        )
+                        .map(slot => ({
+                            startTime: slot.startTime,
+                            endTime: slot.endTime
+                        }))
+                }))
+                .filter(day => day.timeSlots.length > 0);
+
+            doctor.schedules = cleaned;
+            console.log('✅ Set schedules:', cleaned.length, 'days');
         }
 
-        // ✅ Update fromDate and toDate
+        // Set dates
         if (fromDate) {
-            doctor.fromDate = new Date(fromDate);
-            console.log('✅ Set fromDate:', doctor.fromDate);
+            const from = new Date(fromDate);
+            from.setHours(0, 0, 0, 0);
+            doctor.fromDate = from;
+            console.log('✅ fromDate:', from.toISOString().split('T')[0]);
         }
 
         if (toDate) {
-            doctor.toDate = new Date(toDate);
-            console.log('✅ Set toDate:', doctor.toDate);
+            const to = new Date(toDate);
+            to.setHours(23, 59, 59, 999);
+            doctor.toDate = to;
+            console.log('✅ toDate:', to.toISOString().split('T')[0]);
         }
 
-        // ✅ Update acceptBookingsDays if not using explicit dates
-        if (!fromDate && !toDate && recuresEvery) {
-            // If no explicit dates but has recuresEvery, calculate acceptBookingsDays
-            // For example: Weekly = 7, Monthly = 30, Yearly = 365
-            const daysMap = {
-                Weekly: 7,
-                Monthly: 30,
-                Yearly: 365
-            };
-
-            if (daysMap[recuresEvery]) {
-                doctor.acceptBookingsDays = daysMap[recuresEvery];
-                console.log('✅ Set acceptBookingsDays:', doctor.acceptBookingsDays);
-            }
+        // Calculate days
+        if (fromDate && toDate) {
+            const diffDays = Math.ceil((new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24));
+            doctor.acceptBookingsDays = diffDays;
+            console.log('✅ acceptBookingsDays:', diffDays);
         }
 
         await doctor.save();
+        console.log('💾 Saved');
 
-        console.log('🔍 Saved doctor data:');
-        console.log('  fromDate:', doctor.fromDate);
-        console.log('  toDate:', doctor.toDate);
-        console.log('  schedules count:', doctor.schedules?.length);
-
-        // ✅ Fetch fresh from DB to confirm
-        const verifyDoctor = await User.findById(id).select('fromDate toDate schedules');
-        console.log('🔍 Verified from DB:');
-        console.log('  fromDate:', verifyDoctor.fromDate);
-        console.log('  toDate:', verifyDoctor.toDate);
-
-        console.log('✅ Schedule updated successfully');
+        // Verify
+        const verified = await Doctor.findById(id);
+        console.log('🔍 VERIFIED:');
+        console.log('  fromDate:', verified.fromDate);
+        console.log('  toDate:', verified.toDate);
+        console.log('  schedules:', verified.schedules?.length || 0);
 
         res.status(200).json({
             success: true,
-            message: 'Schedule updated successfully',
+            message: 'Schedule updated',
             data: {
-                schedules: doctor.schedules,
-                fromDate: doctor.fromDate,
-                toDate: doctor.toDate,
-                acceptBookingsDays: doctor.acceptBookingsDays
+                schedules: verified.schedules,
+                fromDate: verified.fromDate,
+                toDate: verified.toDate,
+                acceptBookingsDays: verified.acceptBookingsDays
             }
         });
     } catch (error) {
-        console.error('❌ Update schedule error:', error);
+        console.error('❌ Error:', error);
         res.status(500).json({
             success: false,
             message: 'Error updating schedule',
