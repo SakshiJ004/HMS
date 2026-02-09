@@ -79,6 +79,8 @@ app.use('/api/search', require('./routes/searchRoutes'));
 app.use('/api/staffs', require('./routes/staffRoutes'))
 app.use('/api/leaves', require('./routes/leaveRoutes'));
 app.use('/api/leave-types', require('./routes/leaveTypeRoutes'));
+app.use('/api/online-consultations', require('./routes/onlineConsultationRoutes'))
+app.use('/api/diagnoses', require('./routes/diagnosisRoutes'))
 
 // Health check route
 app.get('/api/health', (req, res) => {

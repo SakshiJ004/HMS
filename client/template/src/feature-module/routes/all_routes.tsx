@@ -54,7 +54,7 @@ export const all_routes = {
   doctorspasswordsettings: "/doctor/doctors-password-settings",
   doctorsnotificationsettings: "/doctor/doctors-notification-settings",
   doctorsprescriptions: "/doctor/doctors-prescriptions",
-  onlineconsultations: "/doctor/online-consultations",
+  onlineconsultations: "/doctor/online-consultations/:appointmentId",
   doctorsappointments: "/doctor/doctors-appointments",
   doctorspatientdetails: "/doctor/doctors-patient-details",
   doctorsappointmentdetails: "/doctor/doctors-appointment-details",

@@ -22,6 +22,7 @@ import {
 } from "../../../../../api/doctorDashboardService";
 import { getDoctor } from "../../../../../api/doctorService";
 import { all_routes } from "../../../../routes/all_routes";
+import { message } from "antd";
 
 
 const DoctorDahboard = () => {
@@ -61,6 +62,12 @@ const DoctorDahboard = () => {
   });
   const [topPatients, setTopPatients] = useState<any[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<RecentAppointment | null>(null);
+
+  const isAppointmentStartable = (appointment: any) => {
+    const now = dayjs();
+    const aptDateTime = dayjs(`${appointment.appointmentDate} ${appointment.appointmentTime}`);
+    return now.isAfter(aptDateTime.subtract(10, 'minutes'));
+  };
 
   useEffect(() => {
     fetchAllData();
@@ -366,6 +373,23 @@ const DoctorDahboard = () => {
                             <p className="text-truncate">{apt.appointmentType}</p>
                           </div>
                         </div>
+
+                        {apt.appointmentType === 'Online Consultation' && (
+                          <Link
+                            to={`/doctor/online-consultations/${apt._id}`}
+                            className={`btn btn-sm w-100 mt-3 ${isAppointmentStartable(apt) ? 'btn-primary' : 'btn-secondary disabled'
+                              }`}
+                            onClick={(e) => {
+                              if (!isAppointmentStartable(apt)) {
+                                e.preventDefault();
+                                message.info('Appointment can be started 10 minutes before scheduled time');
+                              }
+                            }}
+                          >
+                            <i className="ti ti-video me-1"></i>
+                            {isAppointmentStartable(apt) ? 'Start Consultation' : 'Not Yet Available'}
+                          </Link>
+                        )}
                       </div>
                     ))
                   ) : (
