@@ -7,14 +7,34 @@ exports.getByAppointmentId = async (req, res) => {
         const { appointmentId } = req.params;
 
         let consultation = await OnlineConsultation.findOne({ appointmentId })
-            .populate('patient', 'fullName email phone profileImage age gender bloodGroup')
-            .populate('doctor', 'fullName department');
+            .populate({
+                path: 'patient',
+                select: 'fullName email phone profileImage age gender bloodGroup'
+            })
+            .populate({
+                path: 'doctor',
+                select: 'fullName department'
+            })
+            .populate({
+                path: 'appointmentId',  // ← 🔥 IMPORTANT: Populate appointment details
+                select: 'appointmentDate appointmentTime reason appointmentType consultationCharge',
+                populate: [
+                    {
+                        path: 'patient',
+                        select: 'fullName email phone profileImage age gender bloodGroup'
+                    },
+                    {
+                        path: 'doctor',
+                        select: 'fullName department specialization'
+                    }
+                ]
+            });
 
         // If consultation doesn't exist, create new one
         if (!consultation) {
             const appointment = await Appointment.findById(appointmentId)
-                .populate('patient')
-                .populate('doctor');
+                .populate('patient', 'fullName email phone profileImage age gender bloodGroup')
+                .populate('doctor', 'fullName department specialization');
 
             if (!appointment) {
                 return res.status(404).json({ success: false, message: 'Appointment not found' });
@@ -30,7 +50,7 @@ exports.getByAppointmentId = async (req, res) => {
                     items: []
                 },
                 vitals: {},
-                complaints: [],
+                complaints: appointment.reason ? [{ complaint: appointment.reason, duration: '', severity: 'Mild' }] : [],  // ← 🔥 AUTO-FILL from appointment reason
                 diagnosis: [],
                 medications: [],
                 advice: [],
@@ -39,9 +59,21 @@ exports.getByAppointmentId = async (req, res) => {
             });
 
             await consultation.save();
+
+            // Re-fetch with all populated data
             consultation = await OnlineConsultation.findById(consultation._id)
-                .populate('patient', 'fullName email phone profileImage age gender bloodGroup')
-                .populate('doctor', 'fullName department');
+                .populate({
+                    path: 'patient',
+                    select: 'fullName email phone profileImage age gender bloodGroup'
+                })
+                .populate({
+                    path: 'doctor',
+                    select: 'fullName department specialization'
+                })
+                .populate({
+                    path: 'appointmentId',
+                    select: 'appointmentDate appointmentTime reason appointmentType consultationCharge'
+                });
         }
 
         res.json({ success: true, data: consultation });
