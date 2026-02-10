@@ -65,8 +65,18 @@ const DoctorDahboard = () => {
 
   const isAppointmentStartable = (appointment: any) => {
     const now = dayjs();
-    const aptDateTime = dayjs(`${appointment.appointmentDate} ${appointment.appointmentTime}`);
-    return now.isAfter(aptDateTime.subtract(10, 'minutes'));
+    const appointmentDateTime = dayjs(`${appointment.appointmentDate} ${appointment.appointmentTime}`, 'YYYY-MM-DD HH:mm');
+
+    // Can start 10 minutes BEFORE appointment time
+    const canStartFrom = appointmentDateTime.subtract(10, 'minutes');
+
+    console.log('Current Time:', now.format('YYYY-MM-DD HH:mm'));
+    console.log('Appointment Time:', appointmentDateTime.format('YYYY-MM-DD HH:mm'));
+    console.log('Can Start From:', canStartFrom.format('YYYY-MM-DD HH:mm'));
+    console.log('Is Startable:', now.isAfter(canStartFrom) || now.isSame(canStartFrom));
+
+    // Enable button 10 min before OR after appointment time
+    return now.isAfter(canStartFrom) || now.isSame(canStartFrom);
   };
 
   useEffect(() => {
