@@ -81,7 +81,6 @@ app.use('/api/leaves', require('./routes/leaveRoutes'));
 app.use('/api/leave-types', require('./routes/leaveTypeRoutes'));
 app.use('/api/online-consultations', require('./routes/onlineConsultationRoutes'))
 app.use('/api/diagnoses', require('./routes/diagnosisRoutes'))
-app.use('/api/specializations', require('./routes/specializationRoutes'))
 
 // Health check route
 app.get('/api/health', (req, res) => {
