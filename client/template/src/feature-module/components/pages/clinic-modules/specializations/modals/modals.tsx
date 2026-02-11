@@ -168,6 +168,7 @@ import {
   createSpecialization,
   updateSpecialization,
 } from "../../../../../../api/specializationService";
+import * as bootstrap from "bootstrap"
 
 interface ModalsProps {
   showAddModal: boolean;
@@ -219,12 +220,13 @@ const Modals = ({
     onCloseAdd();
     const modal = document.getElementById("add_specialization");
     if (modal) {
-      const bootstrapModal = (window as any).bootstrap.Modal.getInstance(modal);
-      if (bootstrapModal) {
-        bootstrapModal.hide();
+      const modalInstance = bootstrap.Modal.getInstance(modal);
+      if (modalInstance) {
+        modalInstance.hide();
       }
     }
   };
+
 
   const closeEditModal = () => {
     setEditName("");
@@ -233,23 +235,25 @@ const Modals = ({
     onCloseEdit();
     const modal = document.getElementById("edit_specialization");
     if (modal) {
-      const bootstrapModal = (window as any).bootstrap.Modal.getInstance(modal);
-      if (bootstrapModal) {
-        bootstrapModal.hide();
+      const modalInstance = bootstrap.Modal.getInstance(modal);
+      if (modalInstance) {
+        modalInstance.hide();
       }
     }
   };
+
 
   const closeDeleteModal = () => {
     onCloseDelete();
     const modal = document.getElementById("delete_specialization");
     if (modal) {
-      const bootstrapModal = (window as any).bootstrap.Modal.getInstance(modal);
-      if (bootstrapModal) {
-        bootstrapModal.hide();
+      const modalInstance = bootstrap.Modal.getInstance(modal);
+      if (modalInstance) {
+        modalInstance.hide();
       }
     }
   };
+
 
   // Handle Add Submit
   const handleAddSubmit = async (e: React.FormEvent) => {
@@ -327,31 +331,34 @@ const Modals = ({
     if (showAddModal) {
       const modal = document.getElementById("add_specialization");
       if (modal) {
-        const bootstrapModal = new (window as any).bootstrap.Modal(modal);
-        bootstrapModal.show();
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
+        modalInstance.show();
       }
     }
   }, [showAddModal]);
+
 
   useEffect(() => {
     if (showEditModal) {
       const modal = document.getElementById("edit_specialization");
       if (modal) {
-        const bootstrapModal = new (window as any).bootstrap.Modal(modal);
-        bootstrapModal.show();
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
+        modalInstance.show();
       }
     }
   }, [showEditModal]);
+
 
   useEffect(() => {
     if (showDeleteModal) {
       const modal = document.getElementById("delete_specialization");
       if (modal) {
-        const bootstrapModal = new (window as any).bootstrap.Modal(modal);
-        bootstrapModal.show();
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
+        modalInstance.show();
       }
     }
   }, [showDeleteModal]);
+
 
   return (
     <>
