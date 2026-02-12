@@ -6,40 +6,42 @@ exports.getByAppointmentId = async (req, res) => {
     try {
         const { appointmentId } = req.params;
 
+        console.log('🔍 Looking for appointment:', appointmentId);
+
+        // STEP 1: Find consultation by appointmentId
         let consultation = await OnlineConsultation.findOne({ appointmentId })
             .populate({
                 path: 'patient',
-                select: 'fullName email phone profileImage age gender bloodGroup'
+                select: 'fullName email phone profileImage age gender bloodGroup dob address'
             })
             .populate({
                 path: 'doctor',
-                select: 'fullName department'
-            })
-            .populate({
-                path: 'appointmentId',  // ← 🔥 IMPORTANT: Populate appointment details
-                select: 'appointmentDate appointmentTime reason appointmentType consultationCharge',
-                populate: [
-                    {
-                        path: 'patient',
-                        select: 'fullName email phone profileImage age gender bloodGroup'
-                    },
-                    {
-                        path: 'doctor',
-                        select: 'fullName department specialization'
-                    }
-                ]
+                select: 'fullName email phone department designation specialization'
             });
 
-        // If consultation doesn't exist, create new one
+        console.log('📋 Found consultation:', consultation ? 'YES' : 'NO');
+
+        // STEP 2: If consultation doesn't exist, create new one
         if (!consultation) {
+            console.log('➕ Creating new consultation...');
+
+            // Fetch appointment details
+            const Appointment = require('../models/Appointment');
             const appointment = await Appointment.findById(appointmentId)
-                .populate('patient', 'fullName email phone profileImage age gender bloodGroup')
-                .populate('doctor', 'fullName department specialization');
+                .populate('patient')
+                .populate('doctor');
 
             if (!appointment) {
-                return res.status(404).json({ success: false, message: 'Appointment not found' });
+                console.error('❌ Appointment not found:', appointmentId);
+                return res.status(404).json({
+                    success: false,
+                    message: 'Appointment not found'
+                });
             }
 
+            console.log('✅ Appointment found:', appointment.patient?.fullName);
+
+            // Create new consultation
             consultation = new OnlineConsultation({
                 appointmentId: appointment._id,
                 patient: appointment.patient._id,
@@ -50,7 +52,11 @@ exports.getByAppointmentId = async (req, res) => {
                     items: []
                 },
                 vitals: {},
-                complaints: appointment.reason ? [{ complaint: appointment.reason, duration: '', severity: 'Mild' }] : [],  // ← 🔥 AUTO-FILL from appointment reason
+                complaints: appointment.reason ? [{
+                    complaint: appointment.reason,
+                    duration: '',
+                    severity: 'Mild'
+                }] : [],
                 diagnosis: [],
                 medications: [],
                 advice: [],
@@ -59,27 +65,30 @@ exports.getByAppointmentId = async (req, res) => {
             });
 
             await consultation.save();
+            console.log('💾 Consultation saved:', consultation._id);
 
-            // Re-fetch with all populated data
+            // Re-fetch with populated data
             consultation = await OnlineConsultation.findById(consultation._id)
                 .populate({
                     path: 'patient',
-                    select: 'fullName email phone profileImage age gender bloodGroup'
+                    select: 'fullName email phone profileImage age gender bloodGroup dob address'
                 })
                 .populate({
                     path: 'doctor',
-                    select: 'fullName department specialization'
-                })
-                .populate({
-                    path: 'appointmentId',
-                    select: 'appointmentDate appointmentTime reason appointmentType consultationCharge'
+                    select: 'fullName email phone department designation specialization'
                 });
         }
 
+        console.log('✅ Returning consultation data');
         res.json({ success: true, data: consultation });
+
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        console.error('❌ Error in getByAppointmentId:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message,
+            error: error.toString()
+        });
     }
 };
 
