@@ -1,3 +1,4 @@
+const https = require('https')
 const OnlineConsultation = require('../models/OnlineConsultation')
 const Appointment = require('../models/Appointment');
 
@@ -344,5 +345,101 @@ exports.getLatestAppointment = async (req, res) => {
         return res.json({ success: true, data: consultation });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// New function - Daily.co room create:
+exports.createVideoRoom = async (req, res) => {
+    try {
+        const { consultationId } = req.params;
+        const { role } = req.body; // 'doctor' or 'patient'
+        const DAILY_API_KEY = process.env.DAILY_API_KEY;
+        const DAILY_DOMAIN = process.env.DAILY_DOMAIN;
+
+        const roomName = `consultation-${consultationId}`;
+
+        // Step 1: Room exist करतो का बघ, नाहीतर create कर
+        let roomUrl = `https://${DAILY_DOMAIN}.daily.co/${roomName}`;
+
+        try {
+            // Room create करण्याचा प्रयत्न
+            const createRes = await fetch('https://api.daily.co/v1/rooms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${DAILY_API_KEY}`
+                },
+                body: JSON.stringify({
+                    name: roomName,
+                    properties: {
+                        enable_prejoin_ui: false,
+                        enable_knocking: false,
+                        enable_screenshare: true,
+                        enable_chat: true,
+                        start_video_off: false,
+                        start_audio_off: false,
+                        max_participants: 2,
+                        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 2)
+                    }
+                })
+            });
+            const roomData = await createRes.json();
+            if (roomData.url) roomUrl = roomData.url;
+        } catch (e) {
+            // Room already exists - URL use करा
+        }
+
+        // Step 2: Role-based token generate कर
+        const isOwner = role === 'doctor'; // Doctor = owner/moderator
+
+        const tokenRes = await fetch('https://api.daily.co/v1/meeting-tokens', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${DAILY_API_KEY}`
+            },
+            body: JSON.stringify({
+                properties: {
+                    room_name: roomName,
+                    is_owner: isOwner,          // ✅ Doctor = moderator
+                    enable_screenshare: true,
+                    start_video_off: false,
+                    start_audio_off: false,
+                    exp: Math.floor(Date.now() / 1000) + (60 * 60 * 2),
+                    user_name: role === 'doctor' ? 'Doctor' : 'Patient'
+                }
+            })
+        });
+
+        const tokenData = await tokenRes.json();
+
+        if (!tokenData.token) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to generate token'
+            });
+        }
+
+        // Step 3: Doctor असेल तर consultation मध्ये roomUrl save कर
+        if (role === 'doctor') {
+            await OnlineConsultation.findByIdAndUpdate(consultationId, {
+                videoRoomUrl: roomUrl,
+                videoRoomName: roomName
+            });
+        }
+
+        // Step 4: Token सह URL return कर
+        return res.json({
+            success: true,
+            roomUrl: `${roomUrl}?t=${tokenData.token}`, // ✅ Token URL मध्ये
+            token: tokenData.token,
+            roomName: roomName
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 };

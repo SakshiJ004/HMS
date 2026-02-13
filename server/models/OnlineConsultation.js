@@ -94,6 +94,16 @@ const onlineConsultationSchema = new mongoose.Schema({
         default: 'In Progress'
     },
 
+    // Schema मध्ये add कर:
+    videoRoomUrl: {
+        type: String,
+        default: null
+    },
+    videoRoomName: {
+        type: String,
+        default: null
+    },
+    
     completedAt: Date
 
 }, { timestamps: true });

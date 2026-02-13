@@ -422,7 +422,7 @@
 
 
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { message } from "antd";
 import dayjs from "dayjs";
 // import CommonSelect from "../../../../core/common/common-select/commonSelect";
@@ -438,7 +438,8 @@ import {
   updateFollowUp,
   updateInvoice,
   completeConsultation,
-  getLatestOnlineAppointment
+  getLatestOnlineAppointment,
+  createVideoRoom
 } from "../../../../../api/onlineConsultationService";
 import {
   getDiagnosesByDepartment,
@@ -465,8 +466,8 @@ const OnlineConsultations = () => {
 
   // Video Call State
   const [showVideoCall, setShowVideoCall] = useState(false);
-  const jitsiContainerRef = useRef<HTMLDivElement>(null);
-  const jitsiApiRef = useRef<any>(null);
+  const [videoRoomUrl, setVideoRoomUrl] = useState<string>('');
+  const [videoLoading, setVideoLoading] = useState(false);
 
   // Section States
   const [vitals, setVitals] = useState<any>({});
@@ -575,100 +576,24 @@ const OnlineConsultations = () => {
   // ========================================
   // VIDEO CALL - JITSI MEET
   // ========================================
-  const startVideoCall = () => {
-    if (!jitsiContainerRef.current) return;
+  const startVideoCall = async () => {
+    try {
+      setVideoLoading(true);
 
-    const domain = 'meet.jit.si';
-    const roomName = `preclinic_consultation_${appointmentId || consultation?._id}`;
+      // Doctor token generate कर
+      const response = await createVideoRoom(consultation._id, 'doctor');
 
-    const options = {
-      roomName: roomName,
-      width: '100%',
-      height: 550,
-      parentNode: jitsiContainerRef.current,
-      userInfo: {
-        displayName: consultation?.doctor?.fullName || 'Doctor',
-        email: consultation?.doctor?.email || ''
-      },
-      configOverwrite: {
-        startWithAudioMuted: false,
-        startWithVideoMuted: false,
-        enableWelcomePage: false,
-        prejoinPageEnabled: false,        // ✅ "How do you want to join" screen बंद
-        disableDeepLinking: true,         // ✅ "Join in app" prompt बंद
-        startScreenSharing: false,
-        enableEmailInStats: false,
-        disableThirdPartyRequests: true,
-        p2p: { enabled: true },
-      },
-      interfaceConfigOverwrite: {
-        SHOW_JITSI_WATERMARK: false,
-        SHOW_WATERMARK_FOR_GUESTS: false,
-        SHOW_BRAND_WATERMARK: false,
-        BRAND_WATERMARK_LINK: '',
-        SHOW_POWERED_BY: false,
-        DISPLAY_WELCOME_FOOTER: false,
-        HIDE_INVITE_MORE_HEADER: true,
-        TOOLBAR_BUTTONS: [
-          'microphone',
-          'camera',
-          'desktop',
-          'fullscreen',
-          'hangup',
-          'chat',
-          'tileview',
-          'raisehand',
-          'videoquality',
-        ],
+      if (response.success) {
+        setVideoRoomUrl(response.roomUrl); // Token already URL मध्ये आहे
+        setShowVideoCall(true);
       }
-    };
-
-    jitsiApiRef.current = new window.JitsiMeetExternalAPI(domain, options);
-
-    jitsiApiRef.current.addEventListener('videoConferenceLeft', () => {
-      setShowVideoCall(false);
-      jitsiApiRef.current?.dispose();
-      jitsiApiRef.current = null;
-    });
-
-    jitsiApiRef.current.addEventListener('readyToClose', () => {
-      setShowVideoCall(false);
-      jitsiApiRef.current?.dispose();
-      jitsiApiRef.current = null;
-    });
+    } catch (error) {
+      message.error('Failed to start video call');
+    } finally {
+      setVideoLoading(false);
+    }
   };
 
-  useEffect(() => {
-    if (!showVideoCall) return;
-
-    // आधीच script load झाली असेल तर directly start कर
-    if (window.JitsiMeetExternalAPI) {
-      startVideoCall();
-      return;
-    }
-
-    // Script load करा
-    const existingScript = document.getElementById('jitsi-script');
-    if (existingScript) {
-      existingScript.remove(); // जुनी script काढा
-    }
-
-    const script = document.createElement('script');
-    script.id = 'jitsi-script';
-    script.src = 'https://meet.jit.si/external_api.js';
-    script.async = true;
-    script.onload = () => {
-      setTimeout(() => startVideoCall(), 100); // थोडा delay
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose();
-        jitsiApiRef.current = null;
-      }
-    };
-  }, [showVideoCall]);
 
   // ========================================
   // SAVE FUNCTIONS
@@ -955,29 +880,41 @@ const OnlineConsultations = () => {
               {!showVideoCall ? (
                 <button
                   className="btn btn-primary btn-sm"
-                  onClick={() => setShowVideoCall(true)}
+                  onClick={startVideoCall}
+                  disabled={videoLoading}
                 >
-                  <i className="ti ti-video me-1"></i> Start Video Call
+                  {videoLoading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-1"></span>
+                      Starting...
+                    </>
+                  ) : (
+                    <><i className="ti ti-video me-1"></i> Start Video Call</>
+                  )}
                 </button>
               ) : (
                 <button
                   className="btn btn-danger btn-sm"
-                  onClick={() => {
-                    setShowVideoCall(false);
-                    if (jitsiApiRef.current) {
-                      jitsiApiRef.current.dispose();
-                      jitsiApiRef.current = null;
-                    }
-                  }}
+                  onClick={() => setShowVideoCall(false)}
                 >
                   <i className="ti ti-video-off me-1"></i> End Call
                 </button>
               )}
             </div>
           </div>
-          {showVideoCall && (
+          {showVideoCall && videoRoomUrl && (
             <div className="card-body p-0">
-              <div ref={jitsiContainerRef} style={{ minHeight: '550px', width: '100%' }}></div>
+              <iframe
+                src={videoRoomUrl}
+                allow="camera; microphone; fullscreen; display-capture; autoplay"
+                style={{
+                  width: '100%',
+                  height: '550px',
+                  border: 'none',
+                  borderRadius: '0'
+                }}
+                title="Video Consultation"
+              />
             </div>
           )}
         </div>

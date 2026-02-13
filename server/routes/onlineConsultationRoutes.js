@@ -19,5 +19,6 @@ router.patch('/:id/invoice', controller.updateInvoice);
 
 // Complete consultation
 router.post('/:id/complete', controller.completeConsultation);
+router.post('/:consultationId/create-video-room', controller.createVideoRoom);
 
 module.exports = router;
