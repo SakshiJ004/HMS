@@ -6,9 +6,19 @@ exports.getByAppointmentId = async (req, res) => {
     try {
         const { appointmentId } = req.params;
 
-        console.log('🔍 Looking for appointment:', appointmentId);
+        console.log('🔍 Searching for appointmentId:', appointmentId);
 
-        // STEP 1: Find consultation by appointmentId
+        // Validate appointmentId
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+            console.log('❌ Invalid appointment ID format');
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid appointment ID format'
+            });
+        }
+
+        // STEP 1: Try to find existing consultation
         let consultation = await OnlineConsultation.findOne({ appointmentId })
             .populate({
                 path: 'patient',
@@ -16,30 +26,43 @@ exports.getByAppointmentId = async (req, res) => {
             })
             .populate({
                 path: 'doctor',
-                select: 'fullName email phone department designation specialization'
+                select: 'fullName email phone department designation'
             });
 
-        console.log('📋 Found consultation:', consultation ? 'YES' : 'NO');
+        console.log('📋 Existing consultation found:', consultation ? 'YES' : 'NO');
 
-        // STEP 2: If consultation doesn't exist, create new one
+        // STEP 2: If not found, check if appointment exists and create consultation
         if (!consultation) {
-            console.log('➕ Creating new consultation...');
+            console.log('➕ Creating new consultation for appointment:', appointmentId);
 
-            // Fetch appointment details
-            const Appointment = require('../models/Appointment');
+            // Find appointment
             const appointment = await Appointment.findById(appointmentId)
                 .populate('patient')
                 .populate('doctor');
 
             if (!appointment) {
-                console.error('❌ Appointment not found:', appointmentId);
+                console.log('❌ Appointment not found in database:', appointmentId);
                 return res.status(404).json({
                     success: false,
-                    message: 'Appointment not found'
+                    message: 'Appointment not found. Please check the appointment ID.'
                 });
             }
 
-            console.log('✅ Appointment found:', appointment.patient?.fullName);
+            console.log('✅ Appointment found:', {
+                id: appointment._id,
+                patient: appointment.patient?.fullName,
+                doctor: appointment.doctor?.fullName,
+                type: appointment.appointmentType
+            });
+
+            // Verify it's an online consultation
+            if (appointment.appointmentType !== 'Online Consultation') {
+                console.log('⚠️ Not an online consultation appointment');
+                return res.status(400).json({
+                    success: false,
+                    message: 'This appointment is not an online consultation'
+                });
+            }
 
             // Create new consultation
             consultation = new OnlineConsultation({
@@ -61,11 +84,12 @@ exports.getByAppointmentId = async (req, res) => {
                 medications: [],
                 advice: [],
                 investigations: [],
-                followUp: {}
+                followUp: {},
+                status: 'In Progress'
             });
 
             await consultation.save();
-            console.log('💾 Consultation saved:', consultation._id);
+            console.log('💾 New consultation created:', consultation._id);
 
             // Re-fetch with populated data
             consultation = await OnlineConsultation.findById(consultation._id)
@@ -75,19 +99,29 @@ exports.getByAppointmentId = async (req, res) => {
                 })
                 .populate({
                     path: 'doctor',
-                    select: 'fullName email phone department designation specialization'
+                    select: 'fullName email phone department designation'
                 });
         }
 
+        // STEP 3: Return consultation data
         console.log('✅ Returning consultation data');
-        res.json({ success: true, data: consultation });
+        return res.json({
+            success: true,
+            data: consultation
+        });
 
     } catch (error) {
-        console.error('❌ Error in getByAppointmentId:', error);
-        res.status(500).json({
-            success: false,
+        console.error('❌ ERROR in getByAppointmentId:', {
             message: error.message,
-            error: error.toString()
+            stack: error.stack,
+            appointmentId: req.params.appointmentId
+        });
+
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to load consultation',
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
