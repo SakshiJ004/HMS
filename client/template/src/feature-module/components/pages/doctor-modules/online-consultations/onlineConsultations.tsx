@@ -579,28 +579,47 @@ const OnlineConsultations = () => {
     if (!jitsiContainerRef.current) return;
 
     const domain = 'meet.jit.si';
-    const roomName = `consultation_${appointmentId}`;
+    const roomName = `preclinic_consultation_${appointmentId || consultation?._id}`;
 
     const options = {
       roomName: roomName,
       width: '100%',
-      height: 600,
+      height: 550,
       parentNode: jitsiContainerRef.current,
       userInfo: {
-        displayName: consultation?.doctor?.fullName || 'Doctor'
+        displayName: consultation?.doctor?.fullName || 'Doctor',
+        email: consultation?.doctor?.email || ''
       },
       configOverwrite: {
         startWithAudioMuted: false,
         startWithVideoMuted: false,
-        enableWelcomePage: false
+        enableWelcomePage: false,
+        prejoinPageEnabled: false,        // ✅ "How do you want to join" screen बंद
+        disableDeepLinking: true,         // ✅ "Join in app" prompt बंद
+        startScreenSharing: false,
+        enableEmailInStats: false,
+        disableThirdPartyRequests: true,
+        p2p: { enabled: true },
       },
       interfaceConfigOverwrite: {
+        SHOW_JITSI_WATERMARK: false,
+        SHOW_WATERMARK_FOR_GUESTS: false,
+        SHOW_BRAND_WATERMARK: false,
+        BRAND_WATERMARK_LINK: '',
+        SHOW_POWERED_BY: false,
+        DISPLAY_WELCOME_FOOTER: false,
+        HIDE_INVITE_MORE_HEADER: true,
         TOOLBAR_BUTTONS: [
-          'microphone', 'camera', 'desktop', 'fullscreen',
-          'fodeviceselection', 'hangup', 'chat', 'recording',
-          'settings', 'raisehand', 'videoquality', 'filmstrip',
-          'feedback', 'stats', 'shortcuts', 'tileview'
-        ]
+          'microphone',
+          'camera',
+          'desktop',
+          'fullscreen',
+          'hangup',
+          'chat',
+          'tileview',
+          'raisehand',
+          'videoquality',
+        ],
       }
     };
 
@@ -609,24 +628,46 @@ const OnlineConsultations = () => {
     jitsiApiRef.current.addEventListener('videoConferenceLeft', () => {
       setShowVideoCall(false);
       jitsiApiRef.current?.dispose();
+      jitsiApiRef.current = null;
+    });
+
+    jitsiApiRef.current.addEventListener('readyToClose', () => {
+      setShowVideoCall(false);
+      jitsiApiRef.current?.dispose();
+      jitsiApiRef.current = null;
     });
   };
 
   useEffect(() => {
-    if (showVideoCall) {
-      // Load Jitsi script
-      const script = document.createElement('script');
-      script.src = 'https://meet.jit.si/external_api.js';
-      script.async = true;
-      script.onload = () => startVideoCall();
-      document.body.appendChild(script);
+    if (!showVideoCall) return;
 
-      return () => {
-        if (jitsiApiRef.current) {
-          jitsiApiRef.current.dispose();
-        }
-      };
+    // आधीच script load झाली असेल तर directly start कर
+    if (window.JitsiMeetExternalAPI) {
+      startVideoCall();
+      return;
     }
+
+    // Script load करा
+    const existingScript = document.getElementById('jitsi-script');
+    if (existingScript) {
+      existingScript.remove(); // जुनी script काढा
+    }
+
+    const script = document.createElement('script');
+    script.id = 'jitsi-script';
+    script.src = 'https://meet.jit.si/external_api.js';
+    script.async = true;
+    script.onload = () => {
+      setTimeout(() => startVideoCall(), 100); // थोडा delay
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      if (jitsiApiRef.current) {
+        jitsiApiRef.current.dispose();
+        jitsiApiRef.current = null;
+      }
+    };
   }, [showVideoCall]);
 
   // ========================================
@@ -906,24 +947,37 @@ const OnlineConsultations = () => {
           </div>
         </div>
 
-        {/* ============================================
-            VIDEO CALL SECTION - JITSI MEET
-        ============================================ */}
+        {/* VIDEO CALL SECTION */}
         <div className="card rounded-0">
           <div className="card-header d-flex justify-content-between align-items-center">
             <h5 className="m-0 fw-bold">Video Consultation</h5>
-            {!showVideoCall && (
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => setShowVideoCall(true)}
-              >
-                <i className="ti ti-video me-1"></i> Start Video Call
-              </button>
-            )}
+            <div className="d-flex gap-2">
+              {!showVideoCall ? (
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowVideoCall(true)}
+                >
+                  <i className="ti ti-video me-1"></i> Start Video Call
+                </button>
+              ) : (
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => {
+                    setShowVideoCall(false);
+                    if (jitsiApiRef.current) {
+                      jitsiApiRef.current.dispose();
+                      jitsiApiRef.current = null;
+                    }
+                  }}
+                >
+                  <i className="ti ti-video-off me-1"></i> End Call
+                </button>
+              )}
+            </div>
           </div>
           {showVideoCall && (
-            <div className="card-body">
-              <div ref={jitsiContainerRef} style={{ minHeight: '600px' }}></div>
+            <div className="card-body p-0">
+              <div ref={jitsiContainerRef} style={{ minHeight: '550px', width: '100%' }}></div>
             </div>
           )}
         </div>
