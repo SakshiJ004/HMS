@@ -585,7 +585,7 @@ const OnlineConsultations = () => {
       setVideoLoading(true);
 
       const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
-      const userId: string = String(userInfo._id || userInfo.id || 'doctor');
+      const userId: string = String(userInfo._id || userInfo.id || 'doctor_001');
       const userName: string = String(consultation?.doctor?.fullName || 'Doctor');
 
       const response = await createVideoRoom(
@@ -606,15 +606,25 @@ const OnlineConsultations = () => {
         if (!zegoContainerRef.current) return;
 
         try {
+          // ✅ Frontend वर Kit Token बनव
           // @ts-ignore
-          const zp = ZegoUIKitPrebuilt.create(String(response.token));
+          const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+            response.appId,          // number
+            response.appSign,        // string
+            response.roomID,         // string
+            response.userID,         // string
+            response.userName        // string
+          );
+
+          // @ts-ignore
+          const zp = ZegoUIKitPrebuilt.create(kitToken);
           zegoInstanceRef.current = zp;
 
           const joinConfig: any = {
             container: zegoContainerRef.current,
             roomID: String(response.roomID),
-            userID: String(userId),
-            userName: String(userName),
+            userID: String(response.userID),
+            userName: String(response.userName),
             scenario: {
               // @ts-ignore
               mode: ZegoUIKitPrebuilt.OneONoneCall,
@@ -637,7 +647,7 @@ const OnlineConsultations = () => {
           console.error('ZegoCloud join error:', err);
           message.error('Failed to join video room');
         }
-      }, 300);
+      }, 500);
 
     } catch (error) {
       message.error('Failed to start video call');

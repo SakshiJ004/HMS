@@ -1,7 +1,6 @@
 const https = require('https')
 const OnlineConsultation = require('../models/OnlineConsultation')
 const Appointment = require('../models/Appointment');
-const {generateToken04} = require('../zegoTokenHelper')
 
 // Get consultation by appointment ID (or create if doesn't exist)
 exports.getByAppointmentId = async (req, res) => {
@@ -356,34 +355,25 @@ exports.createVideoRoom = async (req, res) => {
         const { role, userId, userName } = req.body;
 
         const appId = parseInt(process.env.ZEGO_APP_ID);
-        const serverSecret = process.env.ZEGO_APP_SIGN;
-
-        // Room ID consultation ID वरून
+        const appSign = process.env.ZEGO_APP_SIGN;
         const roomID = `consultation_${consultationId}`;
 
-        // Token generate कर (1 hour valid)
-        const token = generateToken04(
-            appId,
-            userId || role,
-            serverSecret,
-            3600,  // 1 hour
-            ''
-        );
-
-        // Doctor असेल तर roomUrl consultation मध्ये save कर
+        // Doctor असेल तर save कर
         if (role === 'doctor') {
             await OnlineConsultation.findByIdAndUpdate(consultationId, {
                 videoRoomName: roomID
             });
         }
 
+        // Token बनवणे frontend वर होईल
+        // Backend फक्त appId, appSign, roomID return करतो
         return res.json({
             success: true,
             appId,
-            token,
+            appSign,
             roomID,
-            userID: userId || role,
-            userName: userName || role
+            userID: String(userId),
+            userName: String(userName)
         });
 
     } catch (error) {
