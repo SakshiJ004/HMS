@@ -354,24 +354,18 @@ exports.createVideoRoom = async (req, res) => {
         const { consultationId } = req.params;
         const { role, userId, userName } = req.body;
 
-        const appId = parseInt(process.env.ZEGO_APP_ID);
-        const appSign = process.env.ZEGO_APP_SIGN;
         const roomID = `consultation_${consultationId}`;
 
-        // Doctor असेल तर save कर
         if (role === 'doctor') {
             await OnlineConsultation.findByIdAndUpdate(consultationId, {
                 videoRoomName: roomID
             });
         }
 
-        // Token बनवणे frontend वर होईल
-        // Backend फक्त appId, appSign, roomID return करतो
+        // ✅ फक्त roomID return कर - token frontend वर बनेल
         return res.json({
             success: true,
-            appId,
-            appSign,
-            roomID,
+            roomID: roomID,
             userID: String(userId),
             userName: String(userName)
         });

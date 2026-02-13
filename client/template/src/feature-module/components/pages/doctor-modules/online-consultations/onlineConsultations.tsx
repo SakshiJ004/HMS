@@ -606,14 +606,17 @@ const OnlineConsultations = () => {
         if (!zegoContainerRef.current) return;
 
         try {
-          // ✅ Frontend वर Kit Token बनव
+          // ✅ Exact values - no processing
+          const APP_ID = 1862395687;
+          const APP_SIGN = "49dd5a45a2d48da39154c69e617c5d08e69895b5b24eca5a0b9ca198777d9fd2";
+
           // @ts-ignore
           const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-            response.appId,          // number
-            response.appSign,        // string
-            response.roomID,         // string
-            response.userID,         // string
-            response.userName        // string
+            APP_ID,
+            APP_SIGN,
+            String(response.roomID),
+            String(userId),
+            String(userName)
           );
 
           // @ts-ignore
@@ -623,8 +626,8 @@ const OnlineConsultations = () => {
           const joinConfig: any = {
             container: zegoContainerRef.current,
             roomID: String(response.roomID),
-            userID: String(response.userID),
-            userName: String(response.userName),
+            userID: String(userId),
+            userName: String(userName),
             scenario: {
               // @ts-ignore
               mode: ZegoUIKitPrebuilt.OneONoneCall,
@@ -651,7 +654,6 @@ const OnlineConsultations = () => {
 
     } catch (error) {
       message.error('Failed to start video call');
-      console.error(error);
     } finally {
       setVideoLoading(false);
     }
