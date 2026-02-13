@@ -64,11 +64,18 @@ exports.getByAppointmentId = async (req, res) => {
                 });
             }
 
-            // Create new consultation
+            if (!appointment.patient || !appointment.doctor) {
+                console.log('❌ Appointment patient or doctor not populated');
+                return res.status(400).json({
+                    success: false,
+                    message: 'Appointment patient or doctor data is missing'
+                });
+            }
+
             consultation = new OnlineConsultation({
                 appointmentId: appointment._id,
-                patient: appointment.patient._id,
-                doctor: appointment.doctor._id,
+                patient: appointment.patient._id || appointment.patient,
+                doctor: appointment.doctor._id || appointment.doctor,
                 invoice: {
                     consultationFee: appointment.consultationCharge || 0,
                     totalAmount: appointment.consultationCharge || 0,

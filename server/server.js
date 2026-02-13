@@ -14,6 +14,9 @@ connectDB();
 
 // Initialize Passport configuration
 require('./config/passport');
+require('./models/Doctor')
+require('./models/Patient')
+require('./models/OnlineConsultation')
 
 // Initialize Express app
 const app = express();
