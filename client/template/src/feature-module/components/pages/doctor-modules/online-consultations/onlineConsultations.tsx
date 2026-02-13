@@ -497,21 +497,26 @@ const OnlineConsultations = () => {
   const fetchConsultation = async () => {
     try {
       setLoading(true);
+      setNoAppointment(false);
 
-      // doctorId localStorage मधून घे
-      const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
-      const doctorId: string = userInfo._id || userInfo.id || '';
+      let idToUse: string = appointmentId || '';
 
-      let idToUse: string = appointmentId || '';  // ✅ type fix
-
-      // appointmentId नसताना latest appointment fetch कर
+      // appointmentId URL मध्ये नसेल तर latest appointment fetch कर
       if (!idToUse) {
-        const latestResponse = await getLatestOnlineAppointment(doctorId);
-        if (!latestResponse.success || !latestResponse.data) {
-          setConsultation(null);
+        const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+        const doctorId: string = userInfo._id || userInfo.id || '';
+
+        if (!doctorId) {
           setNoAppointment(true);
           return;
         }
+
+        const latestResponse = await getLatestOnlineAppointment(doctorId);
+        if (!latestResponse.success || !latestResponse.data) {
+          setNoAppointment(true);
+          return;
+        }
+        // latest consultation च्या appointmentId ने fetch कर
         idToUse = latestResponse.data.appointmentId || latestResponse.data._id;
       }
 
@@ -764,12 +769,12 @@ const OnlineConsultations = () => {
     );
   }
 
-  if (!consultation && noAppointment) {
+  if (noAppointment || !consultation) {
     return (
       <div className="page-wrapper">
         <div className="content">
-          <div className="alert alert-warning text-center p-5">
-            <i className="ti ti-calendar-off fs-1 d-block mb-3"></i>
+          <div className="alert alert-warning text-center p-5 mt-4">
+            <i className="ti ti-calendar-off d-block mb-3" style={{ fontSize: '48px' }}></i>
             <h5>No Online Appointment Available</h5>
             <p className="text-muted">
               There are no pending online consultations at the moment.
@@ -783,6 +788,7 @@ const OnlineConsultations = () => {
     );
   }
 
+  // ✅ हे फक्त consultation असेल तेव्हाच execute होईल:
   const patient = consultation.patient;
   const doctor = consultation.doctor;
 

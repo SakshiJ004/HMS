@@ -306,8 +306,13 @@ export const publicRoutes = [
     route: Route,
   },
   {
+    path: routes.onlineconsultationswithid,     // /doctor/online-consultations/:appointmentId
+    element: <OnlineConsultations />,
+    route: Route,
+  },
+  {
     path: routes.doctorschedule,
-    element:<DoctorSchedules />,
+    element: <DoctorSchedules />,
     route: Route,
   },
   {
