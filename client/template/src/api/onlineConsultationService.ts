@@ -77,3 +77,9 @@ export const completeConsultation = async (consultationId: string) => {
     const response = await api.post(`/online-consultations/${consultationId}/complete`);
     return response.data;
 };
+
+// Add this new API call:
+export const getLatestOnlineAppointment = async (doctorId: string) => {
+    const response = await api.get(`/online-consultations/latest/${doctorId}`);
+    return response.data;
+};

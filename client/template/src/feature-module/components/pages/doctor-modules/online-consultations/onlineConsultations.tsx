@@ -437,7 +437,8 @@ import {
   updateInvestigations,
   updateFollowUp,
   updateInvoice,
-  completeConsultation
+  completeConsultation,
+  getLatestOnlineAppointment
 } from "../../../../../api/onlineConsultationService";
 import {
   getDiagnosesByDepartment,
@@ -460,6 +461,7 @@ const OnlineConsultations = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [noAppointment, setNoAppointment] = useState(false)
 
   // Video Call State
   const [showVideoCall, setShowVideoCall] = useState(false);
@@ -488,16 +490,32 @@ const OnlineConsultations = () => {
 
   // Load Consultation Data
   useEffect(() => {
-    if (appointmentId) {
-      fetchConsultation();
-    }
+    fetchConsultation();
   }, [appointmentId]);
+
 
   const fetchConsultation = async () => {
     try {
       setLoading(true);
-      const response = await getConsultationByAppointment(appointmentId!);
 
+      // doctorId localStorage मधून घे
+      const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+      const doctorId: string = userInfo._id || userInfo.id || '';
+
+      let idToUse: string = appointmentId || '';  // ✅ type fix
+
+      // appointmentId नसताना latest appointment fetch कर
+      if (!idToUse) {
+        const latestResponse = await getLatestOnlineAppointment(doctorId);
+        if (!latestResponse.success || !latestResponse.data) {
+          setConsultation(null);
+          setNoAppointment(true);
+          return;
+        }
+        idToUse = latestResponse.data.appointmentId || latestResponse.data._id;
+      }
+
+      const response = await getConsultationByAppointment(idToUse);
       if (response.success) {
         const data = response.data;
         setConsultation(data);
@@ -510,7 +528,6 @@ const OnlineConsultations = () => {
         setFollowUp(data.followUp || {});
         setInvoice(data.invoice || { items: [], consultationFee: 0, totalAmount: 0 });
 
-        // Load diagnoses for doctor's department
         if (data.doctor?.department) {
           loadDiagnoses(data.doctor.department);
         }
@@ -747,11 +764,20 @@ const OnlineConsultations = () => {
     );
   }
 
-  if (!consultation) {
+  if (!consultation && noAppointment) {
     return (
       <div className="page-wrapper">
         <div className="content">
-          <div className="alert alert-warning">Consultation not found</div>
+          <div className="alert alert-warning text-center p-5">
+            <i className="ti ti-calendar-off fs-1 d-block mb-3"></i>
+            <h5>No Online Appointment Available</h5>
+            <p className="text-muted">
+              There are no pending online consultations at the moment.
+            </p>
+            <Link to={all_routes.doctordashboard} className="btn btn-primary mt-2">
+              Go to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     );

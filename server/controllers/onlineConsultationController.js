@@ -306,3 +306,43 @@ exports.completeConsultation = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+// Get latest/current online appointment for doctor
+exports.getLatestAppointment = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+
+        // Find the most recent In Progress consultation for this doctor
+        let consultation = await OnlineConsultation.findOne({
+            doctor: doctorId,
+            status: 'In Progress'
+        })
+            .sort({ createdAt: -1 })
+            .populate({ path: 'patient', select: 'fullName email phone profileImage age gender bloodGroup dob address' })
+            .populate({ path: 'doctor', select: 'fullName email phone department designation' });
+
+        // If no In Progress, find next upcoming appointment
+        if (!consultation) {
+            const upcomingAppointment = await Appointment.findOne({
+                doctor: doctorId,
+                appointmentType: 'Online Consultation',
+                status: { $in: ['Confirmed', 'Pending'] },
+                appointmentDate: { $gte: new Date() }
+            })
+                .sort({ appointmentDate: 1, appointmentTime: 1 })
+                .populate('patient')
+                .populate('doctor');
+
+            if (!upcomingAppointment) {
+                return res.json({ success: true, data: null });
+            }
+
+            // Create consultation for this appointment (reuse existing logic)
+            req.params.appointmentId = upcomingAppointment._id.toString();
+            return exports.getByAppointmentId(req, res);
+        }
+
+        return res.json({ success: true, data: consultation });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};

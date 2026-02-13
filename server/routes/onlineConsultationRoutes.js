@@ -4,6 +4,7 @@ const controller = require('../controllers/onlineConsultationController');
 // const { authenticateDoctor } = require('../middleware/auth'); // Uncomment if you have auth middleware
 
 // Get consultation by appointment ID
+router.get('/latest/:doctorId', controller.getLatestAppointment)
 router.get('/appointment/:appointmentId', controller.getByAppointmentId);
 
 // Update sections
