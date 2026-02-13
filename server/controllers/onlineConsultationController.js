@@ -362,9 +362,10 @@ exports.createVideoRoom = async (req, res) => {
             });
         }
 
-        // ✅ फक्त roomID return कर - token frontend वर बनेल
         return res.json({
             success: true,
+            appId: parseInt(process.env.ZEGO_APP_ID),
+            serverSecret: process.env.ZEGO_SERVER_SECRET, // ✅ ServerSecret return कर
             roomID: roomID,
             userID: String(userId),
             userName: String(userName)

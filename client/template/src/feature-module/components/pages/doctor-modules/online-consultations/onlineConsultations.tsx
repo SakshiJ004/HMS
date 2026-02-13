@@ -606,14 +606,13 @@ const OnlineConsultations = () => {
         if (!zegoContainerRef.current) return;
 
         try {
-          // ✅ Exact values - no processing
-          const APP_ID = 1862395687;
-          const APP_SIGN = "49dd5a45a2d48da39154c69e617c5d08e69895b5b24eca5a0b9ca198777d9fd2";
+          const appId = Number(response.appId);
+          const serverSecret = String(response.serverSecret); // ✅ serverSecret वापर
 
           // @ts-ignore
           const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-            APP_ID,
-            APP_SIGN,
+            appId,
+            serverSecret,   // ✅ AppSign नाही, ServerSecret वापर
             String(response.roomID),
             String(userId),
             String(userName)
