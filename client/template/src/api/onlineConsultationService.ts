@@ -83,11 +83,15 @@ export const getLatestOnlineAppointment = async (doctorId: string) => {
     const response = await api.get(`/online-consultations/latest/${doctorId}`);
     return response.data;
 };
-// createVideoRoom function - role pass करतो:
-export const createVideoRoom = async (consultationId: string, role: 'doctor' | 'patient') => {
+export const createVideoRoom = async (
+    consultationId: string,
+    role: 'doctor' | 'patient',
+    userId: string,
+    userName: string
+) => {
     const response = await api.post(
         `/online-consultations/${consultationId}/create-video-room`,
-        { role }
+        { role, userId, userName }
     );
     return response.data;
 };

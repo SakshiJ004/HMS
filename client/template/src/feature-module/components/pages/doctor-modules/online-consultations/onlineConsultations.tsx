@@ -422,7 +422,7 @@
 
 
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { message } from "antd";
 import dayjs from "dayjs";
 // import CommonSelect from "../../../../core/common/common-select/commonSelect";
@@ -445,6 +445,7 @@ import {
   getDiagnosesByDepartment,
   searchDiagnoses
 } from "../../../../../api/diagnosisService";
+import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 
 // Jitsi Meet API declaration
 declare global {
@@ -466,8 +467,11 @@ const OnlineConsultations = () => {
 
   // Video Call State
   const [showVideoCall, setShowVideoCall] = useState(false);
-  const [videoRoomUrl, setVideoRoomUrl] = useState<string>('');
+  // const [videoRoomUrl, setVideoRoomUrl] = useState<string>('');
+  // const [videoLoading, setVideoLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
+  const zegoContainerRef = useRef<HTMLDivElement>(null);
+  const zegoInstanceRef = useRef<any>(null);
 
   // Section States
   const [vitals, setVitals] = useState<any>({});
@@ -580,18 +584,76 @@ const OnlineConsultations = () => {
     try {
       setVideoLoading(true);
 
-      // Doctor token generate कर
-      const response = await createVideoRoom(consultation._id, 'doctor');
+      const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId: string = String(userInfo._id || userInfo.id || 'doctor');
+      const userName: string = String(consultation?.doctor?.fullName || 'Doctor');
 
-      if (response.success) {
-        setVideoRoomUrl(response.roomUrl); // Token already URL मध्ये आहे
-        setShowVideoCall(true);
+      const response = await createVideoRoom(
+        consultation._id,
+        'doctor',
+        userId,
+        userName
+      );
+
+      if (!response.success) {
+        message.error('Failed to start video call');
+        return;
       }
+
+      setShowVideoCall(true);
+
+      setTimeout(() => {
+        if (!zegoContainerRef.current) return;
+
+        try {
+          // @ts-ignore
+          const zp = ZegoUIKitPrebuilt.create(String(response.token));
+          zegoInstanceRef.current = zp;
+
+          const joinConfig: any = {
+            container: zegoContainerRef.current,
+            roomID: String(response.roomID),
+            userID: String(userId),
+            userName: String(userName),
+            scenario: {
+              // @ts-ignore
+              mode: ZegoUIKitPrebuilt.OneONoneCall,
+            },
+            showPreJoinView: false,
+            turnOnCameraWhenJoining: true,
+            turnOnMicrophoneWhenJoining: true,
+            showRoomDetailsButton: false,
+            showInviteLinkButton: false,
+            onLeaveRoom: () => {
+              setShowVideoCall(false);
+              zegoInstanceRef.current = null;
+            },
+          };
+
+          // @ts-ignore
+          zp.joinRoom(joinConfig);
+
+        } catch (err) {
+          console.error('ZegoCloud join error:', err);
+          message.error('Failed to join video room');
+        }
+      }, 300);
+
     } catch (error) {
       message.error('Failed to start video call');
+      console.error(error);
     } finally {
       setVideoLoading(false);
     }
+  };
+
+  // End call function
+  const endVideoCall = () => {
+    if (zegoInstanceRef.current) {
+      zegoInstanceRef.current.destroy();
+      zegoInstanceRef.current = null;
+    }
+    setShowVideoCall(false);
   };
 
 
@@ -873,6 +935,7 @@ const OnlineConsultations = () => {
         </div>
 
         {/* VIDEO CALL SECTION */}
+        {/* VIDEO CALL SECTION */}
         <div className="card rounded-0">
           <div className="card-header d-flex justify-content-between align-items-center">
             <h5 className="m-0 fw-bold">Video Consultation</h5>
@@ -895,25 +958,18 @@ const OnlineConsultations = () => {
               ) : (
                 <button
                   className="btn btn-danger btn-sm"
-                  onClick={() => setShowVideoCall(false)}
+                  onClick={endVideoCall}
                 >
                   <i className="ti ti-video-off me-1"></i> End Call
                 </button>
               )}
             </div>
           </div>
-          {showVideoCall && videoRoomUrl && (
+          {showVideoCall && (
             <div className="card-body p-0">
-              <iframe
-                src={videoRoomUrl}
-                allow="camera; microphone; fullscreen; display-capture; autoplay"
-                style={{
-                  width: '100%',
-                  height: '550px',
-                  border: 'none',
-                  borderRadius: '0'
-                }}
-                title="Video Consultation"
+              <div
+                ref={zegoContainerRef}
+                style={{ width: '100%', height: '550px' }}
               />
             </div>
           )}
