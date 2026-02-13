@@ -1,7 +1,7 @@
 const https = require('https')
 const OnlineConsultation = require('../models/OnlineConsultation')
 const Appointment = require('../models/Appointment');
-const { generateToken04 } = require('./zegoTokenHelper'); // खाली helper बनवणार
+const {generateToken04} = require('../zegoTokenHelper')
 
 // Get consultation by appointment ID (or create if doesn't exist)
 exports.getByAppointmentId = async (req, res) => {
