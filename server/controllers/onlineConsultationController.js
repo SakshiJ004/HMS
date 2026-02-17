@@ -1,6 +1,7 @@
 const https = require('https')
 const OnlineConsultation = require('../models/OnlineConsultation')
 const Appointment = require('../models/Appointment');
+const Prescription = require('../models/Prescription')
 
 // Get consultation by appointment ID (or create if doesn't exist)
 exports.getByAppointmentId = async (req, res) => {
@@ -282,31 +283,57 @@ exports.updateInvoice = async (req, res) => {
     }
 };
 
-// Complete Consultation
+
+// completeConsultation function replace कर:
 exports.completeConsultation = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const consultation = await OnlineConsultation.findById(id);
+        const consultation = await OnlineConsultation.findById(id)
+            .populate('doctor', 'department');
 
         if (!consultation) {
             return res.status(404).json({ success: false, message: 'Consultation not found' });
         }
 
+        // Status update
         consultation.status = 'Completed';
         consultation.completedAt = new Date();
         await consultation.save();
 
-        // Update appointment status
+        // Appointment status update
         await Appointment.findByIdAndUpdate(consultation.appointmentId, {
             status: 'Checked Out'
         });
 
-        res.json({ success: true, data: consultation, message: 'Consultation completed' });
+        // ✅ Prescription automatically create कर
+        const prescription = new Prescription({
+            consultationId: consultation._id,
+            appointmentId: consultation.appointmentId,
+            patient: consultation.patient,
+            doctor: consultation.doctor._id || consultation.doctor,
+            medications: consultation.medications || [],
+            advice: consultation.advice || [],
+            diagnosis: consultation.diagnosis || [],
+            followUp: consultation.followUp || {},
+            department: consultation.doctor?.department || '',
+            prescribedOn: new Date()
+        });
+
+        await prescription.save();
+        console.log('✅ Prescription created:', prescription.prescriptionId);
+
+        res.json({
+            success: true,
+            data: consultation,
+            prescription: prescription,
+            message: 'Consultation completed and prescription generated'
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
 // Get latest/current online appointment for doctor
 // exports.getLatestAppointment = async (req, res) => {
 //     try {

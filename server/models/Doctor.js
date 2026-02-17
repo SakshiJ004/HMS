@@ -64,6 +64,10 @@ const doctorSchema = new mongoose.Schema({
         issuedBy: String,
         year: Number,
     }],
+    signature: {
+        type: String,  // Base64 image किंवा URL
+        default: null
+    },
 });
 
 // ✅ Create Doctor discriminator

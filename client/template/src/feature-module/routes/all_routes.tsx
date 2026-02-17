@@ -59,7 +59,7 @@ export const all_routes = {
   doctorsappointments: "/doctor/doctors-appointments",
   doctorspatientdetails: "/doctor/doctors-patient-details",
   doctorsappointmentdetails: "/doctor/doctors-appointment-details",
-  doctorsprescriptiondetails: "/doctor/doctors-prescription-details",
+  doctorsprescriptiondetails: "/doctor/doctors-prescription-details/:id",
 
   //Super Admin routes
   superAdminDashboard: "/super-admin/super-admin-dashboard",
