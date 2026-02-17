@@ -283,18 +283,22 @@ exports.updateInvoice = async (req, res) => {
     }
 };
 
-
-// completeConsultation function replace कर:
 exports.completeConsultation = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // ✅ _id पण select कर - फक्त department नाही
         const consultation = await OnlineConsultation.findById(id)
-            .populate('doctor', 'department');
+            .populate('doctor', '_id department fullName')  // ← हे fix
+            .populate('patient', '_id');                    // ← हे add
 
         if (!consultation) {
             return res.status(404).json({ success: false, message: 'Consultation not found' });
         }
+
+        console.log('Doctor object:', consultation.doctor);
+        console.log('Doctor _id:', consultation.doctor?._id);
+        console.log('Patient object:', consultation.patient);
 
         // Status update
         consultation.status = 'Completed';
@@ -302,16 +306,23 @@ exports.completeConsultation = async (req, res) => {
         await consultation.save();
 
         // Appointment status update
-        await Appointment.findByIdAndUpdate(consultation.appointmentId, {
-            status: 'Checked Out'
-        });
+        if (consultation.appointmentId) {
+            await Appointment.findByIdAndUpdate(consultation.appointmentId, {
+                status: 'Checked Out'
+            });
+        }
 
-        // ✅ Prescription automatically create कर
+        // ✅ Correct doctor/patient ID extract करा
+        const doctorId = consultation.doctor?._id || consultation.doctor;
+        const patientId = consultation.patient?._id || consultation.patient;
+
+        console.log('Creating prescription with doctorId:', doctorId, 'patientId:', patientId);
+
         const prescription = new Prescription({
             consultationId: consultation._id,
             appointmentId: consultation.appointmentId,
-            patient: consultation.patient,
-            doctor: consultation.doctor._id || consultation.doctor,
+            patient: patientId,
+            doctor: doctorId,
             medications: consultation.medications || [],
             advice: consultation.advice || [],
             diagnosis: consultation.diagnosis || [],
@@ -321,7 +332,7 @@ exports.completeConsultation = async (req, res) => {
         });
 
         await prescription.save();
-        console.log('✅ Prescription created:', prescription.prescriptionId);
+        console.log('✅ Prescription created:', prescription.prescriptionId, '| Doctor:', doctorId);
 
         res.json({
             success: true,
@@ -330,9 +341,11 @@ exports.completeConsultation = async (req, res) => {
             message: 'Consultation completed and prescription generated'
         });
     } catch (error) {
+        console.error('❌ completeConsultation error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
 
 // Get latest/current online appointment for doctor
 // exports.getLatestAppointment = async (req, res) => {
