@@ -5,34 +5,20 @@ const OnlineConsultation = require('../models/OnlineConsultation');
 exports.getDoctorPrescriptions = async (req, res) => {
     try {
         const doctorId = req.user._id;
-        const { search, sortBy, status, startDate, endDate } = req.query;
 
-        let query = { doctor: doctorId };
+        console.log('Doctor ID:', doctorId); // ✅ debug
 
-        // Status filter
-        if (status) query.status = status;
+        // पहिले सगळ्या prescriptions बघ - without doctor filter
+        const allPrescriptions = await Prescription.find({});
+        console.log('Total prescriptions in DB:', allPrescriptions.length); // ✅ debug
+        console.log('Sample prescription doctor field:', allPrescriptions[0]?.doctor); // ✅ debug
 
-        // Date filter
-        if (startDate || endDate) {
-            query.prescribedOn = {};
-            if (startDate) query.prescribedOn.$gte = new Date(startDate);
-            if (endDate) query.prescribedOn.$lte = new Date(endDate);
-        }
-
-        let prescriptions = await Prescription.find(query)
+        const prescriptions = await Prescription.find({ doctor: doctorId })
             .populate('patient', 'fullName email phone profileImage age gender bloodGroup')
-            .populate('doctor', 'fullName department designation consultationCharge profileImage')
-            .sort({ prescribedOn: sortBy === 'oldest' ? 1 : -1 });
+            .populate('doctor', 'fullName department designation')
+            .sort({ prescribedOn: -1 });
 
-        // Search filter (patient name or prescription ID)
-        if (search) {
-            const searchLower = search.toLowerCase();
-            prescriptions = prescriptions.filter(p =>
-                p.patient?.fullName?.toLowerCase().includes(searchLower) ||
-                p.prescriptionId?.toLowerCase().includes(searchLower) ||
-                p.patient?.phone?.includes(search)
-            );
-        }
+        console.log('Prescriptions for this doctor:', prescriptions.length); // ✅ debug
 
         res.json({ success: true, data: prescriptions });
     } catch (error) {
