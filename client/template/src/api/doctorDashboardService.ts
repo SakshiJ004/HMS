@@ -208,3 +208,15 @@ export const getAllDoctorAppointments = async () => {
         throw new Error(error.response?.data?.message || 'Failed to fetch appointments');
     }
 };
+export const getRecentAppointmentsFiltered = async (filter: 'today' | 'week' | 'month' = 'week') => {
+    try {
+        const response = await axios.get<{ success: boolean; data: RecentAppointment[] }>(
+            `${API_URL}/api/doctor/dashboard/recent-filtered?filter=${filter}`,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Get recent appointments filtered error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch recent appointments');
+    }
+};

@@ -19,6 +19,7 @@ import {
   getUpcomingAppointmentFiltered,
   getAppointmentStatistics,
   getTopPatients,
+  getRecentAppointmentsFiltered,
 } from "../../../../../api/doctorDashboardService";
 import { getDoctor } from "../../../../../api/doctorService";
 import { all_routes } from "../../../../routes/all_routes";
@@ -38,6 +39,7 @@ const DoctorDahboard = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [upcomingAppointment, setUpcomingAppointment] = useState<UpcomingAppointmentData[]>([]);
   const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
+  const [recentFilter, setRecentFilter] = useState<'today' | 'week' | 'month'>('week');
 
   const [additionalStats, setAdditionalStats] = useState<any>({
     totalPatients: 0,
@@ -86,12 +88,13 @@ const DoctorDahboard = () => {
   useEffect(() => {
     fetchChartData();
   }, [chartPeriod]);
-
   // Refetch upcoming when filter changes
   useEffect(() => {
+    console.log('Upcoming filter changed to:', upcomingFilter); // debug
     const fetchUpcoming = async () => {
       try {
         const res = await getUpcomingAppointmentFiltered(upcomingFilter);
+        console.log('Upcoming response:', res); // debug
         if (res.success) setUpcomingAppointment(res.data);
       } catch (error) {
         console.error('Error:', error);
@@ -100,11 +103,13 @@ const DoctorDahboard = () => {
     fetchUpcoming();
   }, [upcomingFilter]);
 
-  // Refetch statistics when period changes
+  // Refetch statistics when period changes  
   useEffect(() => {
+    console.log('Statistics period changed to:', statisticsPeriod); // debug
     const fetchStats = async () => {
       try {
         const res = await getAppointmentStatistics(statisticsPeriod);
+        console.log('Statistics response:', res); // debug
         if (res.success) setAppointmentStatistics(res.data);
       } catch (error) {
         console.error('Error:', error);
@@ -115,9 +120,11 @@ const DoctorDahboard = () => {
 
   // Refetch top patients when period changes
   useEffect(() => {
+    console.log('Top patients period changed to:', topPatientsPeriod); // debug
     const fetchTopPatients = async () => {
       try {
         const res = await getTopPatients(topPatientsPeriod);
+        console.log('Top patients response:', res); // debug
         if (res.success) setTopPatients(res.data);
       } catch (error) {
         console.error('Error:', error);
@@ -125,6 +132,19 @@ const DoctorDahboard = () => {
     };
     fetchTopPatients();
   }, [topPatientsPeriod]);
+
+  // Refetch recent appointments when filter changes
+  useEffect(() => {
+    const fetchRecent = async () => {
+      try {
+        const res = await getRecentAppointmentsFiltered(recentFilter);
+        if (res.success) setRecentAppointments(res.data);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    fetchRecent();
+  }, [recentFilter]);
 
   const fetchAllData = async () => {
     try {
@@ -317,17 +337,38 @@ const DoctorDahboard = () => {
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setUpcomingFilter('today')}>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setUpcomingFilter('today');
+                          }}
+                        >
                           Today
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setUpcomingFilter('week')}>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setUpcomingFilter('week');
+                          }}
+                        >
                           This Week
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setUpcomingFilter('month')}>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setUpcomingFilter('month');
+                          }}
+                        >
                           This Month
                         </Link>
                       </li>
@@ -571,6 +612,7 @@ const DoctorDahboard = () => {
           <div className="row">
             <div className="col-12 d-flex">
               <div className="card shadow-sm flex-fill w-100">
+                {/* Recent Appointments card header */}
                 <div className="card-header d-flex align-items-center justify-content-between">
                   <h5 className="fw-bold mb-0">Recent Appointments</h5>
                   <div className="dropdown">
@@ -579,22 +621,23 @@ const DoctorDahboard = () => {
                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Weekly <i className="ti ti-chevron-down ms-1" />
+                      {recentFilter === 'today' ? 'Today' : recentFilter === 'week' ? 'Weekly' : 'Monthly'}
+                      <i className="ti ti-chevron-down ms-1" />
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#">
-                          Monthly
+                        <Link className="dropdown-item" to="#" onClick={() => setRecentFilter('today')}>
+                          Today
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
+                        <Link className="dropdown-item" to="#" onClick={() => setRecentFilter('week')}>
                           Weekly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#">
-                          Yearly
+                        <Link className="dropdown-item" to="#" onClick={() => setRecentFilter('month')}>
+                          Monthly
                         </Link>
                       </li>
                     </ul>
@@ -847,17 +890,38 @@ const DoctorDahboard = () => {
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setStatisticsPeriod('monthly')}>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setStatisticsPeriod('monthly');
+                          }}
+                        >
                           Monthly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setStatisticsPeriod('weekly')}>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setStatisticsPeriod('weekly');
+                          }}
+                        >
                           Weekly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setStatisticsPeriod('yearly')}>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setStatisticsPeriod('yearly');
+                          }}
+                        >
                           Yearly
                         </Link>
                       </li>
@@ -908,17 +972,38 @@ const DoctorDahboard = () => {
                     </Link>
                     <ul className="dropdown-menu">
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setTopPatientsPeriod('monthly')}>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setTopPatientsPeriod('monthly');
+                          }}
+                        >
                           Monthly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setTopPatientsPeriod('weekly')}>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setTopPatientsPeriod('weekly');
+                          }}
+                        >
                           Weekly
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="#" onClick={() => setTopPatientsPeriod('yearly')}>
+                        <Link
+                          className="dropdown-item"
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setTopPatientsPeriod('yearly');
+                          }}
+                        >
                           Yearly
                         </Link>
                       </li>

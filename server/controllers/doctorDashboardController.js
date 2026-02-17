@@ -242,22 +242,26 @@ const getUpcomingAppointmentWithFilter = async (req, res) => {
             endDate.setHours(23, 59, 59, 999);
         } else if (filter === 'month') {
             startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            endDate.setHours(23, 59, 59, 999);
         }
 
-        // ✅ Changed: Get multiple appointments (limit 3) instead of 1
+        console.log(`Filter: ${filter}, StartDate: ${startDate}, EndDate: ${endDate}`);
+
         const upcomingAppointments = await Appointment.find({
             doctor: doctorId,
             appointmentDate: { $gte: startDate, $lte: endDate },
-            status: { $in: ['Scheduled', 'Confirmed'] },
+            status: { $in: ['Scheduled', 'Confirmed', 'Pending'] }, // ✅ Pending add केलं
         })
             .populate('patient', 'fullName email phone profileImage')
             .sort({ appointmentDate: 1, appointmentTime: 1 })
-            .limit(3);  // ✅ Changed from .findOne() and limit(1)
+            .limit(5); // ✅ 3 वरून 5 केलं
+
+        console.log(`Found ${upcomingAppointments.length} appointments`);
 
         res.status(200).json({
             success: true,
-            data: upcomingAppointments,  // ✅ Return array instead of single object
+            data: upcomingAppointments,
         });
     } catch (error) {
         console.error('Get upcoming appointment error:', error);
@@ -455,26 +459,67 @@ const getAppointmentStatistics = async (req, res) => {
             }
         ]);
 
-        // Format data for frontend
+        // ✅ Fix: सगळे pending statuses बघ
         const completed = statistics.find(s => s._id === 'Checked Out')?.count || 0;
-        const pending = statistics.find(s => ['Scheduled', 'Confirmed'].includes(s._id))?.count || 0;
         const cancelled = statistics.find(s => s._id === 'Cancelled')?.count || 0;
+
+        // ✅ Fix: Scheduled + Confirmed + Pending सगळे add कर
+        const pendingStatuses = ['Scheduled', 'Confirmed', 'Pending'];
+        const pending = statistics
+            .filter(s => pendingStatuses.includes(s._id))
+            .reduce((sum, s) => sum + s.count, 0);
 
         res.status(200).json({
             success: true,
-            data: {
-                completed,
-                pending,
-                cancelled
-            }
+            data: { completed, pending, cancelled }
         });
     } catch (error) {
-        console.error('Get appointment statistics error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching statistics',
-            error: error.message,
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getRecentAppointmentsFiltered = async (req, res) => {
+    try {
+        const doctorId = new mongoose.Types.ObjectId(req.user._id);
+        const { filter = 'week' } = req.query;
+
+        const now = new Date();
+        let startDate = new Date();
+        let endDate = new Date();
+
+        if (filter === 'today') {
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+        } else if (filter === 'week') {
+            startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+        } else if (filter === 'month') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
+
+        const recentAppointments = await Appointment.find({
+            doctor: doctorId,
+            appointmentDate: { $gte: startDate, $lte: endDate }
+        })
+            .populate('patient', 'fullName email phone profileImage')
+            .populate('doctor', 'consultationCharge')
+            .sort({ appointmentDate: -1 })
+            .limit(10);
+
+        const appointmentsWithFee = recentAppointments.map(apt => ({
+            ...apt.toObject(),
+            consultationCharge: apt.doctor?.consultationCharge || 0
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: appointmentsWithFee,
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -589,6 +634,7 @@ module.exports = {
     getRecentAppointments,
     getAdditionalStats,
     getAppointmentStatistics,
+    getRecentAppointmentsFiltered,
     getTopPatients,
     getAllDoctorAppointments,
 };
