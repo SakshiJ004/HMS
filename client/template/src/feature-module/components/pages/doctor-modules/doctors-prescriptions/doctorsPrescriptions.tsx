@@ -938,7 +938,7 @@
 
 
 import { Link } from "react-router";
-import { all_routes } from "../../../../routes/all_routes";
+// import { all_routes } from "../../../../routes/all_routes";
 import { useState, useEffect } from "react";
 import SearchInput from "../../../../../core/common/dataTable/dataTableSearch";
 import { DatePicker, Select } from "antd";
