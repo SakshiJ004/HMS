@@ -290,24 +290,60 @@ const DoctorsPrescriptionDetails = () => {
 
   const handlePrint = () => {
     const content = printRef.current?.innerHTML;
+    if (!content) return;
+
     const printWindow = window.open('', '_blank');
-    if (printWindow && content) {
-      printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Prescription - ${prescription?.prescriptionId}</title>
-                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-                        <style>
-                            body { padding: 20px; font-family: Arial, sans-serif; }
-                            @media print { .no-print { display: none; } }
-                        </style>
-                    </head>
-                    <body>${content}</body>
-                </html>
-            `);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Prescription - ${prescription?.prescriptionId}</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+                @page {
+                    size: A4;
+                    margin: 20mm;
+                }
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                    color: #000;
+                }
+                .border { border: 1px solid #dee2e6 !important; }
+                .border-bottom { border-bottom: 1px solid #dee2e6 !important; }
+                .border-top { border-top: 1px solid #dee2e6 !important; }
+                .bg-light { background-color: #f8f9fa !important; }
+                .text-primary { color: #4f46e5 !important; }
+                .text-muted { color: #6c757d !important; }
+                .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+                .bg-info-subtle { background-color: #cfe2ff; }
+                .text-info-emphasis { color: #084298; }
+                table { width: 100%; border-collapse: collapse; }
+                table th, table td { padding: 8px; border: 1px solid #dee2e6; }
+                table thead { background-color: #f8f9fa; }
+                @media print {
+                    body { padding: 0; }
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            ${content}
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    };
   };
 
   const handleDownload = async () => {
@@ -410,9 +446,17 @@ const DoctorsPrescriptionDetails = () => {
                     <div className="px-3 py-2 bg-light rounded d-flex align-items-center justify-content-between flex-wrap gap-2">
                       <h6 className="m-0 fw-semibold fs-16">{patient?.fullName}</h6>
                       <div className="d-flex align-items-center gap-3 flex-wrap">
-                        <p className="mb-0 text-dark">{patient?.age}Y / {patient?.gender}</p>
-                        <p className="mb-0 text-dark"><span className="text-body">Blood</span>: {patient?.bloodGroup || 'N/A'}</p>
-                        <p className="mb-0 text-dark">Patient ID <span className="text-body">{patient?._id?.toString().slice(-6).toUpperCase()}</span></p>
+                        <p className="mb-0 text-dark">
+                          {patient?.age || 'N/A'}Y / {patient?.gender || 'N/A'}
+                        </p>
+                        <p className="mb-0 text-dark">
+                          <span className="text-body">Blood</span>: {patient?.bloodGroup || 'N/A'}
+                        </p>
+                        <p className="mb-0 text-dark">
+                          Patient ID <span className="text-body">
+                            {patient?._id ? patient._id.toString().slice(-6).toUpperCase() : 'N/A'}
+                          </span>
+                        </p>
                       </div>
                     </div>
                   </div>

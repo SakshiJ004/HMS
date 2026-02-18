@@ -287,18 +287,17 @@ exports.completeConsultation = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // ✅ _id पण select कर - फक्त department नाही
         const consultation = await OnlineConsultation.findById(id)
-            .populate('doctor', '_id department fullName')  // ← हे fix
-            .populate('patient', '_id');                    // ← हे add
+            .populate('doctor', '_id department fullName designation')
+            .populate('patient', '_id fullName email phone');
 
         if (!consultation) {
             return res.status(404).json({ success: false, message: 'Consultation not found' });
         }
 
-        console.log('Doctor object:', consultation.doctor);
-        console.log('Doctor _id:', consultation.doctor?._id);
-        console.log('Patient object:', consultation.patient);
+        console.log('✅ Completing consultation:', id);
+        console.log('Doctor:', consultation.doctor);
+        console.log('Medications:', consultation.medications?.length || 0);
 
         // Status update
         consultation.status = 'Completed';
@@ -312,12 +311,17 @@ exports.completeConsultation = async (req, res) => {
             });
         }
 
-        // ✅ Correct doctor/patient ID extract करा
+        // ✅ Extract IDs properly
         const doctorId = consultation.doctor?._id || consultation.doctor;
         const patientId = consultation.patient?._id || consultation.patient;
+        const department = consultation.doctor?.department || '';
 
-        console.log('Creating prescription with doctorId:', doctorId, 'patientId:', patientId);
+        console.log('Creating prescription with:');
+        console.log('- doctorId:', doctorId);
+        console.log('- patientId:', patientId);
+        console.log('- department:', department);
 
+        // ✅ Prescription create
         const prescription = new Prescription({
             consultationId: consultation._id,
             appointmentId: consultation.appointmentId,
@@ -327,12 +331,12 @@ exports.completeConsultation = async (req, res) => {
             advice: consultation.advice || [],
             diagnosis: consultation.diagnosis || [],
             followUp: consultation.followUp || {},
-            department: consultation.doctor?.department || '',
+            department: department,
             prescribedOn: new Date()
         });
 
         await prescription.save();
-        console.log('✅ Prescription created:', prescription.prescriptionId, '| Doctor:', doctorId);
+        console.log('✅ Prescription created:', prescription.prescriptionId);
 
         res.json({
             success: true,
