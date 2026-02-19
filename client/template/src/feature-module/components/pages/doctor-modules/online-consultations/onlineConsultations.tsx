@@ -668,108 +668,26 @@ const OnlineConsultations = () => {
   };
 
 
-  // ========================================
-  // SAVE FUNCTIONS
-  // ========================================
-  const saveVitals = async () => {
+  const saveAllSections = async () => {
     try {
       setSaving(true);
-      await updateVitals(consultation._id, vitals);
-      message.success('Vitals saved');
-      await fetchConsultation();
-    } catch (error: any) {
-      message.error('Failed to save vitals');
-    } finally {
-      setSaving(false);
-    }
-  };
 
-  const saveComplaints = async () => {
-    try {
-      setSaving(true);
-      await updateComplaints(consultation._id, complaints);
-      message.success('Complaints saved');
-      await fetchConsultation();
-    } catch (error: any) {
-      message.error('Failed to save complaints');
-    } finally {
-      setSaving(false);
-    }
-  };
+      // Save all sections in parallel
+      await Promise.all([
+        updateVitals(consultation._id, vitals),
+        updateComplaints(consultation._id, complaints),
+        updateDiagnosis(consultation._id, diagnosis),
+        updateMedications(consultation._id, medications),
+        updateAdvice(consultation._id, advice),
+        updateInvestigations(consultation._id, investigations),
+        updateFollowUp(consultation._id, followUp),
+        updateInvoice(consultation._id, invoice)
+      ]);
 
-  const saveDiagnosis = async () => {
-    try {
-      setSaving(true);
-      await updateDiagnosis(consultation._id, diagnosis);
-      message.success('Diagnosis saved');
-      await fetchConsultation();
-    } catch (error: any) {
-      message.error('Failed to save diagnosis');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveMedications = async () => {
-    try {
-      setSaving(true);
-      await updateMedications(consultation._id, medications);
-      message.success('Medications saved');
-      await fetchConsultation();
-    } catch (error: any) {
-      message.error('Failed to save medications');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveAdvice = async () => {
-    try {
-      setSaving(true);
-      await updateAdvice(consultation._id, advice);
-      message.success('Advice saved');
-      await fetchConsultation();
-    } catch (error: any) {
-      message.error('Failed to save advice');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveInvestigations = async () => {
-    try {
-      setSaving(true);
-      await updateInvestigations(consultation._id, investigations);
-      message.success('Investigations saved');
-      await fetchConsultation();
-    } catch (error: any) {
-      message.error('Failed to save investigations');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveFollowUp = async () => {
-    try {
-      setSaving(true);
-      await updateFollowUp(consultation._id, followUp);
-      message.success('Follow-up saved');
-      await fetchConsultation();
-    } catch (error: any) {
-      message.error('Failed to save follow-up');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveInvoice = async () => {
-    try {
-      setSaving(true);
-      await updateInvoice(consultation._id, invoice);
-      message.success('Invoice saved');
-      await fetchConsultation();
-    } catch (error: any) {
-      message.error('Failed to save invoice');
+      message.success('All data saved successfully');
+    } catch (error) {
+      message.error('Failed to save some data');
+      throw error; // Re-throw to prevent completion
     } finally {
       setSaving(false);
     }
@@ -781,6 +699,11 @@ const OnlineConsultations = () => {
   const handleComplete = async () => {
     try {
       setCompleting(true);
+
+      // Step 1: Save all sections first
+      await saveAllSections();
+
+      // Step 2: Then complete consultation
       const response = await completeConsultation(consultation._id);
 
       if (response.success) {
@@ -992,13 +915,6 @@ const OnlineConsultations = () => {
         <div className="card rounded-0">
           <div className="card-header d-flex justify-content-between">
             <h5 className="m-0 fw-bold">Vitals</h5>
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={saveVitals}
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save Vitals'}
-            </button>
           </div>
           <div className="card-body pb-0">
             <form>
@@ -1170,9 +1086,6 @@ const OnlineConsultations = () => {
               >
                 <i className="ti ti-plus me-1"></i> Add
               </button>
-              <button className="btn btn-sm btn-primary" onClick={saveComplaints} disabled={saving}>
-                Save
-              </button>
             </div>
           </div>
           <div className="card-body">
@@ -1242,9 +1155,6 @@ const OnlineConsultations = () => {
         <div className="card rounded-0">
           <div className="card-header d-flex justify-content-between">
             <h5 className="m-0 fw-bold">Diagnosis</h5>
-            <button className="btn btn-sm btn-primary" onClick={saveDiagnosis} disabled={saving}>
-              Save
-            </button>
           </div>
           <div className="card-body pb-0">
             <div className="mb-3">
@@ -1350,9 +1260,6 @@ const OnlineConsultations = () => {
               >
                 <i className="ti ti-plus me-1"></i> Add
               </button>
-              <button className="btn btn-sm btn-primary" onClick={saveMedications} disabled={saving}>
-                Save
-              </button>
             </div>
           </div>
           <div className="card-body pb-0">
@@ -1456,13 +1363,6 @@ const OnlineConsultations = () => {
               >
                 <i className="ti ti-plus me-1"></i> Add
               </button>
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={saveAdvice}
-                disabled={saving}
-              >
-                {saving ? 'Saving...' : 'Save'}
-              </button>
             </div>
           </div>
           <div className="card-body">
@@ -1510,13 +1410,6 @@ const OnlineConsultations = () => {
                 onClick={() => setInvestigations([...investigations, { name: '', type: 'Lab Test', instructions: '' }])}
               >
                 <i className="ti ti-plus me-1"></i> Add
-              </button>
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={saveInvestigations}
-                disabled={saving}
-              >
-                {saving ? 'Saving...' : 'Save'}
               </button>
             </div>
           </div>
@@ -1589,13 +1482,6 @@ const OnlineConsultations = () => {
         <div className="card rounded-0">
           <div className="card-header d-flex justify-content-between">
             <h5 className="m-0 fw-bold">Follow Up</h5>
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={saveFollowUp}
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save'}
-            </button>
           </div>
           <div className="card-body pb-0">
             <div className="row">
@@ -1655,13 +1541,6 @@ const OnlineConsultations = () => {
         <div className="card rounded-0">
           <div className="card-header d-flex justify-content-between">
             <h5 className="m-0 fw-bold">Invoice</h5>
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={saveInvoice}
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save'}
-            </button>
           </div>
           <div className="card-body">
             <div className="row mb-3">
@@ -1794,10 +1673,21 @@ const OnlineConsultations = () => {
           >
             Cancel
           </Link>
+
+          {/* ✅ Optional: Manual Save Draft button */}
+          <button
+            onClick={saveAllSections}
+            className="btn btn-md btn-outline-primary fs-13 fw-medium rounded"
+            disabled={saving}
+          >
+            {saving ? 'Saving Draft...' : 'Save Draft'}
+          </button>
+
+          {/* ✅ Complete button - saves everything + completes */}
           <button
             onClick={handleComplete}
             className="btn btn-md btn-primary fs-13 fw-medium rounded"
-            disabled={completing}
+            disabled={completing || saving}
           >
             {completing ? 'Completing...' : 'Complete Appointment'}
           </button>
