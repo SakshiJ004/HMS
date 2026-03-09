@@ -74,6 +74,70 @@ router.put('/profile', protect, authorize('doctor'), async (req, res) => {
     }
 });
 
+// ============================================
+// backend/routes/doctorRoutes.js मध्ये
+// router.post('/') च्या आधी हा route ADD करा
+// ============================================
+
+router.post('/change-password', protect, authorize('doctor'), async (req, res) => {
+    try {
+        const { newPassword, confirmPassword } = req.body;
+        const doctorId = req.user._id;
+
+        if (!newPassword || !confirmPassword) {
+            return res.status(400).json({ success: false, message: 'All fields are required' });
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ success: false, message: 'Passwords do not match' });
+        }
+        if (newPassword.length < 8) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+        }
+        if (!/[A-Z]/.test(newPassword)) {
+            return res.status(400).json({ success: false, message: 'Password must contain at least one uppercase letter' });
+        }
+        if (!/[0-9]/.test(newPassword)) {
+            return res.status(400).json({ success: false, message: 'Password must contain at least one number' });
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+            return res.status(400).json({ success: false, message: 'Password must contain at least one special character' });
+        }
+
+        // Find doctor
+        const User = require('../models/User');
+        const doctor = await User.findById(doctorId);
+        if (!doctor) {
+            return res.status(404).json({ success: false, message: 'Doctor not found' });
+        }
+
+        // ✅ Direct set - pre-save hook will hash it automatically
+        doctor.password = newPassword;
+        await doctor.save();
+
+        console.log('✅ Password changed for doctor:', doctor.email);
+
+        // Send confirmation email
+        try {
+            const { sendEmail, emailTemplates } = require('../config/emailService');
+            await sendEmail({
+                to: doctor.email,
+                subject: 'Password Changed Successfully - Preclinic',
+                html: emailTemplates.passwordResetSuccess(doctor.fullName),
+            });
+        } catch (emailError) {
+            console.error('Email failed (non-critical):', emailError.message);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Password updated successfully! A confirmation email has been sent.',
+        });
+
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 
 // @route   POST /api/doctors
 // @desc    Create new doctor
@@ -101,8 +165,6 @@ router.put('/:id', protect, authorize('admin'), updateDoctor);
 // @desc    Delete doctor
 // @access  Private (Admin only)
 router.delete('/:id', protect, authorize('admin'), deleteDoctor);
-
-
 
 
 module.exports = router;
