@@ -231,6 +231,7 @@ import UiScrollbar from "../components/pages/ui-modules/ui-interface/ui-advance/
 import { all_routes } from "./all_routes";
 import { Navigate, Route } from "react-router";
 import DoctorAppointments from "../components/pages/doctor-modules/doctor-appointments/doctorAppointments";
+import DoctorScheduleAdmin from "../components/pages/doctor-modules/doctors-schedules/doctorScheduleAdmin";
 
 const routes = all_routes;
 
@@ -1087,7 +1088,7 @@ export const publicRoutes = [
   },
   {
     path: routes.doctorScheduleClini,
-    element: <DoctorSchedules />,
+    element: <DoctorScheduleAdmin />,
     route: Route,
   },
   {

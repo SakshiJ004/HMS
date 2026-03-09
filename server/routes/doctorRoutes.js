@@ -85,7 +85,7 @@ router.post('/', protect, authorize('admin'), createDoctor);
 // @access  Private
 router.get('/', protect, getDoctors);
 
-router.put('/:id/schedule', protect, authorize('doctor'), updateDoctorSchedule)
+router.put('/:id/schedule', protect, authorize('doctor', 'admin'), updateDoctorSchedule)
 
 // @route   GET /api/doctors/:id
 // @desc    Get single doctor
