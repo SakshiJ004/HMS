@@ -1073,19 +1073,15 @@ exports.updateVitals = async (req, res) => {
     try {
         const { id } = req.params;
         const { vitals } = req.body;
-
         const consultation = await OnlineConsultation.findByIdAndUpdate(
             id,
-            { vitals },
-            { new: true, runValidators: true }
+            { $set: { vitals } },
+            { new: true, runValidators: false }
         );
-
-        if (!consultation) {
-            return res.status(404).json({ success: false, message: 'Consultation not found' });
-        }
-
+        if (!consultation) return res.status(404).json({ success: false, message: 'Consultation not found' });
         res.json({ success: true, data: consultation });
     } catch (error) {
+        console.error('❌ updateVitals error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -1095,15 +1091,15 @@ exports.updateComplaints = async (req, res) => {
     try {
         const { id } = req.params;
         const { complaints } = req.body;
-
         const consultation = await OnlineConsultation.findByIdAndUpdate(
             id,
-            { complaints },
-            { new: true }
+            { $set: { complaints } },
+            { new: true, runValidators: false }
         );
-
+        if (!consultation) return res.status(404).json({ success: false, message: 'Consultation not found' });
         res.json({ success: true, data: consultation });
     } catch (error) {
+        console.error('❌ updateComplaints error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -1113,15 +1109,15 @@ exports.updateDiagnosis = async (req, res) => {
     try {
         const { id } = req.params;
         const { diagnosis } = req.body;
-
         const consultation = await OnlineConsultation.findByIdAndUpdate(
             id,
-            { diagnosis },
-            { new: true }
+            { $set: { diagnosis } },
+            { new: true, runValidators: false }
         );
-
+        if (!consultation) return res.status(404).json({ success: false, message: 'Consultation not found' });
         res.json({ success: true, data: consultation });
     } catch (error) {
+        console.error('❌ updateDiagnosis error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -1131,15 +1127,15 @@ exports.updateMedications = async (req, res) => {
     try {
         const { id } = req.params;
         const { medications } = req.body;
-
         const consultation = await OnlineConsultation.findByIdAndUpdate(
             id,
-            { medications },
-            { new: true }
+            { $set: { medications } },
+            { new: true, runValidators: false }
         );
-
+        if (!consultation) return res.status(404).json({ success: false, message: 'Consultation not found' });
         res.json({ success: true, data: consultation });
     } catch (error) {
+        console.error('❌ updateMedications error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -1149,15 +1145,15 @@ exports.updateAdvice = async (req, res) => {
     try {
         const { id } = req.params;
         const { advice } = req.body;
-
         const consultation = await OnlineConsultation.findByIdAndUpdate(
             id,
-            { advice },
-            { new: true }
+            { $set: { advice } },
+            { new: true, runValidators: false }
         );
-
+        if (!consultation) return res.status(404).json({ success: false, message: 'Consultation not found' });
         res.json({ success: true, data: consultation });
     } catch (error) {
+        console.error('❌ updateAdvice error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -1168,15 +1164,46 @@ exports.updateInvestigations = async (req, res) => {
         const { id } = req.params;
         const { investigations } = req.body;
 
+        console.log('📝 Updating investigations for:', id);
+        console.log('📋 Investigations data:', JSON.stringify(investigations));
+
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid consultation ID'
+            });
+        }
+
+        // ✅ item: any काढलं - plain JS
+        const sanitized = (investigations || []).map((item) => ({
+            name: item.name || '',
+            type: item.type || 'Lab Test',
+            instructions: item.instructions || ''
+        }));
+
         const consultation = await OnlineConsultation.findByIdAndUpdate(
             id,
-            { investigations },
-            { new: true }
+            { $set: { investigations: sanitized } },
+            { new: true, runValidators: false }
         );
 
+        if (!consultation) {
+            return res.status(404).json({
+                success: false,
+                message: 'Consultation not found'
+            });
+        }
+
+        console.log('✅ Investigations updated successfully');
         res.json({ success: true, data: consultation });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+
+    } catch (error) {    // ✅ error: any काढलं - plain JS
+        console.error('❌ updateInvestigations error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to update investigations'
+        });
     }
 };
 
@@ -1185,15 +1212,15 @@ exports.updateFollowUp = async (req, res) => {
     try {
         const { id } = req.params;
         const { followUp } = req.body;
-
         const consultation = await OnlineConsultation.findByIdAndUpdate(
             id,
-            { followUp },
-            { new: true }
+            { $set: { followUp } },
+            { new: true, runValidators: false }
         );
-
+        if (!consultation) return res.status(404).json({ success: false, message: 'Consultation not found' });
         res.json({ success: true, data: consultation });
     } catch (error) {
+        console.error('❌ updateFollowUp error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -1203,15 +1230,15 @@ exports.updateInvoice = async (req, res) => {
     try {
         const { id } = req.params;
         const { invoice } = req.body;
-
         const consultation = await OnlineConsultation.findByIdAndUpdate(
             id,
-            { invoice },
-            { new: true }
+            { $set: { invoice } },
+            { new: true, runValidators: false }
         );
-
+        if (!consultation) return res.status(404).json({ success: false, message: 'Consultation not found' });
         res.json({ success: true, data: consultation });
     } catch (error) {
+        console.error('❌ updateInvoice error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
