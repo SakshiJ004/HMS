@@ -68,6 +68,38 @@ const doctorSchema = new mongoose.Schema({
         type: String,  // Base64 image किंवा URL
         default: null
     },
+    notificationPreferences: {
+        newAppointment: {
+            email: { type: Boolean, default: true },
+            sms: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true },
+        },
+        appointmentCancellation: {
+            email: { type: Boolean, default: true },
+            sms: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true },
+        },
+        labReportReady: {
+            email: { type: Boolean, default: true },
+            sms: { type: Boolean, default: false },
+            inApp: { type: Boolean, default: true },
+        },
+        followUpReminders: {
+            email: { type: Boolean, default: true },
+            sms: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true },
+        },
+        billingNotification: {
+            email: { type: Boolean, default: true },
+            sms: { type: Boolean, default: false },
+            inApp: { type: Boolean, default: true },
+        },
+        systemAlerts: {
+            email: { type: Boolean, default: true },
+            sms: { type: Boolean, default: false },
+            inApp: { type: Boolean, default: true },
+        },
+    },
 });
 
 // ✅ Create Doctor discriminator

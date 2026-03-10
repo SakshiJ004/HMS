@@ -201,91 +201,284 @@
 
 
 
+// import { useState } from "react";
+// import { Link } from "react-router";
+// import { message } from "antd";
+// import { all_routes } from "../../../../routes/all_routes";
+
+// type PasswordField = "newPassword" | "confirmPassword";
+
+// const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+// const DoctorsPasswordSettings = () => {
+//   const [passwordVisibility, setPasswordVisibility] = useState({
+//     newPassword: false,
+//     confirmPassword: false,
+//   });
+
+//   const [formData, setFormData] = useState({
+//     newPassword: "",
+//     confirmPassword: "",
+//   });
+
+//   const [loading, setLoading] = useState(false);
+
+//   const togglePasswordVisibility = (field: PasswordField) => {
+//     setPasswordVisibility((prev) => ({ ...prev, [field]: !prev[field] }));
+//   };
+
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setFormData({ ...formData, [e.target.name]: e.target.value });
+//   };
+
+//   const handleSave = async () => {
+//     if (!formData.newPassword || !formData.confirmPassword) {
+//       message.error("All fields are required");
+//       return;
+//     }
+//     if (formData.newPassword.length < 8) {
+//       message.error("Password must be at least 8 characters");
+//       return;
+//     }
+//     if (!/[A-Z]/.test(formData.newPassword)) {
+//       message.error("Password must contain at least one uppercase letter");
+//       return;
+//     }
+//     if (!/[0-9]/.test(formData.newPassword)) {
+//       message.error("Password must contain at least one number");
+//       return;
+//     }
+//     if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.newPassword)) {
+//       message.error("Password must contain at least one special character");
+//       return;
+//     }
+//     if (formData.newPassword !== formData.confirmPassword) {
+//       message.error("New password and confirm password do not match");
+//       return;
+//     }
+
+//     setLoading(true);
+//     try {
+//       const token = localStorage.getItem("token");
+//       const response = await fetch(`${BACKEND_URL}/api/doctors/change-password`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({
+//           newPassword: formData.newPassword,
+//           confirmPassword: formData.confirmPassword,
+//         }),
+//       });
+
+//       const data = await response.json();
+
+//       if (response.ok && data.success) {
+//         message.success({
+//           content: "✅ Password updated successfully! A confirmation email has been sent.",
+//           duration: 4,
+//         });
+//         setFormData({ newPassword: "", confirmPassword: "" });
+//       } else {
+//         message.error(data.message || "Failed to update password");
+//       }
+//     } catch (error) {
+//       console.error("Change password error:", error);
+//       message.error("Unable to connect to server. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const renderPasswordInput = (name: PasswordField, label: string) => (
+//     <div className="col-lg-6 mb-3">
+//       <label className="form-label">
+//         {label} <span className="text-danger">*</span>
+//       </label>
+//       <div className="pass-group input-group position-relative border rounded">
+//         <span className="input-group-text bg-white border-0">
+//           <i className="ti ti-lock text-dark fs-14" />
+//         </span>
+//         <input
+//           type={passwordVisibility[name] ? "text" : "password"}
+//           name={name}
+//           value={formData[name]}
+//           onChange={handleInputChange}
+//           className="pass-input form-control border-start-0 ps-0"
+//           placeholder="****************"
+//         />
+//         <span
+//           className={`ti toggle-password fs-14 ${passwordVisibility[name] ? "ti-eye" : "ti-eye-off"}`}
+//           style={{ cursor: "pointer", padding: "0 12px", display: "flex", alignItems: "center" }}
+//           onClick={() => togglePasswordVisibility(name)}
+//         />
+//       </div>
+//     </div>
+//   );
+
+//   return (
+//     <>
+//       <div className="page-wrapper">
+//         <div className="content">
+//           <div className="mb-3 border-bottom pb-3">
+//             <h4 className="fw-bold mb-0">Settings</h4>
+//           </div>
+//           <div className="card">
+//             <div className="card-body">
+//               <div className="row">
+//                 {/* Sidebar Nav */}
+//                 <div className="col-lg-3">
+//                   <div className="text-start">
+//                     <Link to={all_routes.doctorsprofilesettings}
+//                       className="btn btn-md rounded fs-14 fw-medium text-dark mb-1 w-100 justify-content-start">
+//                       <i className="ti ti-user-cog me-2 text-dark" /> Profile Settings
+//                     </Link>
+//                     <Link to={all_routes.doctorspasswordsettings}
+//                       className="d-block w-100 btn btn-md border rounded fs-14 fw-medium text-primary text-start mb-1 active">
+//                       <i className="ti ti-lock-star me-2 text-primary" /> Change Password
+//                     </Link>
+//                     <Link to={all_routes.doctorsnotificationsettings}
+//                       className="btn btn-md rounded fs-14 fw-medium text-dark mb-1 w-100 justify-content-start">
+//                       <i className="ti ti-bell me-2 text-dark" /> Notifications
+//                     </Link>
+//                   </div>
+//                 </div>
+
+//                 {/* Form */}
+//                 <div className="col-lg-9">
+//                   <div className="border-1 border-start ps-4">
+//                     <h5 className="fw-bold pb-3 mb-4 border-1 border-bottom">Change Password</h5>
+
+//                     <div className="alert alert-info py-2 px-3 mb-4">
+//                       <i className="ti ti-info-circle me-2" />
+//                       Set a new password for your account. You will use this password for future logins.
+//                     </div>
+
+//                     <div className="row border-bottom mb-3 pb-3">
+//                       {renderPasswordInput("newPassword", "New Password")}
+//                       {renderPasswordInput("confirmPassword", "Confirm New Password")}
+
+//                       <div className="col-12">
+//                         <small className="text-muted">
+//                           Password must be at least 8 characters with 1 uppercase letter, 1 number, and 1 special character.
+//                         </small>
+//                       </div>
+//                     </div>
+
+//                     <div className="d-flex justify-content-end align-items-center gap-2">
+//                       <button type="button"
+//                         className="btn btn-light btn-md fs-13 fw-medium rounded"
+//                         onClick={() => setFormData({ newPassword: "", confirmPassword: "" })}
+//                         disabled={loading}>
+//                         Cancel
+//                       </button>
+//                       <button type="button"
+//                         className="btn btn-primary btn-md fs-13 fw-medium rounded"
+//                         onClick={handleSave}
+//                         disabled={loading}>
+//                         {loading
+//                           ? (<><span className="spinner-border spinner-border-sm me-2" />Saving...</>)
+//                           : "Save Changes"
+//                         }
+//                       </button>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="footer text-center bg-white p-2 border-top">
+//           <p className="text-dark mb-0">
+//             2025 © <Link to="#" className="link-primary">Preclinic</Link>, All Rights Reserved
+//           </p>
+//         </div>
+//       </div>
+//     </>
+//   );
+// };
+
+// export default DoctorsPasswordSettings;
+
 import { useState } from "react";
 import { Link } from "react-router";
-import { message } from "antd";
 import { all_routes } from "../../../../routes/all_routes";
 
 type PasswordField = "newPassword" | "confirmPassword";
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const DoctorsPasswordSettings = () => {
   const [passwordVisibility, setPasswordVisibility] = useState({
     newPassword: false,
     confirmPassword: false,
   });
-
-  const [formData, setFormData] = useState({
-    newPassword: "",
-    confirmPassword: "",
-  });
-
+  const [formData, setFormData] = useState({ newPassword: "", confirmPassword: "" });
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ newPassword?: string; confirmPassword?: string; general?: string }>({});
+
+  const showSuccess = (text: string) => {
+    setSuccessMsg(text);
+    setTimeout(() => setSuccessMsg(""), 5000);
+  };
 
   const togglePasswordVisibility = (field: PasswordField) => {
     setPasswordVisibility((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error on type
+    setFieldErrors((prev) => ({ ...prev, [name]: undefined, general: undefined }));
   };
 
   const handleSave = async () => {
-    if (!formData.newPassword || !formData.confirmPassword) {
-      message.error("All fields are required");
-      return;
+    const errors: typeof fieldErrors = {};
+
+    if (!formData.newPassword) {
+      errors.newPassword = "New password is required";
+    } else if (formData.newPassword.length < 8) {
+      errors.newPassword = "Password must be at least 8 characters";
+    } else if (!/[A-Z]/.test(formData.newPassword)) {
+      errors.newPassword = "Must contain at least one uppercase letter";
+    } else if (!/[0-9]/.test(formData.newPassword)) {
+      errors.newPassword = "Must contain at least one number";
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.newPassword)) {
+      errors.newPassword = "Must contain at least one special character";
     }
-    if (formData.newPassword.length < 8) {
-      message.error("Password must be at least 8 characters");
-      return;
+
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "Please confirm your new password";
+    } else if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
+      errors.confirmPassword = "❌ Passwords do not match. Please re-enter your confirm password.";
     }
-    if (!/[A-Z]/.test(formData.newPassword)) {
-      message.error("Password must contain at least one uppercase letter");
-      return;
-    }
-    if (!/[0-9]/.test(formData.newPassword)) {
-      message.error("Password must contain at least one number");
-      return;
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.newPassword)) {
-      message.error("Password must contain at least one special character");
-      return;
-    }
-    if (formData.newPassword !== formData.confirmPassword) {
-      message.error("New password and confirm password do not match");
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
     setLoading(true);
+    setFieldErrors({});
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${BACKEND_URL}/api/doctors/change-password`, {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+      const response = await fetch(`${backendUrl}/api/doctors/change-password`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          newPassword: formData.newPassword,
-          confirmPassword: formData.confirmPassword,
-        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ newPassword: formData.newPassword, confirmPassword: formData.confirmPassword }),
       });
-
       const data = await response.json();
-
       if (response.ok && data.success) {
-        message.success({
-          content: "✅ Password updated successfully! A confirmation email has been sent.",
-          duration: 4,
-        });
+        showSuccess("✅ Password updated successfully! A confirmation email has been sent.");
         setFormData({ newPassword: "", confirmPassword: "" });
       } else {
-        message.error(data.message || "Failed to update password");
+        setFieldErrors({ general: data.message || "Failed to update password" });
       }
-    } catch (error) {
-      console.error("Change password error:", error);
-      message.error("Unable to connect to server. Please try again.");
+    } catch {
+      setFieldErrors({ general: "Unable to connect to server. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -296,7 +489,7 @@ const DoctorsPasswordSettings = () => {
       <label className="form-label">
         {label} <span className="text-danger">*</span>
       </label>
-      <div className="pass-group input-group position-relative border rounded">
+      <div className={`pass-group input-group position-relative border rounded ${fieldErrors[name] ? "border-danger" : ""}`}>
         <span className="input-group-text bg-white border-0">
           <i className="ti ti-lock text-dark fs-14" />
         </span>
@@ -305,7 +498,7 @@ const DoctorsPasswordSettings = () => {
           name={name}
           value={formData[name]}
           onChange={handleInputChange}
-          className="pass-input form-control border-start-0 ps-0"
+          className="pass-input form-control border-start-0 ps-0 border-0"
           placeholder="****************"
         />
         <span
@@ -314,89 +507,96 @@ const DoctorsPasswordSettings = () => {
           onClick={() => togglePasswordVisibility(name)}
         />
       </div>
+      {fieldErrors[name] && (
+        <div className="text-danger fs-13 mt-1">
+          <i className="ti ti-alert-circle me-1" />{fieldErrors[name]}
+        </div>
+      )}
     </div>
   );
 
   return (
-    <>
-      <div className="page-wrapper">
-        <div className="content">
-          <div className="mb-3 border-bottom pb-3">
-            <h4 className="fw-bold mb-0">Settings</h4>
+    <div className="page-wrapper">
+      <div className="content">
+        <div className="mb-3 border-bottom pb-3">
+          <h4 className="fw-bold mb-0">Settings</h4>
+        </div>
+
+        {/* Success Alert */}
+        {successMsg && (
+          <div className="alert alert-success d-flex align-items-center" role="alert">
+            <i className="ti ti-circle-check me-2 fs-16" />
+            <span className="flex-grow-1">{successMsg}</span>
+            <button type="button" className="btn-close ms-2" onClick={() => setSuccessMsg("")} />
           </div>
-          <div className="card">
-            <div className="card-body">
-              <div className="row">
-                {/* Sidebar Nav */}
-                <div className="col-lg-3">
-                  <div className="text-start">
-                    <Link to={all_routes.doctorsprofilesettings}
-                      className="btn btn-md rounded fs-14 fw-medium text-dark mb-1 w-100 justify-content-start">
-                      <i className="ti ti-user-cog me-2 text-dark" /> Profile Settings
-                    </Link>
-                    <Link to={all_routes.doctorspasswordsettings}
-                      className="d-block w-100 btn btn-md border rounded fs-14 fw-medium text-primary text-start mb-1 active">
-                      <i className="ti ti-lock-star me-2 text-primary" /> Change Password
-                    </Link>
-                    <Link to={all_routes.doctorsnotificationsettings}
-                      className="btn btn-md rounded fs-14 fw-medium text-dark mb-1 w-100 justify-content-start">
-                      <i className="ti ti-bell me-2 text-dark" /> Notifications
-                    </Link>
-                  </div>
+        )}
+
+        {/* General Error Alert */}
+        {fieldErrors.general && (
+          <div className="alert alert-danger d-flex align-items-center" role="alert">
+            <i className="ti ti-alert-circle me-2 fs-16" />
+            <span className="flex-grow-1">{fieldErrors.general}</span>
+            <button type="button" className="btn-close ms-2" onClick={() => setFieldErrors({})} />
+          </div>
+        )}
+
+        <div className="card">
+          <div className="card-body">
+            <div className="row">
+              {/* Sidebar */}
+              <div className="col-lg-3">
+                <div className="text-start">
+                  <Link to={all_routes.doctorsprofilesettings}
+                    className="btn btn-md rounded fs-14 fw-medium text-dark mb-1 w-100 justify-content-start">
+                    <i className="ti ti-user-cog me-2 text-dark" /> Profile Settings
+                  </Link>
+                  <Link to={all_routes.doctorspasswordsettings}
+                    className="d-block w-100 btn btn-md border rounded fs-14 fw-medium text-primary text-start mb-1">
+                    <i className="ti ti-lock-star me-2 text-primary" /> Change Password
+                  </Link>
+                  <Link to={all_routes.doctorsnotificationsettings}
+                    className="btn btn-md rounded fs-14 fw-medium text-dark mb-1 w-100 justify-content-start">
+                    <i className="ti ti-bell me-2 text-dark" /> Notifications
+                  </Link>
                 </div>
+              </div>
 
-                {/* Form */}
-                <div className="col-lg-9">
-                  <div className="border-1 border-start ps-4">
-                    <h5 className="fw-bold pb-3 mb-4 border-1 border-bottom">Change Password</h5>
-
-                    <div className="alert alert-info py-2 px-3 mb-4">
-                      <i className="ti ti-info-circle me-2" />
-                      Set a new password for your account. You will use this password for future logins.
+              {/* Form */}
+              <div className="col-lg-9">
+                <div className="border-1 border-start ps-4">
+                  <h5 className="fw-bold pb-3 mb-4 border-1 border-bottom">Change Password</h5>
+                  <div className="alert alert-info py-2 px-3 mb-4">
+                    <i className="ti ti-info-circle me-2" />
+                    Set a new password for your account.
+                  </div>
+                  <div className="row border-bottom mb-3 pb-3">
+                    {renderPasswordInput("newPassword", "New Password")}
+                    {renderPasswordInput("confirmPassword", "Confirm New Password")}
+                    <div className="col-12">
+                      <small className="text-muted">
+                        Min 8 chars, 1 uppercase, 1 number, 1 special character (!@#$%^&*).
+                      </small>
                     </div>
-
-                    <div className="row border-bottom mb-3 pb-3">
-                      {renderPasswordInput("newPassword", "New Password")}
-                      {renderPasswordInput("confirmPassword", "Confirm New Password")}
-
-                      <div className="col-12">
-                        <small className="text-muted">
-                          Password must be at least 8 characters with 1 uppercase letter, 1 number, and 1 special character.
-                        </small>
-                      </div>
-                    </div>
-
-                    <div className="d-flex justify-content-end align-items-center gap-2">
-                      <button type="button"
-                        className="btn btn-light btn-md fs-13 fw-medium rounded"
-                        onClick={() => setFormData({ newPassword: "", confirmPassword: "" })}
-                        disabled={loading}>
-                        Cancel
-                      </button>
-                      <button type="button"
-                        className="btn btn-primary btn-md fs-13 fw-medium rounded"
-                        onClick={handleSave}
-                        disabled={loading}>
-                        {loading
-                          ? (<><span className="spinner-border spinner-border-sm me-2" />Saving...</>)
-                          : "Save Changes"
-                        }
-                      </button>
-                    </div>
+                  </div>
+                  <div className="d-flex justify-content-end gap-2">
+                    <button type="button" className="btn btn-light btn-md fs-13 fw-medium rounded"
+                      onClick={() => { setFormData({ newPassword: "", confirmPassword: "" }); setFieldErrors({}); }}
+                      disabled={loading}>Cancel</button>
+                    <button type="button" className="btn btn-primary btn-md fs-13 fw-medium rounded"
+                      onClick={handleSave} disabled={loading}>
+                      {loading ? <><span className="spinner-border spinner-border-sm me-2" />Saving...</> : "Save Changes"}
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <div className="footer text-center bg-white p-2 border-top">
-          <p className="text-dark mb-0">
-            2025 © <Link to="#" className="link-primary">Preclinic</Link>, All Rights Reserved
-          </p>
-        </div>
       </div>
-    </>
+      <div className="footer text-center bg-white p-2 border-top">
+        <p className="text-dark mb-0">2025 © <Link to="#" className="link-primary">Preclinic</Link>, All Rights Reserved</p>
+      </div>
+    </div>
   );
 };
 

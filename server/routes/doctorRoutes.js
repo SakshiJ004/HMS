@@ -139,6 +139,52 @@ router.post('/change-password', protect, authorize('doctor'), async (req, res) =
     }
 });
 
+// GET notification preferences
+router.get('/notification-preferences', protect, authorize('doctor'), async (req, res) => {
+    try {
+        const Doctor = require('../models/Doctor'); // ✅ Doctor model use करा
+        const doctor = await Doctor.findById(req.user._id).select('notificationPreferences');
+        if (!doctor) {
+            return res.status(404).json({ success: false, message: 'Doctor not found' });
+        }
+        res.status(200).json({
+            success: true,
+            data: doctor.notificationPreferences || null
+        });
+    } catch (error) {
+        console.error('Get notification prefs error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// PUT - Save notification preferences
+router.put('/notification-preferences', protect, authorize('doctor'), async (req, res) => {
+    try {
+        const Doctor = require('../models/Doctor'); // ✅ Doctor model use करा
+        const prefs = req.body;
+
+        const doctor = await Doctor.findByIdAndUpdate(
+            req.user._id,
+            { $set: { notificationPreferences: prefs } },
+            { new: true, runValidators: false }
+        );
+
+        if (!doctor) {
+            return res.status(404).json({ success: false, message: 'Doctor not found' });
+        }
+
+        console.log('✅ Notification prefs saved for doctor:', doctor.email);
+        res.status(200).json({
+            success: true,
+            message: 'Notification preferences saved successfully',
+            data: doctor.notificationPreferences
+        });
+    } catch (error) {
+        console.error('Save notification prefs error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // @route   POST /api/doctors
 // @desc    Create new doctor
 // @access  Private (Admin only)
