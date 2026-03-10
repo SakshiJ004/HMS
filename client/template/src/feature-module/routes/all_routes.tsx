@@ -1,3 +1,6 @@
+import DoctorsAccountSettings from "../components/pages/doctor-modules/doctor-accounts-settings/doctorAccountSettings";
+import DoctorsTransactions from "../components/pages/doctor-modules/doctor-transactions/doctorTransactions";
+
 export const all_routes = {
   //Auth routes
   login: "/login",
@@ -60,6 +63,10 @@ export const all_routes = {
   doctorspatientdetails: "/doctor/doctors-patient-details",
   doctorsappointmentdetails: "/doctor/doctors-appointment-details",
   doctorsprescriptiondetails: "/doctor/doctors-prescription-details/:id",
+  // doctorsaccountsettings: "/doctor/doctors-account-settings",
+  // doctorstransactions: "/doctor/doctors-transactions",
+  doctorsaccountsettings: "/doctor/doctor-accounts-settings",
+  doctorstransactions: "/doctor/doctor-transactions",
 
   //Super Admin routes
   superAdminDashboard: "/super-admin/super-admin-dashboard",

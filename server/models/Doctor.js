@@ -100,6 +100,8 @@ const doctorSchema = new mongoose.Schema({
             inApp: { type: Boolean, default: true },
         },
     },
+    twoFAEnabled: { type: Boolean, default: false },
+    loginAlerts: { type: Boolean, default: true },
 });
 
 // ✅ Create Doctor discriminator

@@ -232,6 +232,8 @@ import { all_routes } from "./all_routes";
 import { Navigate, Route } from "react-router";
 import DoctorAppointments from "../components/pages/doctor-modules/doctor-appointments/doctorAppointments";
 import DoctorScheduleAdmin from "../components/pages/doctor-modules/doctors-schedules/doctorScheduleAdmin";
+import DoctorsAccountSettings from "../components/pages/doctor-modules/doctor-accounts-settings/doctorAccountSettings";
+import DoctorsTransactions from "../components/pages/doctor-modules/doctor-transactions/doctorTransactions";
 
 const routes = all_routes;
 
@@ -350,6 +352,14 @@ export const publicRoutes = [
     path: routes.doctorsnotificationsettings,
     element: <DoctorsNotificationSettings />,
     route: Route,
+  },
+  { path: routes.doctorsaccountsettings, 
+    element: <DoctorsAccountSettings />, 
+    route: Route 
+  },
+  { path: routes.doctorstransactions, 
+    element: <DoctorsTransactions />, 
+    route: Route 
   },
   {
     path: routes.patientdashboard,

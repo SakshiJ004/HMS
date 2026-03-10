@@ -185,6 +185,96 @@ router.put('/notification-preferences', protect, authorize('doctor'), async (req
     }
 });
 
+// PUT - Update Email
+router.put('/update-email', protect, authorize('doctor'), async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+        const User = require('../models/User');
+        // Check if email already exists
+        const existing = await User.findOne({ email, _id: { $ne: req.user._id } });
+        if (existing) return res.status(400).json({ success: false, message: 'Email already in use by another account' });
+
+        await User.findByIdAndUpdate(req.user._id, { $set: { email } }, { runValidators: false });
+        res.status(200).json({ success: true, message: 'Email updated successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// PUT - Update Security Settings (2FA, login alerts)
+router.put('/update-security', protect, authorize('doctor'), async (req, res) => {
+    try {
+        const { twoFAEnabled, loginAlerts } = req.body;
+        const Doctor = require('../models/Doctor');
+        await Doctor.findByIdAndUpdate(
+            req.user._id,
+            { $set: { twoFAEnabled, loginAlerts } },
+            { runValidators: false }
+        );
+        res.status(200).json({ success: true, message: 'Security settings saved' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// GET - Doctor Transactions (from completed appointments)
+router.get('/transactions', protect, authorize('doctor'), async (req, res) => {
+    try {
+        const Appointment = require('../models/Appointment');
+
+        const appointments = await Appointment.find({
+            doctor: req.user._id,
+            paymentStatus: { $in: ['paid', 'Paid', 'completed'] }
+        })
+            .populate('patient', 'fullName phone email profileImage')
+            .sort({ createdAt: -1 });
+
+        // Build transactions from appointments
+        const transactions = appointments.map(appt => ({
+            _id: appt._id,
+            transactionId: appt.paymentId || appt._id.toString().slice(-8).toUpperCase(),
+            patientName: appt.patient?.fullName || 'Unknown',
+            patientPhone: appt.patient?.phone || '',
+            date: appt.appointmentDate || appt.createdAt,
+            type: appt.appointmentType === 'online' ? 'online' : 'clinic',
+            amount: appt.consultationCharge || appt.amount || 0,
+            status: appt.paymentStatus || 'Pending',
+        }));
+
+        // Summary
+        const now = new Date();
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const totalEarnings = transactions.reduce((sum, t) => sum + t.amount, 0);
+        const thisMonth = transactions
+            .filter(t => new Date(t.date) >= thisMonthStart)
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        // Pending = unpaid appointments
+        const pendingAppts = await Appointment.find({
+            doctor: req.user._id,
+            paymentStatus: { $in: ['pending', 'Pending', null] },
+            status: { $ne: 'Cancelled' }
+        });
+        const pending = pendingAppts.reduce((sum, a) => sum + (a.consultationCharge || a.amount || 0), 0);
+
+        res.status(200).json({
+            success: true,
+            data: transactions,
+            summary: {
+                totalEarnings,
+                thisMonth,
+                pending,
+                totalAppointments: appointments.length,
+            }
+        });
+    } catch (error) {
+        console.error('Transactions error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // @route   POST /api/doctors
 // @desc    Create new doctor
 // @access  Private (Admin only)
