@@ -1,8 +1,13 @@
+// ============================================================
+// backend/routes/specializationRoutes.js - FIXED VERSION
+// Doctor count ची bug fix केली
+// ============================================================
+
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
 const Specialization = require('../models/Specialization');
-const User = require('../models/User');
+const Doctor = require('../models/Doctor'); // ✅ Doctor model use करा, User नाही
 
 // GET all specializations
 router.get('/', protect, async (req, res) => {
@@ -17,14 +22,16 @@ router.get('/', protect, async (req, res) => {
         const specializations = await Specialization.find(filter)
             .sort({ createdAt: sortOrder });
 
-        // ✅ Doctor count per specialization
+        // ✅ FIXED: Doctor count - department field वापरतो, status filter नाही
+        // Doctor model मध्ये department field आहे (Transcript वरून confirm)
         const specializationsWithCount = await Promise.all(
             specializations.map(async (spec) => {
-                const doctorCount = await User.countDocuments({
-                    role: 'doctor',
-                    department: spec.name,
-                    status: 'Available',
+                const doctorCount = await Doctor.countDocuments({
+                    // ✅ Discriminator मध्ये 'role' field automatically 'doctor' असतो
+                    // त्यामुळे Doctor.countDocuments() directly वापरा
+                    department: spec.name, // ✅ Doctor schema मधला field
                 });
+
                 return {
                     ...spec.toObject(),
                     doctorCount,
@@ -52,13 +59,15 @@ router.post('/', protect, authorize('admin'), async (req, res) => {
             return res.status(400).json({ success: false, message: 'Specialization name is required' });
         }
 
-        // Check duplicate
-        const existing = await Specialization.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+        // Duplicate check (case-insensitive)
+        const existing = await Specialization.findOne({
+            name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
+        });
         if (existing) {
             return res.status(400).json({ success: false, message: 'Specialization already exists' });
         }
 
-        const specialization = await Specialization.create({ name, description });
+        const specialization = await Specialization.create({ name: name.trim(), description });
 
         res.status(201).json({
             success: true,
@@ -80,9 +89,9 @@ router.put('/:id', protect, authorize('admin'), async (req, res) => {
             return res.status(400).json({ success: false, message: 'Specialization name is required' });
         }
 
-        // Check duplicate (exclude current)
+        // Duplicate check (exclude current)
         const existing = await Specialization.findOne({
-            name: { $regex: new RegExp(`^${name}$`, 'i') },
+            name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
             _id: { $ne: req.params.id }
         });
         if (existing) {
@@ -91,7 +100,7 @@ router.put('/:id', protect, authorize('admin'), async (req, res) => {
 
         const updated = await Specialization.findByIdAndUpdate(
             req.params.id,
-            { $set: { name, description, status } },
+            { $set: { name: name.trim(), description, status } },
             { new: true, runValidators: false }
         );
 
@@ -118,9 +127,8 @@ router.delete('/:id', protect, authorize('admin'), async (req, res) => {
             return res.status(404).json({ success: false, message: 'Specialization not found' });
         }
 
-        // Check if doctors exist with this specialization
-        const doctorCount = await User.countDocuments({
-            role: 'doctor',
+        // ✅ FIXED: Doctor model use करा
+        const doctorCount = await Doctor.countDocuments({
             department: specialization.name,
         });
 
@@ -144,3 +152,12 @@ router.delete('/:id', protect, authorize('admin'), async (req, res) => {
 });
 
 module.exports = router;
+
+// ============================================================
+// DEBUGGING: जर count अजूनही 0 येत असेल तर हा debug route add करा
+// ============================================================
+// router.get('/debug-count', protect, async (req, res) => {
+//     const Doctor = require('../models/Doctor');
+//     const doctors = await Doctor.find({}).select('fullName department role');
+//     res.json({ doctors: doctors.map(d => ({ name: d.fullName, dept: d.department, role: d.role })) });
+// });
