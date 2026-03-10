@@ -9,22 +9,6 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 const Specialization = require('../models/Specialization');
 const Doctor = require('../models/Doctor');
 
-router.get('/list', protect, async (req, res) => {
-    try {
-        const specializations = await Specialization.find({ status: 'Active' })
-            .select('name')
-            .sort({ name: 1 });
-
-        res.status(200).json({
-            success: true,
-            data: specializations
-        });
-    } catch (error) {
-        console.error('Get specializations list error:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
 // GET all specializations
 router.get('/', protect, async (req, res) => {
     try {
