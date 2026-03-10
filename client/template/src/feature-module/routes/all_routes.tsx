@@ -1,6 +1,3 @@
-import DoctorsAccountSettings from "../components/pages/doctor-modules/doctor-accounts-settings/doctorAccountSettings";
-import DoctorsTransactions from "../components/pages/doctor-modules/doctor-transactions/doctorTransactions";
-
 export const all_routes = {
   //Auth routes
   login: "/login",
