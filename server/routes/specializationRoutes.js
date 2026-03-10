@@ -156,8 +156,8 @@ module.exports = router;
 // ============================================================
 // DEBUGGING: जर count अजूनही 0 येत असेल तर हा debug route add करा
 // ============================================================
-// router.get('/debug-count', protect, async (req, res) => {
-//     const Doctor = require('../models/Doctor');
-//     const doctors = await Doctor.find({}).select('fullName department role');
-//     res.json({ doctors: doctors.map(d => ({ name: d.fullName, dept: d.department, role: d.role })) });
-// });
+router.get('/debug-count', protect, async (req, res) => {
+    const Doctor = require('../models/Doctor');
+    const doctors = await Doctor.find({}).select('fullName department role');
+    res.json({ doctors: doctors.map(d => ({ name: d.fullName, dept: d.department, role: d.role })) });
+});
