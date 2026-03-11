@@ -87,6 +87,7 @@ app.use('/api/online-consultations', require('./routes/onlineConsultationRoutes'
 app.use('/api/diagnoses', require('./routes/diagnosisRoutes'))
 app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 app.use('/api/specializations', require('./routes/specializationRoutes'));
+app.use('/api/services', require('./routes/serviceRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
