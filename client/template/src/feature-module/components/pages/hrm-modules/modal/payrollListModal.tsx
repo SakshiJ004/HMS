@@ -644,6 +644,27 @@ const PayrollListModal = ({
             />
           </div>
         </div>
+        {/* Month + Year */}
+        <div className="row row-gap-2 mb-3">
+          <div className="col-md-6">
+            <label className="form-label">Month<span className="text-danger ms-1">*</span></label>
+            <CommonSelect
+              options={MONTH_OPTIONS}
+              className="select"
+              value={MONTH_OPTIONS.find(m => m.value === form.salaryMonth)}
+              onChange={(option: any) => setForm(prev => ({ ...prev, salaryMonth: option?.value || "" }))}
+            />
+          </div>
+          <div className="col-md-6">
+            <label className="form-label">Year<span className="text-danger ms-1">*</span></label>
+            <CommonSelect
+              options={YEAR_OPTIONS}
+              className="select"
+              value={YEAR_OPTIONS.find(y => y.value === form.salaryYear)}
+              onChange={(option: any) => setForm(prev => ({ ...prev, salaryYear: option?.value || "" }))}
+            />
+          </div>
+        </div>
         <div className="col-md-6">
           <div className="mb-0">
             <label className="form-label">Net Salary</label>
