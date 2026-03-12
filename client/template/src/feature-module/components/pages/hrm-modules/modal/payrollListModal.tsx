@@ -922,7 +922,9 @@ const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
+
 const MONTH_OPTIONS = MONTHS.map(m => ({ label: m, value: m }));
+
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => ({
   label: String(currentYear - i),
@@ -965,18 +967,6 @@ const emptyForm: PayrollFormData = {
   status: "Pending"
 };
 
-const calcTotals = (f: PayrollFormData) => {
-  const totalEarnings =
-    parseFloat(f.basicSalary || "0") + parseFloat(f.da || "0") +
-    parseFloat(f.hra || "0") + parseFloat(f.conveyance || "0") +
-    parseFloat(f.medicalAllowance || "0") + parseFloat(f.otherEarnings || "0");
-  const totalDeductions =
-    parseFloat(f.tds || "0") + parseFloat(f.esi || "0") +
-    parseFloat(f.pf || "0") + parseFloat(f.profTax || "0") +
-    parseFloat(f.labourWelfare || "0") + parseFloat(f.otherDeductions || "0");
-  return { totalEarnings, totalDeductions, netSalary: totalEarnings - totalDeductions };
-};
-
 interface PayrollListModalProps {
   showAddModal: boolean;
   showEditModal: boolean;
@@ -990,6 +980,25 @@ interface PayrollListModalProps {
   onDelete: () => void;
 }
 
+// ✅ Outside component — stable, no focus loss
+const calcTotals = (f: PayrollFormData) => {
+  const totalEarnings =
+    parseFloat(f.basicSalary || "0") + parseFloat(f.da || "0") +
+    parseFloat(f.hra || "0") + parseFloat(f.conveyance || "0") +
+    parseFloat(f.medicalAllowance || "0") + parseFloat(f.otherEarnings || "0");
+
+  const totalDeductions =
+    parseFloat(f.tds || "0") + parseFloat(f.esi || "0") +
+    parseFloat(f.pf || "0") + parseFloat(f.profTax || "0") +
+    parseFloat(f.labourWelfare || "0") + parseFloat(f.otherDeductions || "0");
+
+  return {
+    totalEarnings,
+    totalDeductions,
+    netSalary: totalEarnings - totalDeductions
+  };
+};
+
 const PayrollListModal = ({
   showAddModal, showEditModal, showDeleteModal,
   currentPayroll, onCloseAdd, onCloseEdit, onCloseDelete,
@@ -998,6 +1007,8 @@ const PayrollListModal = ({
 
   const [addForm, setAddForm] = useState<PayrollFormData>(emptyForm);
   const [editForm, setEditForm] = useState<PayrollFormData>(emptyForm);
+
+  // ✅ FIX 1: Real staff from backend
   const [staffOptions, setStaffOptions] = useState<any[]>([]);
 
   useEffect(() => {
@@ -1026,6 +1037,7 @@ const PayrollListModal = ({
     fetchStaffs();
   }, []);
 
+  // Populate edit form
   useEffect(() => {
     if (currentPayroll && showEditModal) {
       setEditForm({
@@ -1054,14 +1066,6 @@ const PayrollListModal = ({
     }
   }, [currentPayroll, showEditModal]);
 
-  const handleAddChange = useCallback((key: keyof PayrollFormData, value: string) => {
-    setAddForm(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleEditChange = useCallback((key: keyof PayrollFormData, value: string) => {
-    setEditForm(prev => ({ ...prev, [key]: value }));
-  }, []);
-
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAdd(addForm);
@@ -1073,193 +1077,148 @@ const PayrollListModal = ({
     onEdit(editForm);
   };
 
-  // ✅ FIX: Full-width stacked layout — no half-cut columns
-  const renderForm = (
+  // ✅ FIX 3: useCallback — stable handlers prevent focus loss
+  const handleAddChange = useCallback((key: keyof PayrollFormData, value: string) => {
+    setAddForm(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleEditChange = useCallback((key: keyof PayrollFormData, value: string) => {
+    setEditForm(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  // ✅ FIX 3: Inline render function — NOT a sub-component (prevents unmount/remount)
+  // ✅ FIX 2: overflow-y: auto on the columns so Others input is always visible
+  const renderEarningsDeductions = (
     form: PayrollFormData,
     onChange: (key: keyof PayrollFormData, value: string) => void
   ) => {
     const totals = calcTotals(form);
 
     return (
-      <>
-        {/* ✅ Earnings & Deductions side by side - full width table layout */}
-        <table className="table table-bordered mb-3">
-          <thead className="table-light">
-            <tr>
-              <th className="text-center fw-bold" style={{ width: "50%" }}>Earnings ($)</th>
-              <th className="text-center fw-bold" style={{ width: "50%" }}>Deductions ($)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Basic Salary | TDS */}
-            <tr>
-              <td>
-                <label className="form-label mb-1">Basic Salary <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.basicSalary}
-                  min="0"
-                  onChange={(e) => onChange("basicSalary", e.target.value)}
-                />
-              </td>
-              <td>
-                <label className="form-label mb-1">TDS <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.tds}
-                  min="0"
-                  onChange={(e) => onChange("tds", e.target.value)}
-                />
-              </td>
-            </tr>
-            {/* DA | ESI */}
-            <tr>
-              <td>
-                <label className="form-label mb-1">DA (40%) <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.da}
-                  min="0"
-                  onChange={(e) => onChange("da", e.target.value)}
-                />
-              </td>
-              <td>
-                <label className="form-label mb-1">ESI</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.esi}
-                  min="0"
-                  onChange={(e) => onChange("esi", e.target.value)}
-                />
-              </td>
-            </tr>
-            {/* HRA | PF */}
-            <tr>
-              <td>
-                <label className="form-label mb-1">HRA (15%) <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.hra}
-                  min="0"
-                  onChange={(e) => onChange("hra", e.target.value)}
-                />
-              </td>
-              <td>
-                <label className="form-label mb-1">PF <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.pf}
-                  min="0"
-                  onChange={(e) => onChange("pf", e.target.value)}
-                />
-              </td>
-            </tr>
-            {/* Conveyance | Prof Tax */}
-            <tr>
-              <td>
-                <label className="form-label mb-1">Conveyance <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.conveyance}
-                  min="0"
-                  onChange={(e) => onChange("conveyance", e.target.value)}
-                />
-              </td>
-              <td>
-                <label className="form-label mb-1">Prof Tax <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.profTax}
-                  min="0"
-                  onChange={(e) => onChange("profTax", e.target.value)}
-                />
-              </td>
-            </tr>
-            {/* Medical Allowance | Labour Welfare */}
-            <tr>
-              <td>
-                <label className="form-label mb-1">Medical Allowance <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.medicalAllowance}
-                  min="0"
-                  onChange={(e) => onChange("medicalAllowance", e.target.value)}
-                />
-              </td>
-              <td>
-                <label className="form-label mb-1">Labour Welfare <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.labourWelfare}
-                  min="0"
-                  onChange={(e) => onChange("labourWelfare", e.target.value)}
-                />
-              </td>
-            </tr>
-            {/* Others | Others */}
-            <tr>
-              <td>
-                <label className="form-label mb-1">Others</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.otherEarnings}
-                  min="0"
-                  onChange={(e) => onChange("otherEarnings", e.target.value)}
-                />
-              </td>
-              <td>
-                <label className="form-label mb-1">Others</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={form.otherDeductions}
-                  min="0"
-                  onChange={(e) => onChange("otherDeductions", e.target.value)}
-                />
-              </td>
-            </tr>
-            {/* Totals Row */}
-            <tr className="table-light">
-              <td>
-                <label className="form-label mb-1 fw-semibold text-success">Total Earnings</label>
-                <input
-                  type="text"
-                  className="form-control fw-bold text-success"
-                  value={`$${totals.totalEarnings.toFixed(2)}`}
-                  readOnly
-                />
-              </td>
-              <td>
-                <label className="form-label mb-1 fw-semibold text-danger">Total Deductions</label>
-                <input
-                  type="text"
-                  className="form-control fw-bold text-danger"
-                  value={`$${totals.totalDeductions.toFixed(2)}`}
-                  readOnly
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="row">
+        {/* Earnings Column */}
+        <div className="col-md-6">
+          <h6 className="mb-3 fw-bold">Earnings ($)</h6>
+          <div className="mb-3">
+            <label className="form-label">Basic Salary<span className="text-danger ms-1">*</span></label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.basicSalary}
+              onChange={(e) => onChange("basicSalary", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">DA (40%)<span className="text-danger ms-1">*</span></label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.da}
+              onChange={(e) => onChange("da", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">HRA (15%)<span className="text-danger ms-1">*</span></label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.hra}
+              onChange={(e) => onChange("hra", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Conveyance<span className="text-danger ms-1">*</span></label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.conveyance}
+              onChange={(e) => onChange("conveyance", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Medical Allowance<span className="text-danger ms-1">*</span></label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.medicalAllowance}
+              onChange={(e) => onChange("medicalAllowance", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Others</label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.otherEarnings}
+              onChange={(e) => onChange("otherEarnings", e.target.value)}
+            />
+          </div>
+          <div className="mb-0 p-2 bg-light rounded">
+            <label className="form-label fw-semibold mb-1">Total Earnings</label>
+            <input type="text" className="form-control fw-bold" value={`$${totals.totalEarnings.toFixed(2)}`} readOnly />
+          </div>
+        </div>
+
+        {/* Deductions Column */}
+        <div className="col-md-6">
+          <h6 className="mb-3 fw-bold">Deductions ($)</h6>
+          <div className="mb-3">
+            <label className="form-label">TDS<span className="text-danger ms-1">*</span></label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.tds}
+              onChange={(e) => onChange("tds", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">ESI</label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.esi}
+              onChange={(e) => onChange("esi", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">PF<span className="text-danger ms-1">*</span></label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.pf}
+              onChange={(e) => onChange("pf", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Prof Tax<span className="text-danger ms-1">*</span></label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.profTax}
+              onChange={(e) => onChange("profTax", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Labour Welfare<span className="text-danger ms-1">*</span></label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.labourWelfare}
+              onChange={(e) => onChange("labourWelfare", e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Others</label>
+            <input
+              type="number" className="form-control" min="0"
+              value={form.otherDeductions}
+              onChange={(e) => onChange("otherDeductions", e.target.value)}
+            />
+          </div>
+          <div className="mb-0 p-2 bg-light rounded">
+            <label className="form-label fw-semibold mb-1">Total Deductions</label>
+            <input type="text" className="form-control fw-bold" value={`$${totals.totalDeductions.toFixed(2)}`} readOnly />
+          </div>
+        </div>
 
         {/* Net Salary */}
-        <div className="p-3 bg-primary bg-opacity-10 rounded border border-primary">
-          <h6 className="fw-bold text-primary mb-0">
-            Net Salary: <span className="fs-5">${totals.netSalary.toFixed(2)}</span>
-          </h6>
+        <div className="col-12 mt-3">
+          <div className="p-3 bg-primary bg-opacity-10 rounded border border-primary">
+            <h6 className="fw-bold text-primary mb-0">
+              Net Salary: <span className="fs-5">${totals.netSalary.toFixed(2)}</span>
+            </h6>
+          </div>
         </div>
-      </>
+      </div>
     );
   };
 
@@ -1271,6 +1230,7 @@ const PayrollListModal = ({
         id="add_payroll"
         style={{ display: showAddModal ? "block" : "none" }}
       >
+        {/* ✅ FIX 2: modal-dialog-scrollable — scroll inside modal body */}
         <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
@@ -1281,12 +1241,13 @@ const PayrollListModal = ({
             </div>
             <form onSubmit={handleAddSubmit}>
               <div className="modal-body">
-                {/* Staff + Month + Year row */}
+                {/* Staff + Month/Year Row */}
                 <div className="row row-gap-2 mb-3">
                   <div className="col-md-6">
                     <label className="form-label">
-                      Select Staff <span className="text-danger">*</span>
+                      Select Staff<span className="text-danger ms-1">*</span>
                     </label>
+                    {/* ✅ FIX 1: Real staff from backend */}
                     <CommonSelect
                       options={staffOptions}
                       className="select"
@@ -1308,9 +1269,7 @@ const PayrollListModal = ({
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">
-                      Month <span className="text-danger">*</span>
-                    </label>
+                    <label className="form-label">Month<span className="text-danger ms-1">*</span></label>
                     <CommonSelect
                       options={MONTH_OPTIONS}
                       className="select"
@@ -1321,9 +1280,7 @@ const PayrollListModal = ({
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">
-                      Year <span className="text-danger">*</span>
-                    </label>
+                    <label className="form-label">Year<span className="text-danger ms-1">*</span></label>
                     <CommonSelect
                       options={YEAR_OPTIONS}
                       className="select"
@@ -1335,7 +1292,7 @@ const PayrollListModal = ({
                   </div>
                 </div>
 
-                {renderForm(addForm, handleAddChange)}
+                {renderEarningsDeductions(addForm, handleAddChange)}
               </div>
               <div className="modal-footer d-flex align-items-center gap-1">
                 <button type="button" className="btn btn-white border" onClick={onCloseAdd}>
@@ -1368,7 +1325,7 @@ const PayrollListModal = ({
                 <div className="row row-gap-2 mb-3">
                   <div className="col-md-6">
                     <label className="form-label">
-                      Select Staff <span className="text-danger">*</span>
+                      Select Staff<span className="text-danger ms-1">*</span>
                     </label>
                     <CommonSelect
                       options={staffOptions}
@@ -1390,9 +1347,7 @@ const PayrollListModal = ({
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">
-                      Month <span className="text-danger">*</span>
-                    </label>
+                    <label className="form-label">Month<span className="text-danger ms-1">*</span></label>
                     <CommonSelect
                       options={MONTH_OPTIONS}
                       className="select"
@@ -1403,9 +1358,7 @@ const PayrollListModal = ({
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">
-                      Year <span className="text-danger">*</span>
-                    </label>
+                    <label className="form-label">Year<span className="text-danger ms-1">*</span></label>
                     <CommonSelect
                       options={YEAR_OPTIONS}
                       className="select"
@@ -1417,7 +1370,7 @@ const PayrollListModal = ({
                   </div>
                 </div>
 
-                {renderForm(editForm, handleEditChange)}
+                {renderEarningsDeductions(editForm, handleEditChange)}
               </div>
               <div className="modal-footer d-flex align-items-center gap-1">
                 <button type="button" className="btn btn-white border" onClick={onCloseEdit}>
