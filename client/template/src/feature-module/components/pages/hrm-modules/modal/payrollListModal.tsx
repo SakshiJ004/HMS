@@ -445,6 +445,8 @@
 
 // export default PayrollListModal;
 
+
+
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
@@ -763,8 +765,8 @@ const PayrollListModal = ({
         style={{ display: showAddModal ? "block" : "none" }}
       >
         <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-          <div className="modal-content">
-            <div className="modal-header">
+          <div className="modal-content" style={{ maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+            <div className="modal-header" style={{ flexShrink: 0 }}>
               <h4 className="text-dark modal-title fw-bold">Add Employee Salary</h4>
               <button type="button" className="btn-close btn-close-modal custom-btn-close" onClick={onCloseAdd} aria-label="Close">
                 <i className="ti ti-x" />
@@ -772,12 +774,12 @@ const PayrollListModal = ({
             </div>
 
             {/* ✅ form wraps only modal-body — footer is OUTSIDE form but inside modal-content */}
-            <form id="add-payroll-form" onSubmit={(e) => { e.preventDefault(); onAdd(addForm); setAddForm(emptyForm); }}>
+            <form id="add-payroll-form" onSubmit={(e) => { e.preventDefault(); onAdd(addForm); setAddForm(emptyForm); }} style={{ overflowY: "auto", flex: 1 }}>
               {renderModalBody(addForm, handleAddChange, setAddForm)}
             </form>
 
             {/* ✅ modal-footer is OUTSIDE form — always visible, never scrolls away */}
-            <div className="modal-footer d-flex align-items-center gap-1">
+            <div className="modal-footer d-flex align-items-center gap-1" style={{ flexShrink: 0 }}>
               <button type="button" className="btn btn-white border" onClick={onCloseAdd}>
                 Cancel
               </button>
@@ -798,19 +800,19 @@ const PayrollListModal = ({
         style={{ display: showEditModal ? "block" : "none" }}
       >
         <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-          <div className="modal-content">
-            <div className="modal-header">
+          <div className="modal-content" style={{ maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+            <div className="modal-header" style={{ flexShrink: 0 }}>
               <h4 className="text-dark modal-title fw-bold">Edit Employee Salary</h4>
               <button type="button" className="btn-close btn-close-modal custom-btn-close" onClick={onCloseEdit} aria-label="Close">
                 <i className="ti ti-x" />
               </button>
             </div>
 
-            <form id="edit-payroll-form" onSubmit={(e) => { e.preventDefault(); onEdit(editForm); }}>
+            <form id="edit-payroll-form" onSubmit={(e) => { e.preventDefault(); onEdit(editForm); }} style={{ overflowY: "auto", flex: 1 }}>
               {renderModalBody(editForm, handleEditChange, setEditForm)}
             </form>
 
-            <div className="modal-footer d-flex align-items-center gap-1">
+            <div className="modal-footer d-flex align-items-center gap-1" style={{ flexShrink: 0 }}>
               <button type="button" className="btn btn-white border" onClick={onCloseEdit}>
                 Cancel
               </button>
