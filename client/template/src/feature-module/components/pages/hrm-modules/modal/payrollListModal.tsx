@@ -445,7 +445,6 @@
 
 // export default PayrollListModal;
 
-
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
@@ -499,7 +498,6 @@ const emptyForm: PayrollFormData = {
   status: "Pending"
 };
 
-// Outside component — stable, no focus loss
 const calcNetSalary = (f: PayrollFormData) => {
   const totalEarnings =
     parseFloat(f.basicSalary || "0") + parseFloat(f.da || "0") +
@@ -535,7 +533,6 @@ const PayrollListModal = ({
   const [editForm, setEditForm] = useState<PayrollFormData>(emptyForm);
   const [staffOptions, setStaffOptions] = useState<any[]>([]);
 
-  // Fetch real staff from backend
   useEffect(() => {
     const fetchStaffs = async () => {
       try {
@@ -562,7 +559,6 @@ const PayrollListModal = ({
     fetchStaffs();
   }, []);
 
-  // Populate edit form
   useEffect(() => {
     if (currentPayroll && showEditModal) {
       setEditForm({
@@ -591,18 +587,6 @@ const PayrollListModal = ({
     }
   }, [currentPayroll, showEditModal]);
 
-  const handleAddSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onAdd(addForm);
-    setAddForm(emptyForm);
-  };
-
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onEdit(editForm);
-  };
-
-  // useCallback — stable handlers, no focus loss on typing
   const handleAddChange = useCallback((key: keyof PayrollFormData, value: string) => {
     setAddForm(prev => ({ ...prev, [key]: value }));
   }, []);
@@ -611,77 +595,81 @@ const PayrollListModal = ({
     setEditForm(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  // Inline render — NOT a sub-component (prevents unmount on each keystroke)
-  const renderFormBody = (
+  // ✅ KEY FIX: modal-body मध्ये फक्त scrollable content
+  // modal-footer form च्या बाहेर आहे — त्यामुळे buttons नेहमी दिसतात
+  const renderModalBody = (
     form: PayrollFormData,
     onChange: (key: keyof PayrollFormData, value: string) => void,
     setForm: React.Dispatch<React.SetStateAction<PayrollFormData>>
   ) => (
     <div className="modal-body">
-      {/* Row 1: Select Staff + Net Salary */}
+      {/* Select Staff */}
       <div className="row row-gap-2 mb-3">
-        <div className="col-md-6">
-          <div className="mb-0">
-            <label className="form-label">Select Staff</label>
-            <CommonSelect
-              options={staffOptions}
-              className="select"
-              placeholder="Select staff"
-              value={staffOptions.find(s => s.value === form.staffId) || null}
-              onChange={(option: any) => {
-                if (option) {
-                  setForm(prev => ({
-                    ...prev,
-                    staffId: option.value,
-                    staffName: option.label,
-                    email: option.email || "",
-                    role: option.role || "",
-                    joiningDate: option.joiningDate || "",
-                    image: option.image || "",
-                  }));
-                }
-              }}
-            />
-          </div>
-        </div>
-        {/* Month + Year */}
-        <div className="row row-gap-2 mb-3">
-          <div className="col-md-6">
-            <label className="form-label">Month<span className="text-danger ms-1">*</span></label>
-            <CommonSelect
-              options={MONTH_OPTIONS}
-              className="select"
-              value={MONTH_OPTIONS.find(m => m.value === form.salaryMonth)}
-              onChange={(option: any) => setForm(prev => ({ ...prev, salaryMonth: option?.value || "" }))}
-            />
-          </div>
-          <div className="col-md-6">
-            <label className="form-label">Year<span className="text-danger ms-1">*</span></label>
-            <CommonSelect
-              options={YEAR_OPTIONS}
-              className="select"
-              value={YEAR_OPTIONS.find(y => y.value === form.salaryYear)}
-              onChange={(option: any) => setForm(prev => ({ ...prev, salaryYear: option?.value || "" }))}
-            />
-          </div>
-        </div>
-        <div className="col-md-6">
-          <div className="mb-0">
-            <label className="form-label">Net Salary</label>
-            <input
-              type="text"
-              className="form-control"
-              value={calcNetSalary(form) > 0 ? `$${calcNetSalary(form).toFixed(2)}` : ""}
-              readOnly
-              placeholder=""
-            />
-          </div>
+        <div className="col-12">
+          <label className="form-label">Select Staff</label>
+          <CommonSelect
+            options={staffOptions}
+            className="select"
+            placeholder="Select staff"
+            value={staffOptions.find(s => s.value === form.staffId) || null}
+            onChange={(option: any) => {
+              if (option) {
+                setForm(prev => ({
+                  ...prev,
+                  staffId: option.value,
+                  staffName: option.label,
+                  email: option.email || "",
+                  role: option.role || "",
+                  joiningDate: option.joiningDate || "",
+                  image: option.image || "",
+                }));
+              }
+            }}
+          />
         </div>
       </div>
 
-      {/* Row 2: Earnings + Deductions */}
+      {/* Month + Year */}
+      <div className="row row-gap-2 mb-3">
+        <div className="col-md-6">
+          <label className="form-label">Month<span className="text-danger ms-1">*</span></label>
+          <CommonSelect
+            options={MONTH_OPTIONS}
+            className="select"
+            value={MONTH_OPTIONS.find(m => m.value === form.salaryMonth)}
+            onChange={(option: any) =>
+              setForm(prev => ({ ...prev, salaryMonth: option?.value || "" }))
+            }
+          />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Year<span className="text-danger ms-1">*</span></label>
+          <CommonSelect
+            options={YEAR_OPTIONS}
+            className="select"
+            value={YEAR_OPTIONS.find(y => y.value === form.salaryYear)}
+            onChange={(option: any) =>
+              setForm(prev => ({ ...prev, salaryYear: option?.value || "" }))
+            }
+          />
+        </div>
+      </div>
+
+      {/* Net Salary */}
+      <div className="mb-3">
+        <label className="form-label">Net Salary</label>
+        <input
+          type="text"
+          className="form-control"
+          value={calcNetSalary(form) > 0 ? `$${calcNetSalary(form).toFixed(2)}` : ""}
+          readOnly
+          placeholder=""
+        />
+      </div>
+
+      {/* Earnings + Deductions */}
       <div className="row row-gap-2">
-        {/* Earnings column */}
+        {/* Earnings */}
         <div className="col-md-6">
           <h6 className="mb-3">Earnings ($)</h6>
           <div className="mb-3">
@@ -722,7 +710,7 @@ const PayrollListModal = ({
           </div>
         </div>
 
-        {/* Deductions column */}
+        {/* Deductions */}
         <div className="col-md-6">
           <h6 className="mb-3">Deductions ($)</h6>
           <div className="mb-3">
@@ -778,26 +766,26 @@ const PayrollListModal = ({
           <div className="modal-content">
             <div className="modal-header">
               <h4 className="text-dark modal-title fw-bold">Add Employee Salary</h4>
-              <button
-                type="button"
-                className="btn-close btn-close-modal custom-btn-close"
-                onClick={onCloseAdd}
-                aria-label="Close"
-              >
+              <button type="button" className="btn-close btn-close-modal custom-btn-close" onClick={onCloseAdd} aria-label="Close">
                 <i className="ti ti-x" />
               </button>
             </div>
-            <form onSubmit={handleAddSubmit}>
-              {renderFormBody(addForm, handleAddChange, setAddForm)}
-              <div className="modal-footer d-flex align-items-center gap-1">
-                <button type="button" className="btn btn-white border" onClick={onCloseAdd}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Add Payslip
-                </button>
-              </div>
+
+            {/* ✅ form wraps only modal-body — footer is OUTSIDE form but inside modal-content */}
+            <form id="add-payroll-form" onSubmit={(e) => { e.preventDefault(); onAdd(addForm); setAddForm(emptyForm); }}>
+              {renderModalBody(addForm, handleAddChange, setAddForm)}
             </form>
+
+            {/* ✅ modal-footer is OUTSIDE form — always visible, never scrolls away */}
+            <div className="modal-footer d-flex align-items-center gap-1">
+              <button type="button" className="btn btn-white border" onClick={onCloseAdd}>
+                Cancel
+              </button>
+              <button type="submit" form="add-payroll-form" className="btn btn-primary">
+                Add Payslip
+              </button>
+            </div>
+
           </div>
         </div>
       </div>
@@ -813,26 +801,24 @@ const PayrollListModal = ({
           <div className="modal-content">
             <div className="modal-header">
               <h4 className="text-dark modal-title fw-bold">Edit Employee Salary</h4>
-              <button
-                type="button"
-                className="btn-close btn-close-modal custom-btn-close"
-                onClick={onCloseEdit}
-                aria-label="Close"
-              >
+              <button type="button" className="btn-close btn-close-modal custom-btn-close" onClick={onCloseEdit} aria-label="Close">
                 <i className="ti ti-x" />
               </button>
             </div>
-            <form onSubmit={handleEditSubmit}>
-              {renderFormBody(editForm, handleEditChange, setEditForm)}
-              <div className="modal-footer d-flex align-items-center gap-1">
-                <button type="button" className="btn btn-white border" onClick={onCloseEdit}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Save Changes
-                </button>
-              </div>
+
+            <form id="edit-payroll-form" onSubmit={(e) => { e.preventDefault(); onEdit(editForm); }}>
+              {renderModalBody(editForm, handleEditChange, setEditForm)}
             </form>
+
+            <div className="modal-footer d-flex align-items-center gap-1">
+              <button type="button" className="btn btn-white border" onClick={onCloseEdit}>
+                Cancel
+              </button>
+              <button type="submit" form="edit-payroll-form" className="btn btn-primary">
+                Save Changes
+              </button>
+            </div>
+
           </div>
         </div>
       </div>
@@ -847,16 +833,8 @@ const PayrollListModal = ({
         <div className="modal-dialog modal-dialog-centered modal-sm">
           <div className="modal-content">
             <div className="modal-body text-center position-relative z-1">
-              <ImageWithBasePath
-                src="assets/img/bg/delete-modal-bg-01.png"
-                alt=""
-                className="img-fluid position-absolute top-0 start-0 z-n1"
-              />
-              <ImageWithBasePath
-                src="assets/img/bg/delete-modal-bg-02.png"
-                alt=""
-                className="img-fluid position-absolute bottom-0 end-0 z-n1"
-              />
+              <ImageWithBasePath src="assets/img/bg/delete-modal-bg-01.png" alt="" className="img-fluid position-absolute top-0 start-0 z-n1" />
+              <ImageWithBasePath src="assets/img/bg/delete-modal-bg-02.png" alt="" className="img-fluid position-absolute bottom-0 end-0 z-n1" />
               <div className="mb-3">
                 <span className="avatar avatar-lg bg-danger text-white">
                   <i className="ti ti-trash fs-24" />
@@ -865,18 +843,12 @@ const PayrollListModal = ({
               <h5 className="fw-bold mb-1">Delete Confirmation</h5>
               <p className="mb-3">Are you sure want to delete?</p>
               <div className="d-flex justify-content-center">
-                <Link
-                  to="#"
-                  className="btn btn-light position-relative z-1 me-3"
-                  onClick={(e) => { e.preventDefault(); onCloseDelete(); }}
-                >
+                <Link to="#" className="btn btn-light position-relative z-1 me-3"
+                  onClick={(e) => { e.preventDefault(); onCloseDelete(); }}>
                   Cancel
                 </Link>
-                <Link
-                  to="#"
-                  className="btn btn-danger position-relative z-1"
-                  onClick={(e) => { e.preventDefault(); onDelete(); }}
-                >
+                <Link to="#" className="btn btn-danger position-relative z-1"
+                  onClick={(e) => { e.preventDefault(); onDelete(); }}>
                   Yes, Delete
                 </Link>
               </div>
