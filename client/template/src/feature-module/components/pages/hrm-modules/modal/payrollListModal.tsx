@@ -446,19 +446,17 @@
 // export default PayrollListModal;
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import CommonSelect from "../../../../../core/common/common-select/commonSelect";
-import { Staff } from "../../../../../core/common/selectOption";
+import { getStaffs } from "../../../../../api/staffService";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
-
 const MONTH_OPTIONS = MONTHS.map(m => ({ label: m, value: m }));
-
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => ({
   label: String(currentYear - i),
@@ -501,6 +499,37 @@ const emptyForm: PayrollFormData = {
   status: "Pending"
 };
 
+// ✅ Outside component — stable reference, no re-mount
+const calcTotals = (f: PayrollFormData) => {
+  const totalEarnings =
+    parseFloat(f.basicSalary || "0") + parseFloat(f.da || "0") +
+    parseFloat(f.hra || "0") + parseFloat(f.conveyance || "0") +
+    parseFloat(f.medicalAllowance || "0") + parseFloat(f.otherEarnings || "0");
+  const totalDeductions =
+    parseFloat(f.tds || "0") + parseFloat(f.esi || "0") +
+    parseFloat(f.pf || "0") + parseFloat(f.profTax || "0") +
+    parseFloat(f.labourWelfare || "0") + parseFloat(f.otherDeductions || "0");
+  return { totalEarnings, totalDeductions, netSalary: totalEarnings - totalDeductions };
+};
+
+const EARNINGS_FIELDS: { label: string; key: keyof PayrollFormData; required?: boolean }[] = [
+  { label: "Basic Salary", key: "basicSalary", required: true },
+  { label: "DA (40%)", key: "da", required: true },
+  { label: "HRA (15%)", key: "hra", required: true },
+  { label: "Conveyance", key: "conveyance", required: true },
+  { label: "Medical Allowance", key: "medicalAllowance", required: true },
+  { label: "Others", key: "otherEarnings" },
+];
+
+const DEDUCTION_FIELDS: { label: string; key: keyof PayrollFormData; required?: boolean }[] = [
+  { label: "TDS", key: "tds", required: true },
+  { label: "ESI", key: "esi" },
+  { label: "PF", key: "pf", required: true },
+  { label: "Prof Tax", key: "profTax", required: true },
+  { label: "Labour Welfare", key: "labourWelfare", required: true },
+  { label: "Others", key: "otherDeductions" },
+];
+
 interface PayrollListModalProps {
   showAddModal: boolean;
   showEditModal: boolean;
@@ -514,25 +543,6 @@ interface PayrollListModalProps {
   onDelete: () => void;
 }
 
-// Helper: calc totals
-const calcTotals = (f: PayrollFormData) => {
-  const totalEarnings =
-    parseFloat(f.basicSalary || "0") + parseFloat(f.da || "0") +
-    parseFloat(f.hra || "0") + parseFloat(f.conveyance || "0") +
-    parseFloat(f.medicalAllowance || "0") + parseFloat(f.otherEarnings || "0");
-
-  const totalDeductions =
-    parseFloat(f.tds || "0") + parseFloat(f.esi || "0") +
-    parseFloat(f.pf || "0") + parseFloat(f.profTax || "0") +
-    parseFloat(f.labourWelfare || "0") + parseFloat(f.otherDeductions || "0");
-
-  return {
-    totalEarnings,
-    totalDeductions,
-    netSalary: totalEarnings - totalDeductions
-  };
-};
-
 const PayrollListModal = ({
   showAddModal, showEditModal, showDeleteModal,
   currentPayroll, onCloseAdd, onCloseEdit, onCloseDelete,
@@ -541,6 +551,35 @@ const PayrollListModal = ({
 
   const [addForm, setAddForm] = useState<PayrollFormData>(emptyForm);
   const [editForm, setEditForm] = useState<PayrollFormData>(emptyForm);
+
+  // ✅ FIX 1: Real staff options fetched from backend
+  const [staffOptions, setStaffOptions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchStaffs = async () => {
+      try {
+        const response = await getStaffs();
+        if (response.success && response.data) {
+          const options = response.data.map((staff: any) => ({
+            label: staff.name,
+            value: staff._id,
+            email: staff.email || "",
+            role: staff.role || "",
+            joiningDate: staff.dateOfJoining
+              ? new Date(staff.dateOfJoining).toLocaleDateString("en-GB", {
+                day: "2-digit", month: "short", year: "numeric"
+              })
+              : "",
+            image: staff.image || "",
+          }));
+          setStaffOptions(options);
+        }
+      } catch (error) {
+        console.error("Error fetching staff for payroll:", error);
+      }
+    };
+    fetchStaffs();
+  }, []);
 
   // Populate edit form
   useEffect(() => {
@@ -571,6 +610,15 @@ const PayrollListModal = ({
     }
   }, [currentPayroll, showEditModal]);
 
+  // ✅ FIX 3: useCallback — stable handlers, no focus loss on re-render
+  const handleAddChange = useCallback((key: keyof PayrollFormData, value: string) => {
+    setAddForm(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleEditChange = useCallback((key: keyof PayrollFormData, value: string) => {
+    setEditForm(prev => ({ ...prev, [key]: value }));
+  }, []);
+
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAdd(addForm);
@@ -582,90 +630,69 @@ const PayrollListModal = ({
     onEdit(editForm);
   };
 
-  // Earnings/Deductions form rows
-  const EarningsDeductionsForm = ({
-    form, setForm
-  }: { form: PayrollFormData; setForm: (f: PayrollFormData) => void }) => {
+  // ✅ FIX 3: renderEarningsDeductions as inline function — NOT a sub-component
+  // This avoids React unmounting/remounting inputs on every keystroke
+  const renderEarningsDeductions = (
+    form: PayrollFormData,
+    onChange: (key: keyof PayrollFormData, value: string) => void
+  ) => {
     const totals = calcTotals(form);
-    const field = (key: keyof PayrollFormData) => (
-      <input
-        type="number"
-        className="form-control"
-        value={form[key]}
-        min="0"
-        onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-      />
-    );
-
     return (
       <div className="row row-gap-2">
-        {/* Earnings */}
         <div className="col-md-6">
-          <h6 className="mb-3 fw-bold">Earnings ($)</h6>
-          <div className="mb-3">
-            <label className="form-label">Basic Salary<span className="text-danger ms-1">*</span></label>
-            {field("basicSalary")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">DA (40%)<span className="text-danger ms-1">*</span></label>
-            {field("da")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">HRA (15%)<span className="text-danger ms-1">*</span></label>
-            {field("hra")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Conveyance<span className="text-danger ms-1">*</span></label>
-            {field("conveyance")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Medical Allowance<span className="text-danger ms-1">*</span></label>
-            {field("medicalAllowance")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Others</label>
-            {field("otherEarnings")}
-          </div>
+          <h6 className="mb-3">Earnings ($)</h6>
+          {EARNINGS_FIELDS.map(({ label, key, required }) => (
+            <div className="mb-3" key={key}>
+              <label className="form-label">
+                {label}{required && <span className="text-danger ms-1">*</span>}
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                value={form[key]}
+                min="0"
+                onChange={(e) => onChange(key, e.target.value)}
+              />
+            </div>
+          ))}
           <div className="mb-0 p-2 bg-light rounded">
             <label className="form-label fw-semibold mb-1">Total Earnings</label>
-            <input type="text" className="form-control fw-bold" value={`$${totals.totalEarnings.toFixed(2)}`} readOnly />
+            <input
+              type="text"
+              className="form-control fw-bold"
+              value={`$${totals.totalEarnings.toFixed(2)}`}
+              readOnly
+            />
           </div>
         </div>
 
-        {/* Deductions */}
         <div className="col-md-6">
-          <h6 className="mb-3 fw-bold">Deductions ($)</h6>
-          <div className="mb-3">
-            <label className="form-label">TDS<span className="text-danger ms-1">*</span></label>
-            {field("tds")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">ESI</label>
-            {field("esi")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">PF<span className="text-danger ms-1">*</span></label>
-            {field("pf")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Prof Tax<span className="text-danger ms-1">*</span></label>
-            {field("profTax")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Labour Welfare<span className="text-danger ms-1">*</span></label>
-            {field("labourWelfare")}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Others</label>
-            {field("otherDeductions")}
-          </div>
+          <h6 className="mb-3">Deductions ($)</h6>
+          {DEDUCTION_FIELDS.map(({ label, key, required }) => (
+            <div className="mb-3" key={key}>
+              <label className="form-label">
+                {label}{required && <span className="text-danger ms-1">*</span>}
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                value={form[key]}
+                min="0"
+                onChange={(e) => onChange(key, e.target.value)}
+              />
+            </div>
+          ))}
           <div className="mb-0 p-2 bg-light rounded">
             <label className="form-label fw-semibold mb-1">Total Deductions</label>
-            <input type="text" className="form-control fw-bold" value={`$${totals.totalDeductions.toFixed(2)}`} readOnly />
+            <input
+              type="text"
+              className="form-control fw-bold"
+              value={`$${totals.totalDeductions.toFixed(2)}`}
+              readOnly
+            />
           </div>
         </div>
 
-        {/* Net Salary */}
         <div className="col-12 mt-2">
           <div className="p-3 bg-primary bg-opacity-10 rounded border border-primary">
             <h6 className="fw-bold text-primary mb-0">
@@ -685,6 +712,7 @@ const PayrollListModal = ({
         id="add_payroll"
         style={{ display: showAddModal ? "block" : "none" }}
       >
+        {/* ✅ FIX 2: modal-dialog-scrollable fixes scroll inside modal */}
         <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
@@ -695,51 +723,65 @@ const PayrollListModal = ({
             </div>
             <form onSubmit={handleAddSubmit}>
               <div className="modal-body">
-                {/* Staff + Month/Year Row */}
                 <div className="row row-gap-2 mb-3">
                   <div className="col-md-6">
-                    <label className="form-label">Select Staff<span className="text-danger ms-1">*</span></label>
+                    <label className="form-label">
+                      Select Staff<span className="text-danger ms-1">*</span>
+                    </label>
                     <CommonSelect
-                      options={Staff}
+                      options={staffOptions}
                       className="select"
-                      defaultValue={Staff[0]}
-                      onChange={(option: any) =>
-                        setAddForm({
-                          ...addForm,
-                          staffId: option?.value || "",
-                          staffName: option?.label || ""
-                        })
-                      }
+                      placeholder="Select staff"
+                      value={staffOptions.find(s => s.value === addForm.staffId) || null}
+                      onChange={(option: any) => {
+                        if (option) {
+                          setAddForm(prev => ({
+                            ...prev,
+                            staffId: option.value,
+                            staffName: option.label,
+                            email: option.email || "",
+                            role: option.role || "",
+                            joiningDate: option.joiningDate || "",
+                            image: option.image || "",
+                          }));
+                        }
+                      }}
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">Month<span className="text-danger ms-1">*</span></label>
+                    <label className="form-label">
+                      Month<span className="text-danger ms-1">*</span>
+                    </label>
                     <CommonSelect
                       options={MONTH_OPTIONS}
                       className="select"
-                      defaultValue={MONTH_OPTIONS.find(m => m.value === addForm.salaryMonth)}
+                      value={MONTH_OPTIONS.find(m => m.value === addForm.salaryMonth)}
                       onChange={(option: any) =>
-                        setAddForm({ ...addForm, salaryMonth: option?.value || "" })
+                        setAddForm(prev => ({ ...prev, salaryMonth: option?.value || "" }))
                       }
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">Year<span className="text-danger ms-1">*</span></label>
+                    <label className="form-label">
+                      Year<span className="text-danger ms-1">*</span>
+                    </label>
                     <CommonSelect
                       options={YEAR_OPTIONS}
                       className="select"
-                      defaultValue={YEAR_OPTIONS[0]}
+                      value={YEAR_OPTIONS.find(y => y.value === addForm.salaryYear)}
                       onChange={(option: any) =>
-                        setAddForm({ ...addForm, salaryYear: option?.value || "" })
+                        setAddForm(prev => ({ ...prev, salaryYear: option?.value || "" }))
                       }
                     />
                   </div>
                 </div>
 
-                <EarningsDeductionsForm form={addForm} setForm={setAddForm} />
+                {renderEarningsDeductions(addForm, handleAddChange)}
               </div>
               <div className="modal-footer d-flex align-items-center gap-1">
-                <button type="button" className="btn btn-white border" onClick={onCloseAdd}>Cancel</button>
+                <button type="button" className="btn btn-white border" onClick={onCloseAdd}>
+                  Cancel
+                </button>
                 <button type="submit" className="btn btn-primary">Add Payslip</button>
               </div>
             </form>
@@ -766,48 +808,62 @@ const PayrollListModal = ({
               <div className="modal-body">
                 <div className="row row-gap-2 mb-3">
                   <div className="col-md-6">
-                    <label className="form-label">Select Staff<span className="text-danger ms-1">*</span></label>
+                    <label className="form-label">
+                      Select Staff<span className="text-danger ms-1">*</span>
+                    </label>
                     <CommonSelect
-                      options={Staff}
+                      options={staffOptions}
                       className="select"
-                      value={Staff.find((s: any) => s.value === editForm.staffId)}
-                      onChange={(option: any) =>
-                        setEditForm({
-                          ...editForm,
-                          staffId: option?.value || "",
-                          staffName: option?.label || ""
-                        })
-                      }
+                      value={staffOptions.find(s => s.value === editForm.staffId) || null}
+                      onChange={(option: any) => {
+                        if (option) {
+                          setEditForm(prev => ({
+                            ...prev,
+                            staffId: option.value,
+                            staffName: option.label,
+                            email: option.email || "",
+                            role: option.role || "",
+                            joiningDate: option.joiningDate || "",
+                            image: option.image || "",
+                          }));
+                        }
+                      }}
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">Month<span className="text-danger ms-1">*</span></label>
+                    <label className="form-label">
+                      Month<span className="text-danger ms-1">*</span>
+                    </label>
                     <CommonSelect
                       options={MONTH_OPTIONS}
                       className="select"
                       value={MONTH_OPTIONS.find(m => m.value === editForm.salaryMonth)}
                       onChange={(option: any) =>
-                        setEditForm({ ...editForm, salaryMonth: option?.value || "" })
+                        setEditForm(prev => ({ ...prev, salaryMonth: option?.value || "" }))
                       }
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">Year<span className="text-danger ms-1">*</span></label>
+                    <label className="form-label">
+                      Year<span className="text-danger ms-1">*</span>
+                    </label>
                     <CommonSelect
                       options={YEAR_OPTIONS}
                       className="select"
                       value={YEAR_OPTIONS.find(y => y.value === editForm.salaryYear)}
                       onChange={(option: any) =>
-                        setEditForm({ ...editForm, salaryYear: option?.value || "" })
+                        setEditForm(prev => ({ ...prev, salaryYear: option?.value || "" }))
                       }
                     />
                   </div>
                 </div>
 
-                <EarningsDeductionsForm form={editForm} setForm={setEditForm} />
+                {renderEarningsDeductions(editForm, handleEditChange)}
               </div>
               <div className="modal-footer d-flex align-items-center gap-1">
-                <button type="button" className="btn btn-white border" onClick={onCloseEdit}>Cancel</button>
+                <button type="button" className="btn btn-white border" onClick={onCloseEdit}>
+                  Cancel
+                </button>
                 <button type="submit" className="btn btn-primary">Save Changes</button>
               </div>
             </form>
