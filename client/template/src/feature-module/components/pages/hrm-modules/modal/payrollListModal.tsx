@@ -446,472 +446,6 @@
 // export default PayrollListModal;
 
 
-// import { useState, useEffect, useCallback } from "react";
-// import { Link } from "react-router";
-// import ImageWithBasePath from "../../../../../core/imageWithBasePath";
-// import CommonSelect from "../../../../../core/common/common-select/commonSelect";
-// import { getStaffs } from "../../../../../api/staffService";
-
-// const MONTHS = [
-//   "January", "February", "March", "April", "May", "June",
-//   "July", "August", "September", "October", "November", "December"
-// ];
-// const MONTH_OPTIONS = MONTHS.map(m => ({ label: m, value: m }));
-// const currentYear = new Date().getFullYear();
-// const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => ({
-//   label: String(currentYear - i),
-//   value: String(currentYear - i)
-// }));
-
-// export interface PayrollFormData {
-//   staffId: string;
-//   staffName: string;
-//   email: string;
-//   role: string;
-//   joiningDate: string;
-//   image: string;
-//   salaryMonth: string;
-//   salaryYear: string;
-//   basicSalary: string;
-//   da: string;
-//   hra: string;
-//   conveyance: string;
-//   medicalAllowance: string;
-//   otherEarnings: string;
-//   tds: string;
-//   esi: string;
-//   pf: string;
-//   profTax: string;
-//   labourWelfare: string;
-//   otherDeductions: string;
-//   status: string;
-// }
-
-// const emptyForm: PayrollFormData = {
-//   staffId: "", staffName: "", email: "", role: "",
-//   joiningDate: "", image: "",
-//   salaryMonth: MONTHS[new Date().getMonth()],
-//   salaryYear: String(currentYear),
-//   basicSalary: "0", da: "0", hra: "0", conveyance: "0",
-//   medicalAllowance: "0", otherEarnings: "0",
-//   tds: "0", esi: "0", pf: "0", profTax: "0",
-//   labourWelfare: "0", otherDeductions: "0",
-//   status: "Pending"
-// };
-
-// // ✅ Outside component — stable reference, no re-mount
-// const calcTotals = (f: PayrollFormData) => {
-//   const totalEarnings =
-//     parseFloat(f.basicSalary || "0") + parseFloat(f.da || "0") +
-//     parseFloat(f.hra || "0") + parseFloat(f.conveyance || "0") +
-//     parseFloat(f.medicalAllowance || "0") + parseFloat(f.otherEarnings || "0");
-//   const totalDeductions =
-//     parseFloat(f.tds || "0") + parseFloat(f.esi || "0") +
-//     parseFloat(f.pf || "0") + parseFloat(f.profTax || "0") +
-//     parseFloat(f.labourWelfare || "0") + parseFloat(f.otherDeductions || "0");
-//   return { totalEarnings, totalDeductions, netSalary: totalEarnings - totalDeductions };
-// };
-
-// const EARNINGS_FIELDS: { label: string; key: keyof PayrollFormData; required?: boolean }[] = [
-//   { label: "Basic Salary", key: "basicSalary", required: true },
-//   { label: "DA (40%)", key: "da", required: true },
-//   { label: "HRA (15%)", key: "hra", required: true },
-//   { label: "Conveyance", key: "conveyance", required: true },
-//   { label: "Medical Allowance", key: "medicalAllowance", required: true },
-//   { label: "Others", key: "otherEarnings" },
-// ];
-
-// const DEDUCTION_FIELDS: { label: string; key: keyof PayrollFormData; required?: boolean }[] = [
-//   { label: "TDS", key: "tds", required: true },
-//   { label: "ESI", key: "esi" },
-//   { label: "PF", key: "pf", required: true },
-//   { label: "Prof Tax", key: "profTax", required: true },
-//   { label: "Labour Welfare", key: "labourWelfare", required: true },
-//   { label: "Others", key: "otherDeductions" },
-// ];
-
-// interface PayrollListModalProps {
-//   showAddModal: boolean;
-//   showEditModal: boolean;
-//   showDeleteModal: boolean;
-//   currentPayroll: any;
-//   onCloseAdd: () => void;
-//   onCloseEdit: () => void;
-//   onCloseDelete: () => void;
-//   onAdd: (data: PayrollFormData) => void;
-//   onEdit: (data: PayrollFormData) => void;
-//   onDelete: () => void;
-// }
-
-// const PayrollListModal = ({
-//   showAddModal, showEditModal, showDeleteModal,
-//   currentPayroll, onCloseAdd, onCloseEdit, onCloseDelete,
-//   onAdd, onEdit, onDelete
-// }: PayrollListModalProps) => {
-
-//   const [addForm, setAddForm] = useState<PayrollFormData>(emptyForm);
-//   const [editForm, setEditForm] = useState<PayrollFormData>(emptyForm);
-
-//   // ✅ FIX 1: Real staff options fetched from backend
-//   const [staffOptions, setStaffOptions] = useState<any[]>([]);
-
-//   useEffect(() => {
-//     const fetchStaffs = async () => {
-//       try {
-//         const response = await getStaffs();
-//         if (response.success && response.data) {
-//           const options = response.data.map((staff: any) => ({
-//             label: staff.name,
-//             value: staff._id,
-//             email: staff.email || "",
-//             role: staff.role || "",
-//             joiningDate: staff.dateOfJoining
-//               ? new Date(staff.dateOfJoining).toLocaleDateString("en-GB", {
-//                 day: "2-digit", month: "short", year: "numeric"
-//               })
-//               : "",
-//             image: staff.image || "",
-//           }));
-//           setStaffOptions(options);
-//         }
-//       } catch (error) {
-//         console.error("Error fetching staff for payroll:", error);
-//       }
-//     };
-//     fetchStaffs();
-//   }, []);
-
-//   // Populate edit form
-//   useEffect(() => {
-//     if (currentPayroll && showEditModal) {
-//       setEditForm({
-//         staffId: currentPayroll.staffId || "",
-//         staffName: currentPayroll.staffName || "",
-//         email: currentPayroll.email || "",
-//         role: currentPayroll.role || "",
-//         joiningDate: currentPayroll.joiningDate || "",
-//         image: currentPayroll.image || "",
-//         salaryMonth: currentPayroll.salaryMonth || MONTHS[new Date().getMonth()],
-//         salaryYear: String(currentPayroll.salaryYear || currentYear),
-//         basicSalary: String(currentPayroll.basicSalary || 0),
-//         da: String(currentPayroll.da || 0),
-//         hra: String(currentPayroll.hra || 0),
-//         conveyance: String(currentPayroll.conveyance || 0),
-//         medicalAllowance: String(currentPayroll.medicalAllowance || 0),
-//         otherEarnings: String(currentPayroll.otherEarnings || 0),
-//         tds: String(currentPayroll.tds || 0),
-//         esi: String(currentPayroll.esi || 0),
-//         pf: String(currentPayroll.pf || 0),
-//         profTax: String(currentPayroll.profTax || 0),
-//         labourWelfare: String(currentPayroll.labourWelfare || 0),
-//         otherDeductions: String(currentPayroll.otherDeductions || 0),
-//         status: currentPayroll.status || "Pending"
-//       });
-//     }
-//   }, [currentPayroll, showEditModal]);
-
-//   // ✅ FIX 3: useCallback — stable handlers, no focus loss on re-render
-//   const handleAddChange = useCallback((key: keyof PayrollFormData, value: string) => {
-//     setAddForm(prev => ({ ...prev, [key]: value }));
-//   }, []);
-
-//   const handleEditChange = useCallback((key: keyof PayrollFormData, value: string) => {
-//     setEditForm(prev => ({ ...prev, [key]: value }));
-//   }, []);
-
-//   const handleAddSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     onAdd(addForm);
-//     setAddForm(emptyForm);
-//   };
-
-//   const handleEditSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     onEdit(editForm);
-//   };
-
-//   // ✅ FIX 3: renderEarningsDeductions as inline function — NOT a sub-component
-//   // This avoids React unmounting/remounting inputs on every keystroke
-//   const renderEarningsDeductions = (
-//     form: PayrollFormData,
-//     onChange: (key: keyof PayrollFormData, value: string) => void
-//   ) => {
-//     const totals = calcTotals(form);
-//     return (
-//       <div className="row row-gap-2">
-//         <div className="col-md-6">
-//           <h6 className="mb-3">Earnings ($)</h6>
-//           {EARNINGS_FIELDS.map(({ label, key, required }) => (
-//             <div className="mb-3" key={key}>
-//               <label className="form-label">
-//                 {label}{required && <span className="text-danger ms-1">*</span>}
-//               </label>
-//               <input
-//                 type="number"
-//                 className="form-control"
-//                 value={form[key]}
-//                 min="0"
-//                 onChange={(e) => onChange(key, e.target.value)}
-//               />
-//             </div>
-//           ))}
-//           <div className="mb-0 p-2 bg-light rounded">
-//             <label className="form-label fw-semibold mb-1">Total Earnings</label>
-//             <input
-//               type="text"
-//               className="form-control fw-bold"
-//               value={`$${totals.totalEarnings.toFixed(2)}`}
-//               readOnly
-//             />
-//           </div>
-//         </div>
-
-//         <div className="col-md-6">
-//           <h6 className="mb-3">Deductions ($)</h6>
-//           {DEDUCTION_FIELDS.map(({ label, key, required }) => (
-//             <div className="mb-3" key={key}>
-//               <label className="form-label">
-//                 {label}{required && <span className="text-danger ms-1">*</span>}
-//               </label>
-//               <input
-//                 type="number"
-//                 className="form-control"
-//                 value={form[key]}
-//                 min="0"
-//                 onChange={(e) => onChange(key, e.target.value)}
-//               />
-//             </div>
-//           ))}
-//           <div className="mb-0 p-2 bg-light rounded">
-//             <label className="form-label fw-semibold mb-1">Total Deductions</label>
-//             <input
-//               type="text"
-//               className="form-control fw-bold"
-//               value={`$${totals.totalDeductions.toFixed(2)}`}
-//               readOnly
-//             />
-//           </div>
-//         </div>
-
-//         <div className="col-12 mt-2">
-//           <div className="p-3 bg-primary bg-opacity-10 rounded border border-primary">
-//             <h6 className="fw-bold text-primary mb-0">
-//               Net Salary: <span className="fs-5">${totals.netSalary.toFixed(2)}</span>
-//             </h6>
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   };
-
-//   return (
-//     <>
-//       {/* ==================== Add Modal ==================== */}
-//       <div
-//         className={`modal fade ${showAddModal ? "show" : ""}`}
-//         id="add_payroll"
-//         style={{ display: showAddModal ? "block" : "none" }}
-//       >
-//         {/* ✅ FIX 2: modal-dialog-scrollable fixes scroll inside modal */}
-//         <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-//           <div className="modal-content">
-//             <div className="modal-header">
-//               <h4 className="text-dark modal-title fw-bold">Add Employee Salary</h4>
-//               <button type="button" className="btn-close btn-close-modal custom-btn-close" onClick={onCloseAdd}>
-//                 <i className="ti ti-x" />
-//               </button>
-//             </div>
-//             <form onSubmit={handleAddSubmit}>
-//               <div className="modal-body">
-//                 <div className="row row-gap-2 mb-3">
-//                   <div className="col-md-6">
-//                     <label className="form-label">
-//                       Select Staff<span className="text-danger ms-1">*</span>
-//                     </label>
-//                     <CommonSelect
-//                       options={staffOptions}
-//                       className="select"
-//                       placeholder="Select staff"
-//                       value={staffOptions.find(s => s.value === addForm.staffId) || null}
-//                       onChange={(option: any) => {
-//                         if (option) {
-//                           setAddForm(prev => ({
-//                             ...prev,
-//                             staffId: option.value,
-//                             staffName: option.label,
-//                             email: option.email || "",
-//                             role: option.role || "",
-//                             joiningDate: option.joiningDate || "",
-//                             image: option.image || "",
-//                           }));
-//                         }
-//                       }}
-//                     />
-//                   </div>
-//                   <div className="col-md-3">
-//                     <label className="form-label">
-//                       Month<span className="text-danger ms-1">*</span>
-//                     </label>
-//                     <CommonSelect
-//                       options={MONTH_OPTIONS}
-//                       className="select"
-//                       value={MONTH_OPTIONS.find(m => m.value === addForm.salaryMonth)}
-//                       onChange={(option: any) =>
-//                         setAddForm(prev => ({ ...prev, salaryMonth: option?.value || "" }))
-//                       }
-//                     />
-//                   </div>
-//                   <div className="col-md-3">
-//                     <label className="form-label">
-//                       Year<span className="text-danger ms-1">*</span>
-//                     </label>
-//                     <CommonSelect
-//                       options={YEAR_OPTIONS}
-//                       className="select"
-//                       value={YEAR_OPTIONS.find(y => y.value === addForm.salaryYear)}
-//                       onChange={(option: any) =>
-//                         setAddForm(prev => ({ ...prev, salaryYear: option?.value || "" }))
-//                       }
-//                     />
-//                   </div>
-//                 </div>
-
-//                 {renderEarningsDeductions(addForm, handleAddChange)}
-//               </div>
-//               <div className="modal-footer d-flex align-items-center gap-1">
-//                 <button type="button" className="btn btn-white border" onClick={onCloseAdd}>
-//                   Cancel
-//                 </button>
-//                 <button type="submit" className="btn btn-primary">Add Payslip</button>
-//               </div>
-//             </form>
-//           </div>
-//         </div>
-//       </div>
-//       {showAddModal && <div className="modal-backdrop fade show"></div>}
-
-//       {/* ==================== Edit Modal ==================== */}
-//       <div
-//         className={`modal fade ${showEditModal ? "show" : ""}`}
-//         id="edit_payroll"
-//         style={{ display: showEditModal ? "block" : "none" }}
-//       >
-//         <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-//           <div className="modal-content">
-//             <div className="modal-header">
-//               <h4 className="text-dark modal-title fw-bold">Edit Employee Salary</h4>
-//               <button type="button" className="btn-close btn-close-modal custom-btn-close" onClick={onCloseEdit}>
-//                 <i className="ti ti-x" />
-//               </button>
-//             </div>
-//             <form onSubmit={handleEditSubmit}>
-//               <div className="modal-body">
-//                 <div className="row row-gap-2 mb-3">
-//                   <div className="col-md-6">
-//                     <label className="form-label">
-//                       Select Staff<span className="text-danger ms-1">*</span>
-//                     </label>
-//                     <CommonSelect
-//                       options={staffOptions}
-//                       className="select"
-//                       value={staffOptions.find(s => s.value === editForm.staffId) || null}
-//                       onChange={(option: any) => {
-//                         if (option) {
-//                           setEditForm(prev => ({
-//                             ...prev,
-//                             staffId: option.value,
-//                             staffName: option.label,
-//                             email: option.email || "",
-//                             role: option.role || "",
-//                             joiningDate: option.joiningDate || "",
-//                             image: option.image || "",
-//                           }));
-//                         }
-//                       }}
-//                     />
-//                   </div>
-//                   <div className="col-md-3">
-//                     <label className="form-label">
-//                       Month<span className="text-danger ms-1">*</span>
-//                     </label>
-//                     <CommonSelect
-//                       options={MONTH_OPTIONS}
-//                       className="select"
-//                       value={MONTH_OPTIONS.find(m => m.value === editForm.salaryMonth)}
-//                       onChange={(option: any) =>
-//                         setEditForm(prev => ({ ...prev, salaryMonth: option?.value || "" }))
-//                       }
-//                     />
-//                   </div>
-//                   <div className="col-md-3">
-//                     <label className="form-label">
-//                       Year<span className="text-danger ms-1">*</span>
-//                     </label>
-//                     <CommonSelect
-//                       options={YEAR_OPTIONS}
-//                       className="select"
-//                       value={YEAR_OPTIONS.find(y => y.value === editForm.salaryYear)}
-//                       onChange={(option: any) =>
-//                         setEditForm(prev => ({ ...prev, salaryYear: option?.value || "" }))
-//                       }
-//                     />
-//                   </div>
-//                 </div>
-
-//                 {renderEarningsDeductions(editForm, handleEditChange)}
-//               </div>
-//               <div className="modal-footer d-flex align-items-center gap-1">
-//                 <button type="button" className="btn btn-white border" onClick={onCloseEdit}>
-//                   Cancel
-//                 </button>
-//                 <button type="submit" className="btn btn-primary">Save Changes</button>
-//               </div>
-//             </form>
-//           </div>
-//         </div>
-//       </div>
-//       {showEditModal && <div className="modal-backdrop fade show"></div>}
-
-//       {/* ==================== Delete Modal ==================== */}
-//       <div
-//         className={`modal fade ${showDeleteModal ? "show" : ""}`}
-//         id="delete_payroll"
-//         style={{ display: showDeleteModal ? "block" : "none" }}
-//       >
-//         <div className="modal-dialog modal-dialog-centered modal-sm">
-//           <div className="modal-content">
-//             <div className="modal-body text-center position-relative z-1">
-//               <ImageWithBasePath src="assets/img/bg/delete-modal-bg-01.png" alt="" className="img-fluid position-absolute top-0 start-0 z-n1" />
-//               <ImageWithBasePath src="assets/img/bg/delete-modal-bg-02.png" alt="" className="img-fluid position-absolute bottom-0 end-0 z-n1" />
-//               <div className="mb-3">
-//                 <span className="avatar avatar-lg bg-danger text-white">
-//                   <i className="ti ti-trash fs-24" />
-//                 </span>
-//               </div>
-//               <h5 className="fw-bold mb-1">Delete Confirmation</h5>
-//               <p className="mb-3">Are you sure want to delete?</p>
-//               <div className="d-flex justify-content-center">
-//                 <Link to="#" className="btn btn-light position-relative z-1 me-3"
-//                   onClick={(e) => { e.preventDefault(); onCloseDelete(); }}>
-//                   Cancel
-//                 </Link>
-//                 <Link to="#" className="btn btn-danger position-relative z-1"
-//                   onClick={(e) => { e.preventDefault(); onDelete(); }}>
-//                   Yes, Delete
-//                 </Link>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//       {showDeleteModal && <div className="modal-backdrop fade show"></div>}
-//     </>
-//   );
-// };
-
-// export default PayrollListModal;
-
-
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
@@ -922,9 +456,7 @@ const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
-
 const MONTH_OPTIONS = MONTHS.map(m => ({ label: m, value: m }));
-
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => ({
   label: String(currentYear - i),
@@ -962,9 +494,22 @@ const emptyForm: PayrollFormData = {
   salaryYear: String(currentYear),
   basicSalary: "0", da: "0", hra: "0", conveyance: "0",
   medicalAllowance: "0", otherEarnings: "0",
-  tds: "0", esi: "0", pf: "0", profTax: "0",
-  labourWelfare: "0", otherDeductions: "0",
+  tds: "", esi: "", pf: "", profTax: "",
+  labourWelfare: "", otherDeductions: "",
   status: "Pending"
+};
+
+// Outside component — stable, no focus loss
+const calcNetSalary = (f: PayrollFormData) => {
+  const totalEarnings =
+    parseFloat(f.basicSalary || "0") + parseFloat(f.da || "0") +
+    parseFloat(f.hra || "0") + parseFloat(f.conveyance || "0") +
+    parseFloat(f.medicalAllowance || "0") + parseFloat(f.otherEarnings || "0");
+  const totalDeductions =
+    parseFloat(f.tds || "0") + parseFloat(f.esi || "0") +
+    parseFloat(f.pf || "0") + parseFloat(f.profTax || "0") +
+    parseFloat(f.labourWelfare || "0") + parseFloat(f.otherDeductions || "0");
+  return totalEarnings - totalDeductions;
 };
 
 interface PayrollListModalProps {
@@ -980,25 +525,6 @@ interface PayrollListModalProps {
   onDelete: () => void;
 }
 
-// ✅ Outside component — stable, no focus loss
-const calcTotals = (f: PayrollFormData) => {
-  const totalEarnings =
-    parseFloat(f.basicSalary || "0") + parseFloat(f.da || "0") +
-    parseFloat(f.hra || "0") + parseFloat(f.conveyance || "0") +
-    parseFloat(f.medicalAllowance || "0") + parseFloat(f.otherEarnings || "0");
-
-  const totalDeductions =
-    parseFloat(f.tds || "0") + parseFloat(f.esi || "0") +
-    parseFloat(f.pf || "0") + parseFloat(f.profTax || "0") +
-    parseFloat(f.labourWelfare || "0") + parseFloat(f.otherDeductions || "0");
-
-  return {
-    totalEarnings,
-    totalDeductions,
-    netSalary: totalEarnings - totalDeductions
-  };
-};
-
 const PayrollListModal = ({
   showAddModal, showEditModal, showDeleteModal,
   currentPayroll, onCloseAdd, onCloseEdit, onCloseDelete,
@@ -1007,10 +533,9 @@ const PayrollListModal = ({
 
   const [addForm, setAddForm] = useState<PayrollFormData>(emptyForm);
   const [editForm, setEditForm] = useState<PayrollFormData>(emptyForm);
-
-  // ✅ FIX 1: Real staff from backend
   const [staffOptions, setStaffOptions] = useState<any[]>([]);
 
+  // Fetch real staff from backend
   useEffect(() => {
     const fetchStaffs = async () => {
       try {
@@ -1055,12 +580,12 @@ const PayrollListModal = ({
         conveyance: String(currentPayroll.conveyance || 0),
         medicalAllowance: String(currentPayroll.medicalAllowance || 0),
         otherEarnings: String(currentPayroll.otherEarnings || 0),
-        tds: String(currentPayroll.tds || 0),
-        esi: String(currentPayroll.esi || 0),
-        pf: String(currentPayroll.pf || 0),
-        profTax: String(currentPayroll.profTax || 0),
-        labourWelfare: String(currentPayroll.labourWelfare || 0),
-        otherDeductions: String(currentPayroll.otherDeductions || 0),
+        tds: String(currentPayroll.tds || ""),
+        esi: String(currentPayroll.esi || ""),
+        pf: String(currentPayroll.pf || ""),
+        profTax: String(currentPayroll.profTax || ""),
+        labourWelfare: String(currentPayroll.labourWelfare || ""),
+        otherDeductions: String(currentPayroll.otherDeductions || ""),
         status: currentPayroll.status || "Pending"
       });
     }
@@ -1077,7 +602,7 @@ const PayrollListModal = ({
     onEdit(editForm);
   };
 
-  // ✅ FIX 3: useCallback — stable handlers prevent focus loss
+  // useCallback — stable handlers, no focus loss on typing
   const handleAddChange = useCallback((key: keyof PayrollFormData, value: string) => {
     setAddForm(prev => ({ ...prev, [key]: value }));
   }, []);
@@ -1086,219 +611,170 @@ const PayrollListModal = ({
     setEditForm(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  // ✅ FIX 3: Inline render function — NOT a sub-component (prevents unmount/remount)
-  // ✅ FIX 2: overflow-y: auto on the columns so Others input is always visible
-  const renderEarningsDeductions = (
+  // Inline render — NOT a sub-component (prevents unmount on each keystroke)
+  const renderFormBody = (
     form: PayrollFormData,
-    onChange: (key: keyof PayrollFormData, value: string) => void
-  ) => {
-    const totals = calcTotals(form);
-
-    return (
-      <div className="row">
-        {/* Earnings Column */}
+    onChange: (key: keyof PayrollFormData, value: string) => void,
+    setForm: React.Dispatch<React.SetStateAction<PayrollFormData>>
+  ) => (
+    <div className="modal-body">
+      {/* Row 1: Select Staff + Net Salary */}
+      <div className="row row-gap-2 mb-3">
         <div className="col-md-6">
-          <h6 className="mb-3 fw-bold">Earnings ($)</h6>
-          <div className="mb-3">
-            <label className="form-label">Basic Salary<span className="text-danger ms-1">*</span></label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.basicSalary}
-              onChange={(e) => onChange("basicSalary", e.target.value)}
+          <div className="mb-0">
+            <label className="form-label">Select Staff</label>
+            <CommonSelect
+              options={staffOptions}
+              className="select"
+              placeholder="Select staff"
+              value={staffOptions.find(s => s.value === form.staffId) || null}
+              onChange={(option: any) => {
+                if (option) {
+                  setForm(prev => ({
+                    ...prev,
+                    staffId: option.value,
+                    staffName: option.label,
+                    email: option.email || "",
+                    role: option.role || "",
+                    joiningDate: option.joiningDate || "",
+                    image: option.image || "",
+                  }));
+                }
+              }}
             />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">DA (40%)<span className="text-danger ms-1">*</span></label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.da}
-              onChange={(e) => onChange("da", e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">HRA (15%)<span className="text-danger ms-1">*</span></label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.hra}
-              onChange={(e) => onChange("hra", e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Conveyance<span className="text-danger ms-1">*</span></label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.conveyance}
-              onChange={(e) => onChange("conveyance", e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Medical Allowance<span className="text-danger ms-1">*</span></label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.medicalAllowance}
-              onChange={(e) => onChange("medicalAllowance", e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Others</label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.otherEarnings}
-              onChange={(e) => onChange("otherEarnings", e.target.value)}
-            />
-          </div>
-          <div className="mb-0 p-2 bg-light rounded">
-            <label className="form-label fw-semibold mb-1">Total Earnings</label>
-            <input type="text" className="form-control fw-bold" value={`$${totals.totalEarnings.toFixed(2)}`} readOnly />
           </div>
         </div>
-
-        {/* Deductions Column */}
         <div className="col-md-6">
-          <h6 className="mb-3 fw-bold">Deductions ($)</h6>
-          <div className="mb-3">
-            <label className="form-label">TDS<span className="text-danger ms-1">*</span></label>
+          <div className="mb-0">
+            <label className="form-label">Net Salary</label>
             <input
-              type="number" className="form-control" min="0"
-              value={form.tds}
-              onChange={(e) => onChange("tds", e.target.value)}
+              type="text"
+              className="form-control"
+              value={calcNetSalary(form) > 0 ? `$${calcNetSalary(form).toFixed(2)}` : ""}
+              readOnly
+              placeholder=""
             />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">ESI</label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.esi}
-              onChange={(e) => onChange("esi", e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">PF<span className="text-danger ms-1">*</span></label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.pf}
-              onChange={(e) => onChange("pf", e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Prof Tax<span className="text-danger ms-1">*</span></label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.profTax}
-              onChange={(e) => onChange("profTax", e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Labour Welfare<span className="text-danger ms-1">*</span></label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.labourWelfare}
-              onChange={(e) => onChange("labourWelfare", e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Others</label>
-            <input
-              type="number" className="form-control" min="0"
-              value={form.otherDeductions}
-              onChange={(e) => onChange("otherDeductions", e.target.value)}
-            />
-          </div>
-          <div className="mb-0 p-2 bg-light rounded">
-            <label className="form-label fw-semibold mb-1">Total Deductions</label>
-            <input type="text" className="form-control fw-bold" value={`$${totals.totalDeductions.toFixed(2)}`} readOnly />
-          </div>
-        </div>
-
-        {/* Net Salary */}
-        <div className="col-12 mt-3">
-          <div className="p-3 bg-primary bg-opacity-10 rounded border border-primary">
-            <h6 className="fw-bold text-primary mb-0">
-              Net Salary: <span className="fs-5">${totals.netSalary.toFixed(2)}</span>
-            </h6>
           </div>
         </div>
       </div>
-    );
-  };
+
+      {/* Row 2: Earnings + Deductions */}
+      <div className="row row-gap-2">
+        {/* Earnings column */}
+        <div className="col-md-6">
+          <h6 className="mb-3">Earnings ($)</h6>
+          <div className="mb-3">
+            <label className="form-label">Basic Salary<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.basicSalary}
+              onChange={(e) => onChange("basicSalary", e.target.value)} />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">DA (40%)<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.da}
+              onChange={(e) => onChange("da", e.target.value)} />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">HRA (15%)<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.hra}
+              onChange={(e) => onChange("hra", e.target.value)} />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Conveyance<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.conveyance}
+              onChange={(e) => onChange("conveyance", e.target.value)} />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Medical Allowance<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.medicalAllowance}
+              onChange={(e) => onChange("medicalAllowance", e.target.value)} />
+          </div>
+          <div className="mb-0">
+            <label className="form-label">Others<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.otherEarnings}
+              onChange={(e) => onChange("otherEarnings", e.target.value)} />
+          </div>
+        </div>
+
+        {/* Deductions column */}
+        <div className="col-md-6">
+          <h6 className="mb-3">Deductions ($)</h6>
+          <div className="mb-3">
+            <label className="form-label">TDS<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.tds}
+              onChange={(e) => onChange("tds", e.target.value)} />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">ESI</label>
+            <input type="number" className="form-control" min="0"
+              value={form.esi}
+              onChange={(e) => onChange("esi", e.target.value)} />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">PF<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.pf}
+              onChange={(e) => onChange("pf", e.target.value)} />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Prof Tax<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.profTax}
+              onChange={(e) => onChange("profTax", e.target.value)} />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Labour Welfare<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.labourWelfare}
+              onChange={(e) => onChange("labourWelfare", e.target.value)} />
+          </div>
+          <div className="mb-0">
+            <label className="form-label">Others<span className="text-danger ms-1">*</span></label>
+            <input type="number" className="form-control" min="0"
+              value={form.otherDeductions}
+              onChange={(e) => onChange("otherDeductions", e.target.value)} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <>
       {/* ==================== Add Modal ==================== */}
       <div
-        className={`modal fade ${showAddModal ? "show" : ""}`}
         id="add_payroll"
+        className={`modal fade ${showAddModal ? "show" : ""}`}
         style={{ display: showAddModal ? "block" : "none" }}
       >
-        {/* ✅ FIX 2: modal-dialog-scrollable — scroll inside modal body */}
-        <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
               <h4 className="text-dark modal-title fw-bold">Add Employee Salary</h4>
-              <button type="button" className="btn-close btn-close-modal custom-btn-close" onClick={onCloseAdd}>
+              <button
+                type="button"
+                className="btn-close btn-close-modal custom-btn-close"
+                onClick={onCloseAdd}
+                aria-label="Close"
+              >
                 <i className="ti ti-x" />
               </button>
             </div>
             <form onSubmit={handleAddSubmit}>
-              <div className="modal-body">
-                {/* Staff + Month/Year Row */}
-                <div className="row row-gap-2 mb-3">
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Select Staff<span className="text-danger ms-1">*</span>
-                    </label>
-                    {/* ✅ FIX 1: Real staff from backend */}
-                    <CommonSelect
-                      options={staffOptions}
-                      className="select"
-                      placeholder="Select staff"
-                      value={staffOptions.find(s => s.value === addForm.staffId) || null}
-                      onChange={(option: any) => {
-                        if (option) {
-                          setAddForm(prev => ({
-                            ...prev,
-                            staffId: option.value,
-                            staffName: option.label,
-                            email: option.email || "",
-                            role: option.role || "",
-                            joiningDate: option.joiningDate || "",
-                            image: option.image || "",
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="col-md-3">
-                    <label className="form-label">Month<span className="text-danger ms-1">*</span></label>
-                    <CommonSelect
-                      options={MONTH_OPTIONS}
-                      className="select"
-                      value={MONTH_OPTIONS.find(m => m.value === addForm.salaryMonth)}
-                      onChange={(option: any) =>
-                        setAddForm(prev => ({ ...prev, salaryMonth: option?.value || "" }))
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3">
-                    <label className="form-label">Year<span className="text-danger ms-1">*</span></label>
-                    <CommonSelect
-                      options={YEAR_OPTIONS}
-                      className="select"
-                      value={YEAR_OPTIONS.find(y => y.value === addForm.salaryYear)}
-                      onChange={(option: any) =>
-                        setAddForm(prev => ({ ...prev, salaryYear: option?.value || "" }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                {renderEarningsDeductions(addForm, handleAddChange)}
-              </div>
+              {renderFormBody(addForm, handleAddChange, setAddForm)}
               <div className="modal-footer d-flex align-items-center gap-1">
                 <button type="button" className="btn btn-white border" onClick={onCloseAdd}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">Add Payslip</button>
+                <button type="submit" className="btn btn-primary">
+                  Add Payslip
+                </button>
               </div>
             </form>
           </div>
@@ -1308,75 +784,32 @@ const PayrollListModal = ({
 
       {/* ==================== Edit Modal ==================== */}
       <div
-        className={`modal fade ${showEditModal ? "show" : ""}`}
         id="edit_payroll"
+        className={`modal fade ${showEditModal ? "show" : ""}`}
         style={{ display: showEditModal ? "block" : "none" }}
       >
-        <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
               <h4 className="text-dark modal-title fw-bold">Edit Employee Salary</h4>
-              <button type="button" className="btn-close btn-close-modal custom-btn-close" onClick={onCloseEdit}>
+              <button
+                type="button"
+                className="btn-close btn-close-modal custom-btn-close"
+                onClick={onCloseEdit}
+                aria-label="Close"
+              >
                 <i className="ti ti-x" />
               </button>
             </div>
             <form onSubmit={handleEditSubmit}>
-              <div className="modal-body">
-                <div className="row row-gap-2 mb-3">
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Select Staff<span className="text-danger ms-1">*</span>
-                    </label>
-                    <CommonSelect
-                      options={staffOptions}
-                      className="select"
-                      value={staffOptions.find(s => s.value === editForm.staffId) || null}
-                      onChange={(option: any) => {
-                        if (option) {
-                          setEditForm(prev => ({
-                            ...prev,
-                            staffId: option.value,
-                            staffName: option.label,
-                            email: option.email || "",
-                            role: option.role || "",
-                            joiningDate: option.joiningDate || "",
-                            image: option.image || "",
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="col-md-3">
-                    <label className="form-label">Month<span className="text-danger ms-1">*</span></label>
-                    <CommonSelect
-                      options={MONTH_OPTIONS}
-                      className="select"
-                      value={MONTH_OPTIONS.find(m => m.value === editForm.salaryMonth)}
-                      onChange={(option: any) =>
-                        setEditForm(prev => ({ ...prev, salaryMonth: option?.value || "" }))
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3">
-                    <label className="form-label">Year<span className="text-danger ms-1">*</span></label>
-                    <CommonSelect
-                      options={YEAR_OPTIONS}
-                      className="select"
-                      value={YEAR_OPTIONS.find(y => y.value === editForm.salaryYear)}
-                      onChange={(option: any) =>
-                        setEditForm(prev => ({ ...prev, salaryYear: option?.value || "" }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                {renderEarningsDeductions(editForm, handleEditChange)}
-              </div>
+              {renderFormBody(editForm, handleEditChange, setEditForm)}
               <div className="modal-footer d-flex align-items-center gap-1">
                 <button type="button" className="btn btn-white border" onClick={onCloseEdit}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">Save Changes</button>
+                <button type="submit" className="btn btn-primary">
+                  Save Changes
+                </button>
               </div>
             </form>
           </div>
@@ -1393,8 +826,16 @@ const PayrollListModal = ({
         <div className="modal-dialog modal-dialog-centered modal-sm">
           <div className="modal-content">
             <div className="modal-body text-center position-relative z-1">
-              <ImageWithBasePath src="assets/img/bg/delete-modal-bg-01.png" alt="" className="img-fluid position-absolute top-0 start-0 z-n1" />
-              <ImageWithBasePath src="assets/img/bg/delete-modal-bg-02.png" alt="" className="img-fluid position-absolute bottom-0 end-0 z-n1" />
+              <ImageWithBasePath
+                src="assets/img/bg/delete-modal-bg-01.png"
+                alt=""
+                className="img-fluid position-absolute top-0 start-0 z-n1"
+              />
+              <ImageWithBasePath
+                src="assets/img/bg/delete-modal-bg-02.png"
+                alt=""
+                className="img-fluid position-absolute bottom-0 end-0 z-n1"
+              />
               <div className="mb-3">
                 <span className="avatar avatar-lg bg-danger text-white">
                   <i className="ti ti-trash fs-24" />
@@ -1403,12 +844,18 @@ const PayrollListModal = ({
               <h5 className="fw-bold mb-1">Delete Confirmation</h5>
               <p className="mb-3">Are you sure want to delete?</p>
               <div className="d-flex justify-content-center">
-                <Link to="#" className="btn btn-light position-relative z-1 me-3"
-                  onClick={(e) => { e.preventDefault(); onCloseDelete(); }}>
+                <Link
+                  to="#"
+                  className="btn btn-light position-relative z-1 me-3"
+                  onClick={(e) => { e.preventDefault(); onCloseDelete(); }}
+                >
                   Cancel
                 </Link>
-                <Link to="#" className="btn btn-danger position-relative z-1"
-                  onClick={(e) => { e.preventDefault(); onDelete(); }}>
+                <Link
+                  to="#"
+                  className="btn btn-danger position-relative z-1"
+                  onClick={(e) => { e.preventDefault(); onDelete(); }}
+                >
                   Yes, Delete
                 </Link>
               </div>

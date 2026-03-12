@@ -336,7 +336,6 @@
 
 // export default PayrollList;
 
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../core/imageWithBasePath";
@@ -381,7 +380,6 @@ interface PayrollData {
   totalDeductions: number;
   netSalary: number;
   status: string;
-  // Table display
   Employee: string;
   Email: string;
   JoiningDate: string;
@@ -396,25 +394,21 @@ const PayrollList = () => {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState<string>("");
 
-  // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentPayroll, setCurrentPayroll] = useState<any>(null);
 
-  // Filter states
   const [filterEmployee, setFilterEmployee] = useState<string[]>([]);
   const [filterRole, setFilterRole] = useState<string[]>([]);
   const [filterDate, setFilterDate] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<"recent" | "oldest">("recent");
 
-  // ===================== Fetch =====================
   const fetchPayrolls = async () => {
     try {
       setLoading(true);
       const response = await getPayrolls();
-
       if (response.success && response.data) {
         const formatted: PayrollData[] = response.data.map((p: any) => ({
           key: p._id,
@@ -443,7 +437,6 @@ const PayrollList = () => {
           totalDeductions: p.totalDeductions,
           netSalary: p.netSalary,
           status: p.status,
-          // Table display
           Employee: p.staffName,
           Email: p.email || "",
           JoiningDate: p.joiningDate || "-",
@@ -468,10 +461,8 @@ const PayrollList = () => {
     fetchPayrolls();
   }, []);
 
-  // ===================== Filters =====================
   const applyFilters = () => {
     let filtered = [...data];
-
     if (filterEmployee.length > 0) {
       filtered = filtered.filter(item => filterEmployee.includes(item.Employee));
     }
@@ -485,22 +476,19 @@ const PayrollList = () => {
       const selectedDate = dayjs(filterDate).format("DD-MMM-YYYY");
       filtered = filtered.filter(item => item.JoiningDate === selectedDate);
     }
-
     if (sortBy === "oldest") {
       filtered.reverse();
     }
-
     return filtered;
   };
 
   const filteredData = applyFilters();
 
   const getModalContainer = () => {
-    const el = document.getElementById("modal-datepicker");
-    return el ? el : document.body;
+    const modalElement = document.getElementById("modal-datepicker");
+    return modalElement ? modalElement : document.body;
   };
 
-  // ===================== Columns =====================
   const columns = [
     {
       title: "Employee",
@@ -527,7 +515,7 @@ const PayrollList = () => {
       sorter: (a: any, b: any) => a.Email.localeCompare(b.Email),
     },
     {
-      title: "Joining Date",
+      title: "JoiningDate",
       dataIndex: "JoiningDate",
       sorter: (a: any, b: any) => a.JoiningDate.localeCompare(b.JoiningDate),
     },
@@ -537,7 +525,7 @@ const PayrollList = () => {
       sorter: (a: any, b: any) => a.Role.localeCompare(b.Role),
     },
     {
-      title: "Net Salary",
+      title: "Salary",
       dataIndex: "Salary",
       sorter: (a: any, b: any) =>
         parseFloat(a.Salary.replace("$", "")) - parseFloat(b.Salary.replace("$", "")),
@@ -548,14 +536,8 @@ const PayrollList = () => {
       render: (text: any, record: any) => (
         <Link
           to={`${all_routes.payroll2}?id=${record._id}`}
-          className={`btn btn-white border text-dark btn-sm`}
+          className="btn btn-white border text-dark"
         >
-          <span className={`badge me-1 ${text === "Paid"
-            ? "badge-soft-success"
-            : text === "Processing"
-              ? "badge-soft-warning"
-              : "badge-soft-danger"
-            }`}>●</span>
           {text}
         </Link>
       ),
@@ -565,44 +547,40 @@ const PayrollList = () => {
       title: "",
       render: (_: any, record: any) => (
         <div className="action-item p-2">
-          <div className="dropdown">
-            <button className="btn p-1 btn-white border" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i className="ti ti-dots-vertical" />
-            </button>
-            <ul className="dropdown-menu dropdown-menu-end p-2">
-              <li>
-                <button
-                  className="dropdown-item d-flex align-items-center"
-                  type="button"
-                  onClick={() => { setCurrentPayroll(record); setShowEditModal(true); }}
-                >
-                  <i className="ti ti-edit me-2" />Edit
-                </button>
-              </li>
-              <li>
-                <button
-                  className="dropdown-item d-flex align-items-center text-danger"
-                  type="button"
-                  onClick={() => { setCurrentPayroll(record); setShowDeleteModal(true); }}
-                >
-                  <i className="ti ti-trash me-2" />Delete
-                </button>
-              </li>
-            </ul>
-          </div>
+          <Link to="#" data-bs-toggle="dropdown" className="btn p-1 btn-white border">
+            <i className="ti ti-dots-vertical" />
+          </Link>
+          <ul className="dropdown-menu p-2">
+            <li>
+              <button
+                className="dropdown-item d-flex align-items-center"
+                type="button"
+                onClick={() => { setCurrentPayroll(record); setShowEditModal(true); }}
+              >
+                <i className="ti ti-edit me-2" />Edit
+              </button>
+            </li>
+            <li>
+              <button
+                className="dropdown-item d-flex align-items-center"
+                type="button"
+                onClick={() => { setCurrentPayroll(record); setShowDeleteModal(true); }}
+              >
+                <i className="ti ti-trash me-2" />Delete
+              </button>
+            </li>
+          </ul>
         </div>
       ),
     },
   ];
 
-  // ===================== CRUD =====================
   const handleAddPayroll = async (formData: PayrollFormData) => {
     try {
       const response = await createPayroll({
         ...formData,
         salaryYear: parseInt(formData.salaryYear),
       });
-
       if (response.success) {
         await fetchPayrolls();
         setShowAddModal(false);
@@ -622,7 +600,6 @@ const PayrollList = () => {
           ...formData,
           salaryYear: parseInt(formData.salaryYear),
         });
-
         if (response.success) {
           await fetchPayrolls();
           setShowEditModal(false);
@@ -641,7 +618,6 @@ const PayrollList = () => {
     if (currentPayroll && currentPayroll._id) {
       try {
         const response = await deletePayroll(currentPayroll._id);
-
         if (response.success) {
           await fetchPayrolls();
           setShowDeleteModal(false);
@@ -656,7 +632,6 @@ const PayrollList = () => {
     }
   };
 
-  // ===================== Loading =====================
   if (loading) {
     return (
       <div className="page-wrapper">
@@ -671,12 +646,11 @@ const PayrollList = () => {
     );
   }
 
-  // ===================== Render =====================
   return (
     <>
       <div className="page-wrapper">
         <div className="content">
-          {/* Header */}
+          {/* Page Header */}
           <div className="mb-3 pb-3 border-bottom">
             <div className="d-flex align-items-center justify-content-between">
               <div className="d-flex align-items-center">
@@ -709,7 +683,6 @@ const PayrollList = () => {
             </div>
 
             <div className="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">
-              {/* Filters */}
               <div className="dropdown me-2">
                 <Link
                   to="#"
@@ -729,63 +702,64 @@ const PayrollList = () => {
                         setFilterDate(null); setFilterStatus([]);
                       }}>Clear All</Link>
                   </div>
-                  <div className="filter-body pb-0">
-                    <div className="mb-3">
-                      <div className="d-flex align-items-center justify-content-between">
-                        <label className="form-label">Employee</label>
-                        <Link to="#" className="link-primary mb-1"
-                          onClick={(e) => { e.preventDefault(); setFilterEmployee([]); }}>Reset</Link>
+                  <form action="#">
+                    <div className="filter-body pb-0">
+                      <div className="mb-3">
+                        <div className="d-flex align-items-center justify-content-between">
+                          <label className="form-label">Employee</label>
+                          <Link to="#" className="link-primary mb-1"
+                            onClick={(e) => { e.preventDefault(); setFilterEmployee([]); }}>Reset</Link>
+                        </div>
+                        <Select mode="multiple" allowClear style={{ width: "100%" }}
+                          placeholder="Please select" value={filterEmployee}
+                          onChange={setFilterEmployee} options={Employee} />
                       </div>
-                      <Select mode="multiple" allowClear style={{ width: "100%" }}
-                        placeholder="Please select" value={filterEmployee}
-                        onChange={setFilterEmployee} options={Employee} />
-                    </div>
-                    <div className="mb-3">
-                      <div className="d-flex align-items-center justify-content-between">
-                        <label className="form-label">Role</label>
-                        <Link to="#" className="link-primary mb-1"
-                          onClick={(e) => { e.preventDefault(); setFilterRole([]); }}>Reset</Link>
+                      <div className="mb-3">
+                        <div className="d-flex align-items-center justify-content-between">
+                          <label className="form-label">Role</label>
+                          <Link to="#" className="link-primary mb-1"
+                            onClick={(e) => { e.preventDefault(); setFilterRole([]); }}>Reset</Link>
+                        </div>
+                        <Select mode="multiple" allowClear style={{ width: "100%" }}
+                          placeholder="Please select" value={filterRole}
+                          onChange={setFilterRole} options={StaffsRole} />
                       </div>
-                      <Select mode="multiple" allowClear style={{ width: "100%" }}
-                        placeholder="Please select" value={filterRole}
-                        onChange={setFilterRole} options={StaffsRole} />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label mb-1 text-dark fs-14 fw-medium">Date</label>
-                      <div className="input-icon-end position-relative">
-                        <DatePicker
-                          className="form-control datetimepicker"
-                          format={{ format: "DD-MM-YYYY", type: "mask" }}
-                          value={filterDate}
-                          onChange={setFilterDate}
-                          getPopupContainer={getModalContainer}
-                          placeholder="DD-MM-YYYY"
-                          suffixIcon={null}
-                        />
-                        <span className="input-icon-addon">
-                          <i className="ti ti-calendar" />
-                        </span>
+                      <div className="mb-3">
+                        <label className="form-label mb-1 text-dark fs-14 fw-medium">Date</label>
+                        <div className="input-icon-end position-relative">
+                          <DatePicker
+                            className="form-control datetimepicker"
+                            format={{ format: "DD-MM-YYYY", type: "mask" }}
+                            value={filterDate}
+                            onChange={setFilterDate}
+                            getPopupContainer={getModalContainer}
+                            placeholder="DD-MM-YYYY"
+                            suffixIcon={null}
+                          />
+                          <span className="input-icon-addon">
+                            <i className="ti ti-calendar" />
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mb-3">
+                        <div className="d-flex align-items-center justify-content-between">
+                          <label className="form-label">Status</label>
+                          <Link to="#" className="link-primary mb-1"
+                            onClick={(e) => { e.preventDefault(); setFilterStatus([]); }}>Reset</Link>
+                        </div>
+                        <Select mode="multiple" allowClear style={{ width: "100%" }}
+                          placeholder="Please select" value={filterStatus}
+                          onChange={setFilterStatus} options={StatusActive} />
                       </div>
                     </div>
-                    <div className="mb-3">
-                      <div className="d-flex align-items-center justify-content-between">
-                        <label className="form-label">Status</label>
-                        <Link to="#" className="link-primary mb-1"
-                          onClick={(e) => { e.preventDefault(); setFilterStatus([]); }}>Reset</Link>
-                      </div>
-                      <Select mode="multiple" allowClear style={{ width: "100%" }}
-                        placeholder="Please select" value={filterStatus}
-                        onChange={setFilterStatus} options={StatusActive} />
+                    <div className="filter-footer d-flex align-items-center justify-content-end border-top">
+                      <Link to="#" className="btn btn-light btn-md me-2">Close</Link>
+                      <button type="submit" className="btn btn-primary btn-md">Filter</button>
                     </div>
-                  </div>
-                  <div className="filter-footer d-flex align-items-center justify-content-end border-top">
-                    <Link to="#" className="btn btn-light btn-md me-2">Close</Link>
-                    <button type="button" className="btn btn-primary btn-md">Filter</button>
-                  </div>
+                  </form>
                 </div>
               </div>
 
-              {/* Sort */}
               <div className="dropdown">
                 <Link
                   to="#"
@@ -820,7 +794,6 @@ const PayrollList = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="footer text-center bg-white p-2 border-top">
           <p className="text-dark mb-0">
             2025 © <Link to="#" className="link-primary">Preclinic</Link>, All Rights Reserved
