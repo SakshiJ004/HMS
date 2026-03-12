@@ -89,7 +89,7 @@ app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 app.use('/api/specializations', require('./routes/specializationRoutes'));
 app.use('/api/services', require('./routes/serviceRoutes'));
 app.use('/api/locations', require('./routes/locationRoutes'));
-app.use('/api/locations', require('./routes/locationRoutes'));
+app.use('/api/payrolls', require('./routes/payrollRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
