@@ -769,7 +769,6 @@
 // export default Modals;
 
 
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../../core/imageWithBasePath";
@@ -870,12 +869,15 @@ const AssetModal = ({
     }
   }, [currentAsset, showEditModal]);
 
-  // Inline render — NOT a sub-component (prevents focus loss on typing)
+  // ✅ KEY: renderFormBody is inline function — NOT a sub-component
+  // This prevents focus loss on every keystroke
   const renderFormBody = (
     form: AssetFormData,
     setForm: React.Dispatch<React.SetStateAction<AssetFormData>>
   ) => (
-    <div className="modal-body" style={{ overflowY: "auto", flex: 1 }}>
+    // ✅ KEY FIX: overflowY + flex:1 makes this div scroll independently
+    // header और footer fixed रहतात, फक्त हा div scroll होतो
+    <div style={{ overflowY: "auto", flex: 1, padding: "1rem 1.5rem" }}>
       <div className="row">
 
         {/* Asset Name */}
@@ -884,15 +886,13 @@ const AssetModal = ({
             <label className="form-label mb-1 text-dark fs-14 fw-medium">
               Asset Name <span className="text-danger">*</span>
             </label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. Patient Monitor"
-                value={form.assetName}
-                onChange={(e) => setForm((p) => ({ ...p, assetName: e.target.value }))}
-              />
-            </div>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. Patient Monitor"
+              value={form.assetName}
+              onChange={(e) => setForm((p) => ({ ...p, assetName: e.target.value }))}
+            />
           </div>
         </div>
 
@@ -902,15 +902,13 @@ const AssetModal = ({
             <label className="form-label mb-1 text-dark fs-14 fw-medium">
               Asset User <span className="text-danger">*</span>
             </label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. Dr. Ramesh Kumar"
-                value={form.assetUser}
-                onChange={(e) => setForm((p) => ({ ...p, assetUser: e.target.value }))}
-              />
-            </div>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. Dr. Ramesh Kumar"
+              value={form.assetUser}
+              onChange={(e) => setForm((p) => ({ ...p, assetUser: e.target.value }))}
+            />
           </div>
         </div>
 
@@ -932,9 +930,7 @@ const AssetModal = ({
                   setForm((p) => ({ ...p, purchaseDate: dateStr as string }))
                 }
               />
-              <span className="input-icon-addon">
-                <i className="ti ti-calendar" />
-              </span>
+              <span className="input-icon-addon"><i className="ti ti-calendar" /></span>
             </div>
           </div>
         </div>
@@ -945,15 +941,13 @@ const AssetModal = ({
             <label className="form-label mb-1 text-dark fs-14 fw-medium">
               Purchase From <span className="text-danger">*</span>
             </label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. Mediline Supplies Pvt Ltd"
-                value={form.purchaseFrom}
-                onChange={(e) => setForm((p) => ({ ...p, purchaseFrom: e.target.value }))}
-              />
-            </div>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. Mediline Supplies Pvt Ltd"
+              value={form.purchaseFrom}
+              onChange={(e) => setForm((p) => ({ ...p, purchaseFrom: e.target.value }))}
+            />
           </div>
         </div>
 
@@ -963,15 +957,13 @@ const AssetModal = ({
             <label className="form-label mb-1 text-dark fs-14 fw-medium">
               Manufacturer <span className="text-danger">*</span>
             </label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. Philips Healthcare"
-                value={form.manufacturer}
-                onChange={(e) => setForm((p) => ({ ...p, manufacturer: e.target.value }))}
-              />
-            </div>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. Philips Healthcare"
+              value={form.manufacturer}
+              onChange={(e) => setForm((p) => ({ ...p, manufacturer: e.target.value }))}
+            />
           </div>
         </div>
 
@@ -981,15 +973,13 @@ const AssetModal = ({
             <label className="form-label mb-1 text-dark fs-14 fw-medium">
               Model <span className="text-danger">*</span>
             </label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. IntelliVue MX40"
-                value={form.model}
-                onChange={(e) => setForm((p) => ({ ...p, model: e.target.value }))}
-              />
-            </div>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. IntelliVue MX40"
+              value={form.model}
+              onChange={(e) => setForm((p) => ({ ...p, model: e.target.value }))}
+            />
           </div>
         </div>
 
@@ -999,15 +989,13 @@ const AssetModal = ({
             <label className="form-label mb-1 text-dark fs-14 fw-medium">
               Serial Number <span className="text-danger">*</span>
             </label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. PHI-MX40-2024001"
-                value={form.serialNumber}
-                onChange={(e) => setForm((p) => ({ ...p, serialNumber: e.target.value }))}
-              />
-            </div>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. PHI-MX40-2024001"
+              value={form.serialNumber}
+              onChange={(e) => setForm((p) => ({ ...p, serialNumber: e.target.value }))}
+            />
           </div>
         </div>
 
@@ -1017,15 +1005,13 @@ const AssetModal = ({
             <label className="form-label mb-1 text-dark fs-14 fw-medium">
               Supplier <span className="text-danger">*</span>
             </label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. MedEquip India"
-                value={form.supplier}
-                onChange={(e) => setForm((p) => ({ ...p, supplier: e.target.value }))}
-              />
-            </div>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. MedEquip India"
+              value={form.supplier}
+              onChange={(e) => setForm((p) => ({ ...p, supplier: e.target.value }))}
+            />
           </div>
         </div>
 
@@ -1035,43 +1021,35 @@ const AssetModal = ({
             <label className="form-label mb-1 text-dark fs-14 fw-medium">
               Condition <span className="text-danger">*</span>
             </label>
-            <div className="input-group custom-select">
-              <CommonSelect
-                options={CONDITION_OPTIONS}
-                className="select"
-                value={CONDITION_OPTIONS.find((c) => c.value === form.condition)}
-                onChange={(option: any) =>
-                  setForm((p) => ({ ...p, condition: option?.value || "New" }))
-                }
-              />
-            </div>
+            <CommonSelect
+              options={CONDITION_OPTIONS}
+              className="select"
+              value={CONDITION_OPTIONS.find((c) => c.value === form.condition)}
+              onChange={(option: any) =>
+                setForm((p) => ({ ...p, condition: option?.value || "New" }))
+              }
+            />
           </div>
         </div>
 
         {/* Warranty */}
         <div className="col-lg-6">
           <div className="mb-3">
-            <label className="form-label mb-1 text-dark fs-14 fw-medium">
-              Warranty
-            </label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. 2 Years"
-                value={form.warranty}
-                onChange={(e) => setForm((p) => ({ ...p, warranty: e.target.value }))}
-              />
-            </div>
+            <label className="form-label mb-1 text-dark fs-14 fw-medium">Warranty</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. 2 Years"
+              value={form.warranty}
+              onChange={(e) => setForm((p) => ({ ...p, warranty: e.target.value }))}
+            />
           </div>
         </div>
 
         {/* Warranty End */}
         <div className="col-lg-6">
           <div className="mb-3">
-            <label className="form-label mb-1 text-dark fs-14 fw-medium">
-              Warranty End
-            </label>
+            <label className="form-label mb-1 text-dark fs-14 fw-medium">Warranty End</label>
             <div className="input-icon-end position-relative">
               <DatePicker
                 className="form-control datetimepicker"
@@ -1084,9 +1062,7 @@ const AssetModal = ({
                   setForm((p) => ({ ...p, warrantyEnd: dateStr as string }))
                 }
               />
-              <span className="input-icon-addon">
-                <i className="ti ti-calendar" />
-              </span>
+              <span className="input-icon-addon"><i className="ti ti-calendar" /></span>
             </div>
           </div>
         </div>
@@ -1117,25 +1093,21 @@ const AssetModal = ({
             <label className="form-label mb-1 text-dark fs-14 fw-medium">
               Status <span className="text-danger">*</span>
             </label>
-            <div className="input-group custom-select">
-              <CommonSelect
-                options={STATUS_OPTIONS}
-                className="select"
-                value={STATUS_OPTIONS.find((s) => s.value === form.status)}
-                onChange={(option: any) =>
-                  setForm((p) => ({ ...p, status: option?.value || "Pending" }))
-                }
-              />
-            </div>
+            <CommonSelect
+              options={STATUS_OPTIONS}
+              className="select"
+              value={STATUS_OPTIONS.find((s) => s.value === form.status)}
+              onChange={(option: any) =>
+                setForm((p) => ({ ...p, status: option?.value || "Pending" }))
+              }
+            />
           </div>
         </div>
 
-        {/* Description */}
+        {/* Description — full width */}
         <div className="col-lg-12">
-          <div className="mb-3">
-            <label className="form-label mb-1 text-dark fs-14 fw-medium">
-              Description
-            </label>
+          <div className="mb-2">
+            <label className="form-label mb-1 text-dark fs-14 fw-medium">Description</label>
             <textarea
               rows={4}
               className="form-control rounded"
@@ -1150,6 +1122,12 @@ const AssetModal = ({
     </div>
   );
 
+  // ✅ STRUCTURE:
+  // modal-content (flex column, maxHeight 88vh)
+  //   ├── modal-header  (flexShrink: 0 — never shrinks)
+  //   ├── form          (flex: 1, contains scrollable div)
+  //   └── modal-footer  (flexShrink: 0 — ALWAYS visible at bottom)
+
   return (
     <>
       {/* ==================== Add Modal ==================== */}
@@ -1158,48 +1136,35 @@ const AssetModal = ({
         id="add_asset"
         style={{ display: showAddModal ? "block" : "none" }}
       >
-        <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-          <div className="modal-content" style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content" style={{
+            maxHeight: "88vh",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden"
+          }}>
+            {/* Header — fixed */}
             <div className="modal-header" style={{ flexShrink: 0 }}>
               <h5 className="modal-title text-dark fw-bold">Add Asset</h5>
-              <button
-                type="button"
-                className="btn-close custom-btn-close opacity-100"
-                onClick={onCloseAdd}
-                aria-label="Close"
-              >
+              <button type="button" className="btn-close custom-btn-close opacity-100"
+                onClick={onCloseAdd} aria-label="Close">
                 <i className="ti ti-x bg-white fs-16 text-dark" />
               </button>
             </div>
 
-            {/* form wraps only modal-body */}
-            <form
-              id="add-asset-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                onAdd(addForm);
-                setAddForm(emptyForm);
-              }}
-            >
+            {/* Form — scrollable area, flex: 1 fills remaining space */}
+            <form id="add-asset-form"
+              style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}
+              onSubmit={(e) => { e.preventDefault(); onAdd(addForm); setAddForm(emptyForm); }}>
               {renderFormBody(addForm, setAddForm)}
             </form>
 
-            {/* footer outside form — always visible */}
+            {/* Footer — fixed at bottom, always visible */}
             <div className="modal-footer" style={{ flexShrink: 0 }}>
-              <button
-                type="button"
-                className="btn btn-light btn-sm me-2 fs-13 fw-medium"
-                onClick={onCloseAdd}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="add-asset-form"
-                className="btn btn-primary btn-sm fs-13 fw-medium"
-              >
-                Add Asset
-              </button>
+              <button type="button" className="btn btn-light btn-sm me-2 fs-13 fw-medium"
+                onClick={onCloseAdd}>Cancel</button>
+              <button type="submit" form="add-asset-form"
+                className="btn btn-primary btn-sm fs-13 fw-medium">Add Asset</button>
             </div>
           </div>
         </div>
@@ -1212,45 +1177,32 @@ const AssetModal = ({
         id="edit_asset"
         style={{ display: showEditModal ? "block" : "none" }}
       >
-        <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-          <div className="modal-content" style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content" style={{
+            maxHeight: "88vh",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden"
+          }}>
             <div className="modal-header" style={{ flexShrink: 0 }}>
               <h5 className="modal-title text-dark fw-bold">Edit Asset</h5>
-              <button
-                type="button"
-                className="btn-close custom-btn-close opacity-100"
-                onClick={onCloseEdit}
-                aria-label="Close"
-              >
+              <button type="button" className="btn-close custom-btn-close opacity-100"
+                onClick={onCloseEdit} aria-label="Close">
                 <i className="ti ti-x bg-white fs-16 text-dark" />
               </button>
             </div>
 
-            <form
-              id="edit-asset-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                onEdit(editForm);
-              }}
-            >
+            <form id="edit-asset-form"
+              style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}
+              onSubmit={(e) => { e.preventDefault(); onEdit(editForm); }}>
               {renderFormBody(editForm, setEditForm)}
             </form>
 
             <div className="modal-footer" style={{ flexShrink: 0 }}>
-              <button
-                type="button"
-                className="btn btn-light btn-sm me-2 fs-13 fw-medium"
-                onClick={onCloseEdit}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="edit-asset-form"
-                className="btn btn-primary btn-sm fs-13 fw-medium"
-              >
-                Save Changes
-              </button>
+              <button type="button" className="btn btn-light btn-sm me-2 fs-13 fw-medium"
+                onClick={onCloseEdit}>Cancel</button>
+              <button type="submit" form="edit-asset-form"
+                className="btn btn-primary btn-sm fs-13 fw-medium">Save Changes</button>
             </div>
           </div>
         </div>
@@ -1266,16 +1218,10 @@ const AssetModal = ({
         <div className="modal-dialog modal-dialog-centered modal-sm">
           <div className="modal-content">
             <div className="modal-body text-center position-relative">
-              <ImageWithBasePath
-                src="assets/img/bg/delete-modal-bg-01.png"
-                alt=""
-                className="img-fluid position-absolute top-0 start-0 z-0"
-              />
-              <ImageWithBasePath
-                src="assets/img/bg/delete-modal-bg-02.png"
-                alt=""
-                className="img-fluid position-absolute bottom-0 end-0 z-0"
-              />
+              <ImageWithBasePath src="assets/img/bg/delete-modal-bg-01.png" alt=""
+                className="img-fluid position-absolute top-0 start-0 z-0" />
+              <ImageWithBasePath src="assets/img/bg/delete-modal-bg-02.png" alt=""
+                className="img-fluid position-absolute bottom-0 end-0 z-0" />
               <div className="mb-3 position-relative z-1">
                 <span className="avatar avatar-lg bg-danger text-white">
                   <i className="ti ti-trash fs-24" />
@@ -1284,20 +1230,10 @@ const AssetModal = ({
               <h5 className="fw-bold mb-1 position-relative z-1">Delete Confirmation</h5>
               <p className="mb-3 position-relative z-1">Are you sure you want to delete this asset?</p>
               <div className="d-flex justify-content-center">
-                <Link
-                  to="#"
-                  className="btn btn-light position-relative z-1 me-3"
-                  onClick={(e) => { e.preventDefault(); onCloseDelete(); }}
-                >
-                  Cancel
-                </Link>
-                <Link
-                  to="#"
-                  className="btn btn-danger position-relative z-1"
-                  onClick={(e) => { e.preventDefault(); onDelete(); }}
-                >
-                  Yes, Delete
-                </Link>
+                <Link to="#" className="btn btn-light position-relative z-1 me-3"
+                  onClick={(e) => { e.preventDefault(); onCloseDelete(); }}>Cancel</Link>
+                <Link to="#" className="btn btn-danger position-relative z-1"
+                  onClick={(e) => { e.preventDefault(); onDelete(); }}>Yes, Delete</Link>
               </div>
             </div>
           </div>
@@ -1308,4 +1244,4 @@ const AssetModal = ({
   );
 };
 
-export default AssetModal;
+export default AssetModal;  
