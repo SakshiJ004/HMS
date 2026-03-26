@@ -90,6 +90,7 @@ app.use('/api/specializations', require('./routes/specializationRoutes'));
 app.use('/api/services', require('./routes/serviceRoutes'));
 app.use('/api/locations', require('./routes/locationRoutes'));
 app.use('/api/payrolls', require('./routes/payrollRoutes'));
+app.use('/api/assets', require('./routes/assetRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
