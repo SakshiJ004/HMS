@@ -5,6 +5,8 @@ const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
 const connectDB = require('./config/db');
+const http = require('http');
+const { Server } = require('socket.io');
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +22,11 @@ require('./models/OnlineConsultation')
 
 // Initialize Express app
 const app = express();
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: { origin: ['http://localhost:5173', 'https://hms-zo76.vercel.app'], credentials: true }
+});
 
 /**
  * Middleware Configuration
@@ -91,6 +98,7 @@ app.use('/api/services', require('./routes/serviceRoutes'));
 app.use('/api/locations', require('./routes/locationRoutes'));
 app.use('/api/payrolls', require('./routes/payrollRoutes'));
 app.use('/api/assets', require('./routes/assetRoutes'));
+app.use('/api/chat', require('./routes/chatRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -125,6 +133,40 @@ app.use((err, req, res, next) => {
  */
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+// app.listen(PORT, () => {
+//     console.log(`Server is running on port ${PORT}`);
+// });
+
+
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
+    socket.on('join_conversation', (conversationId) => {
+        socket.join(conversationId);
+    });
+
+    socket.on('leave_conversation', (conversationId) => {
+        socket.leave(conversationId);
+    });
+
+    socket.on('send_message', (messageData) => {
+        socket.to(messageData.conversationId).emit('receive_message', messageData);
+        io.emit('conversation_updated', { conversationId: messageData.conversationId });
+    });
+
+    socket.on('typing', ({ conversationId, sender }) => {
+        socket.to(conversationId).emit('user_typing', { sender });
+    });
+
+    socket.on('stop_typing', ({ conversationId }) => {
+        socket.to(conversationId).emit('user_stop_typing');
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+});
+
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

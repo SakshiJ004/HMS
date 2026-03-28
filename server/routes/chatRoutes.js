@@ -1,0 +1,19 @@
+const express = require('express');
+const router = express.Router();
+const {
+    getConversations,
+    createConversation,
+    getMessages,
+    sendMessage,
+    deleteMessage,
+    deleteConversation
+} = require('../controllers/chatController');
+
+router.get('/conversations', getConversations);
+router.post('/conversations', createConversation);
+router.get('/messages/:conversationId', getMessages);
+router.post('/messages', sendMessage);
+router.delete('/messages/:id', deleteMessage);
+router.delete('/conversations/:id', deleteConversation);
+
+module.exports = router;
