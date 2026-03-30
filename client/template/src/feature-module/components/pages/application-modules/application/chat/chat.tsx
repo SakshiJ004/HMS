@@ -1027,12 +1027,10 @@
 
 
 
-
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { io, Socket } from "socket.io-client";
-// import ImageWithBasePath from "../../../../../core/imageWithBasePath";
-import ImageWithBasePath from "../../../../../../core/imageWithBasePath";
+// import ImageWithBasePath from "../../../../../../core/imageWithBasePath";
 import {
   getConversations,
   getMessages,
@@ -1043,13 +1041,29 @@ import {
   type ConversationData,
   type MessageData,
 } from "../../../../../../api/chatService";
+import { getStaffs } from "../../../../../../api/staffService";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 
-// ✅ Current logged-in user — इथे तुमचा logged in user name/image लावा
-// Later auth context / localStorage से fetch करा
-const MY_NAME = "You";
-const MY_IMAGE = "assets/img/users/user-01.jpg";
+// ✅ localStorage मधून logged-in user घेतो — hardcoded नाही
+const getUserInfo = () => {
+  try {
+    const raw = localStorage.getItem("userData");
+    if (raw) {
+      const u = JSON.parse(raw);
+      return {
+        name: u.fullName || u.firstName || "User",
+        image: u.profileImage || "",
+        role: u.role || "admin",
+      };
+    }
+  } catch { /* ignore */ }
+  return { name: "Admin", image: "", role: "admin" };
+};
+
+const currentUser = getUserInfo();
+const MY_NAME = currentUser.name;
+const MY_IMAGE = currentUser.image;
 
 let socket: Socket;
 
@@ -1062,101 +1076,67 @@ const Chat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState("");
   const [showNewChatModal, setShowNewChatModal] = useState(false);
-  const [newContactName, setNewContactName] = useState("");
+  const [staffList, setStaffList] = useState<any[]>([]);
+  const [selectedStaff, setSelectedStaff] = useState<any>(null);
+  const [staffSearch, setStaffSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<any>(null);
 
-  // ===== Socket.io Setup =====
   useEffect(() => {
     socket = io(BACKEND_URL, { transports: ["websocket"] });
-
     socket.on("receive_message", (msg: MessageData) => {
       setMessages((prev) => [...prev, msg]);
       scrollToBottom();
     });
-
-    socket.on("conversation_updated", () => {
-      fetchConversations();
-    });
-
+    socket.on("conversation_updated", () => fetchConversations());
     socket.on("user_typing", ({ sender }: { sender: string }) => {
-      setTypingUser(sender);
-      setIsTyping(true);
+      setTypingUser(sender); setIsTyping(true);
     });
-
-    socket.on("user_stop_typing", () => {
-      setIsTyping(false);
-      setTypingUser("");
-    });
-
-    return () => {
-      socket.disconnect();
-    };
+    socket.on("user_stop_typing", () => { setIsTyping(false); setTypingUser(""); });
+    return () => { socket.disconnect(); };
   }, []);
 
-  // ===== Fetch conversations on mount =====
-  useEffect(() => {
-    fetchConversations();
-  }, []);
+  useEffect(() => { fetchConversations(); }, []);
+  useEffect(() => { scrollToBottom(); }, [messages]);
 
-  // ===== Scroll to bottom when messages change =====
+  // ✅ Staff list fetch करतो New Chat modal साठी
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (showNewChatModal) {
+      getStaffs().then((res) => {
+        if (res.success && res.data) setStaffList(res.data);
+      }).catch(console.error);
+    }
+  }, [showNewChatModal]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
   const fetchConversations = async () => {
     try {
       const res = await getConversations();
       if (res.success) setConversations(res.data);
-    } catch (err) {
-      console.error("Fetch conversations error:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // ===== Open conversation =====
   const openConversation = async (conv: ConversationData) => {
-    // Leave previous room
-    if (activeConversation) {
-      socket.emit("leave_conversation", activeConversation._id);
-    }
-
+    if (activeConversation) socket.emit("leave_conversation", activeConversation._id);
     setActiveConversation(conv);
     setLoading(true);
-
     try {
       const res = await getMessages(conv._id);
       if (res.success) setMessages(res.data);
-    } catch (err) {
-      console.error("Fetch messages error:", err);
-    } finally {
-      setLoading(false);
-    }
-
-    // Join new room
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
     socket.emit("join_conversation", conv._id);
-
-    // Update unread count locally
-    setConversations((prev) =>
-      prev.map((c) => (c._id === conv._id ? { ...c, unreadCount: 0 } : c))
-    );
+    setConversations((prev) => prev.map((c) => c._id === conv._id ? { ...c, unreadCount: 0 } : c));
   };
 
-  // ===== Send message =====
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeConversation) return;
-
     const msgText = newMessage.trim();
     setNewMessage("");
-
-    // Stop typing indicator
     socket.emit("stop_typing", { conversationId: activeConversation._id });
-
     try {
       const res = await sendMessage({
         conversationId: activeConversation._id,
@@ -1164,100 +1144,68 @@ const Chat = () => {
         senderImage: MY_IMAGE,
         text: msgText,
       });
-
       if (res.success) {
-        // Add to local messages immediately
         setMessages((prev) => [...prev, res.data]);
-
-        // Emit to socket for real-time delivery
         socket.emit("send_message", res.data);
-
-        // Update conversation list
         fetchConversations();
       }
-    } catch (err) {
-      console.error("Send message error:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // ===== Typing indicator =====
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
-
     if (!activeConversation) return;
-
-    socket.emit("typing", {
-      conversationId: activeConversation._id,
-      sender: MY_NAME,
-    });
-
+    socket.emit("typing", { conversationId: activeConversation._id, sender: MY_NAME });
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit("stop_typing", { conversationId: activeConversation._id });
     }, 1500);
   };
 
-  // ===== Delete message =====
   const handleDeleteMessage = async (msgId: string) => {
     try {
       await deleteMessage(msgId);
       setMessages((prev) => prev.filter((m) => m._id !== msgId));
-    } catch (err) {
-      console.error("Delete message error:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // ===== Delete conversation =====
   const handleDeleteConversation = async (convId: string) => {
     if (!confirm("Delete this conversation?")) return;
     try {
       await deleteConversation(convId);
       setConversations((prev) => prev.filter((c) => c._id !== convId));
-      if (activeConversation?._id === convId) {
-        setActiveConversation(null);
-        setMessages([]);
-      }
-    } catch (err) {
-      console.error("Delete conversation error:", err);
-    }
+      if (activeConversation?._id === convId) { setActiveConversation(null); setMessages([]); }
+    } catch (err) { console.error(err); }
   };
 
-  // ===== New Conversation =====
-  const handleNewConversation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newContactName.trim()) return;
-
+  // ✅ Staff select करून new conversation start करतो
+  const handleNewConversation = async (staff: any) => {
     try {
       const res = await createConversation({
-        participantName: newContactName.trim(),
+        participantName: staff.name,
+        participantImage: staff.image || "",
         myName: MY_NAME,
         myImage: MY_IMAGE,
       });
       if (res.success) {
         setConversations((prev) => [res.data, ...prev]);
         setShowNewChatModal(false);
-        setNewContactName("");
+        setSelectedStaff(null);
+        setStaffSearch("");
         openConversation(res.data);
       }
-    } catch (err) {
-      console.error("New conversation error:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // ===== Helpers =====
-  const getOtherParticipant = (conv: ConversationData) => {
-    return conv.participants.find((p) => p.name !== MY_NAME) || conv.participants[0];
-  };
+  const getOtherParticipant = (conv: ConversationData) =>
+    conv.participants.find((p) => p.name !== MY_NAME) || conv.participants[0];
 
-  const formatTime = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  };
+  const formatTime = (dateStr: string) =>
+    new Date(dateStr).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
   const formatConvTime = (dateStr: string) => {
     const d = new Date(dateStr);
-    const now = new Date();
-    const diff = now.getTime() - d.getTime();
+    const diff = Date.now() - d.getTime();
     if (diff < 86400000) return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
     if (diff < 172800000) return "Yesterday";
     return d.toLocaleDateString("en-US", { weekday: "short" });
@@ -1268,11 +1216,15 @@ const Chat = () => {
     return other.name.toLowerCase().includes(searchText.toLowerCase());
   });
 
+  const filteredStaff = staffList.filter((s) =>
+    s.name.toLowerCase().includes(staffSearch.toLowerCase()) ||
+    (s.role || "").toLowerCase().includes(staffSearch.toLowerCase())
+  );
+
   return (
     <>
       <div className="page-wrapper">
         <div className="content">
-          {/* Page Header */}
           <div className="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3">
             <div className="flex-grow-1">
               <h4 className="fs-18 fw-semibold mb-0">Chat</h4>
@@ -1283,45 +1235,37 @@ const Chat = () => {
             <div className="card-body p-0">
               <div className="d-md-flex" style={{ height: "calc(100vh - 12rem)" }}>
 
-                {/* ===== LEFT SIDEBAR ===== */}
+                {/* LEFT SIDEBAR */}
                 <div className="chat-user-nav" style={{ width: "300px", borderRight: "1px solid #e9ecef", display: "flex", flexDirection: "column" }}>
-                  {/* Header */}
                   <div className="d-flex align-items-center justify-content-between border-bottom p-3" style={{ flexShrink: 0 }}>
                     <div className="d-flex align-items-center">
-                      <span className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath src={MY_IMAGE} alt="user" />
-                      </span>
+                      <div className="avatar me-2 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                        {MY_IMAGE ? (
+                          <img src={MY_IMAGE} className="rounded-circle w-100 h-100 object-fit-cover" alt={MY_NAME} />
+                        ) : (
+                          <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center w-100 h-100">
+                            <span className="text-white fw-bold">{MY_NAME.charAt(0).toUpperCase()}</span>
+                          </div>
+                        )}
+                      </div>
                       <div>
                         <h6 className="fs-14 mb-0">{MY_NAME}</h6>
-                        <p className="mb-0 text-muted fs-12">Admin</p>
+                        <p className="mb-0 text-muted fs-12 text-capitalize">{currentUser.role}</p>
                       </div>
                     </div>
-                    <button
-                      className="btn p-2 btn-primary btn-sm"
-                      onClick={() => setShowNewChatModal(true)}
-                      title="New Chat"
-                    >
+                    <button className="btn p-2 btn-primary btn-sm" onClick={() => setShowNewChatModal(true)} title="New Chat">
                       <i className="ti ti-plus" />
                     </button>
                   </div>
 
-                  {/* Search */}
                   <div className="p-3 pb-0" style={{ flexShrink: 0 }}>
                     <div className="input-group input-group-flat">
-                      <span className="input-group-text border-end-0">
-                        <i className="ti ti-search" />
-                      </span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search..."
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                      />
+                      <span className="input-group-text border-end-0"><i className="ti ti-search" /></span>
+                      <input type="text" className="form-control" placeholder="Search..."
+                        value={searchText} onChange={(e) => setSearchText(e.target.value)} />
                     </div>
                   </div>
 
-                  {/* Conversation List */}
                   <div style={{ overflowY: "auto", flex: 1, padding: "1rem" }}>
                     <h6 className="mb-3 text-muted fs-12 text-uppercase">All Messages</h6>
                     {filteredConversations.length === 0 ? (
@@ -1332,44 +1276,30 @@ const Chat = () => {
                     ) : (
                       filteredConversations.map((conv) => {
                         const other = getOtherParticipant(conv);
-                        const isActive = activeConversation?._id === conv._id;
+                        const isActiveConv = activeConversation?._id === conv._id;
                         return (
-                          <div
-                            key={conv._id}
-                            className={`d-flex align-items-center justify-content-between rounded p-2 mb-1 cursor-pointer ${isActive ? "bg-primary bg-opacity-10" : "user-list"}`}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <div
-                              className="d-flex align-items-center flex-fill overflow-hidden"
-                              onClick={() => openConversation(conv)}
-                            >
+                          <div key={conv._id}
+                            className={`d-flex align-items-center justify-content-between rounded p-2 mb-1 ${isActiveConv ? "bg-primary bg-opacity-10" : "user-list"}`}
+                            style={{ cursor: "pointer" }}>
+                            <div className="d-flex align-items-center flex-fill overflow-hidden" onClick={() => openConversation(conv)}>
                               <div className="avatar me-2 flex-shrink-0" style={{ width: "38px", height: "38px" }}>
                                 {other.image ? (
-                                  <img src={other.image} alt={other.name}
-                                    className="rounded-circle w-100 h-100 object-fit-cover" />
+                                  <img src={other.image} alt={other.name} className="rounded-circle w-100 h-100 object-fit-cover" />
                                 ) : (
                                   <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center w-100 h-100">
-                                    <span className="text-white fw-bold fs-14">
-                                      {other.name.charAt(0).toUpperCase()}
-                                    </span>
+                                    <span className="text-white fw-bold fs-14">{other.name.charAt(0).toUpperCase()}</span>
                                   </div>
                                 )}
                               </div>
                               <div className="overflow-hidden flex-fill">
                                 <h6 className="fs-14 mb-0 text-truncate">{other.name}</h6>
-                                <p className="mb-0 text-muted fs-12 text-truncate">
-                                  {conv.lastMessage || "No messages yet"}
-                                </p>
+                                <p className="mb-0 text-muted fs-12 text-truncate">{conv.lastMessage || "No messages yet"}</p>
                               </div>
                             </div>
                             <div className="text-end ms-2" style={{ flexShrink: 0 }}>
-                              <span className="text-muted d-block fs-11">
-                                {formatConvTime(conv.lastMessageTime)}
-                              </span>
+                              <span className="text-muted d-block fs-11">{formatConvTime(conv.lastMessageTime)}</span>
                               {conv.unreadCount > 0 && (
-                                <span className="badge bg-danger rounded-circle fs-11">
-                                  {conv.unreadCount}
-                                </span>
+                                <span className="badge bg-danger rounded-circle fs-11">{conv.unreadCount}</span>
                               )}
                               <div className="dropdown d-inline">
                                 <Link to="#" data-bs-toggle="dropdown" className="ms-1">
@@ -1392,11 +1322,10 @@ const Chat = () => {
                   </div>
                 </div>
 
-                {/* ===== RIGHT CHAT AREA ===== */}
+                {/* RIGHT CHAT AREA */}
                 <div className="flex-fill d-flex flex-column" style={{ overflow: "hidden" }}>
                   {activeConversation ? (
                     <>
-                      {/* Chat Header */}
                       <div className="d-flex align-items-center justify-content-between border-bottom p-3" style={{ flexShrink: 0 }}>
                         <div className="d-flex align-items-center">
                           <div className="avatar me-2" style={{ width: "38px", height: "38px" }}>
@@ -1412,30 +1341,21 @@ const Chat = () => {
                             )}
                           </div>
                           <div>
-                            <h6 className="fs-14 fw-semibold mb-0">
-                              {getOtherParticipant(activeConversation).name}
-                            </h6>
+                            <h6 className="fs-14 fw-semibold mb-0">{getOtherParticipant(activeConversation).name}</h6>
                             <p className="mb-0 fs-12 text-success d-flex align-items-center">
                               <i className="ti ti-point-filled me-1" />Online
                             </p>
                           </div>
                         </div>
                         <div className="d-flex gap-2">
-                          <button className="btn btn-icon btn-light btn-sm" title="Voice Call">
-                            <i className="ti ti-phone" />
-                          </button>
-                          <button className="btn btn-icon btn-light btn-sm" title="Video Call">
-                            <i className="ti ti-video" />
-                          </button>
+                          <button className="btn btn-icon btn-light btn-sm"><i className="ti ti-phone" /></button>
+                          <button className="btn btn-icon btn-light btn-sm"><i className="ti ti-video" /></button>
                         </div>
                       </div>
 
-                      {/* Messages Area */}
                       <div style={{ flex: 1, overflowY: "auto", padding: "1rem" }}>
                         {loading ? (
-                          <div className="text-center py-4">
-                            <div className="spinner-border spinner-border-sm text-primary" />
-                          </div>
+                          <div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>
                         ) : messages.length === 0 ? (
                           <div className="text-center text-muted py-5">
                             <i className="ti ti-message fs-1 d-block mb-2" />
@@ -1445,26 +1365,19 @@ const Chat = () => {
                           messages.map((msg) => {
                             const isMe = msg.sender === MY_NAME;
                             return (
-                              <div
-                                key={msg._id}
-                                className={`chat-list mb-3 ${isMe ? "ms-auto" : ""}`}
-                              >
+                              <div key={msg._id} className={`chat-list mb-3 ${isMe ? "ms-auto" : ""}`}>
                                 <div className={`d-flex align-items-start ${isMe ? "justify-content-end" : ""}`}>
-                                  {/* Other person avatar */}
                                   {!isMe && (
                                     <div className="avatar me-2 flex-shrink-0" style={{ width: "34px", height: "34px" }}>
                                       {msg.senderImage ? (
                                         <img src={msg.senderImage} className="rounded-circle w-100 h-100 object-fit-cover" alt={msg.sender} />
                                       ) : (
                                         <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center w-100 h-100">
-                                          <span className="text-white fw-bold fs-12">
-                                            {msg.sender.charAt(0).toUpperCase()}
-                                          </span>
+                                          <span className="text-white fw-bold fs-12">{msg.sender.charAt(0).toUpperCase()}</span>
                                         </div>
                                       )}
                                     </div>
                                   )}
-
                                   <div style={{ maxWidth: "65%" }}>
                                     <div className={`d-flex align-items-center mb-1 ${isMe ? "justify-content-end" : ""}`}>
                                       <h6 className="fs-13 mb-0 me-2">{isMe ? "You" : msg.sender}</h6>
@@ -1486,13 +1399,8 @@ const Chat = () => {
                                           </ul>
                                         </div>
                                       )}
-                                      <div
-                                        className={`p-3 rounded-3 ${isMe
-                                          ? "bg-primary text-white"
-                                          : "bg-light text-dark border"
-                                          }`}
-                                        style={{ wordBreak: "break-word" }}
-                                      >
+                                      <div className={`p-3 rounded-3 ${isMe ? "bg-primary text-white" : "bg-light text-dark border"}`}
+                                        style={{ wordBreak: "break-word" }}>
                                         <p className="mb-0 fs-14">{msg.text}</p>
                                       </div>
                                       {!isMe && (
@@ -1511,17 +1419,17 @@ const Chat = () => {
                                         </div>
                                       )}
                                     </div>
-                                    {isMe && (
-                                      <div className="text-end mt-1">
-                                        <i className="ti ti-checks text-success fs-12" />
-                                      </div>
-                                    )}
+                                    {isMe && <div className="text-end mt-1"><i className="ti ti-checks text-success fs-12" /></div>}
                                   </div>
-
-                                  {/* My avatar */}
                                   {isMe && (
                                     <div className="avatar ms-2 flex-shrink-0" style={{ width: "34px", height: "34px" }}>
-                                      <img src={MY_IMAGE} className="rounded-circle w-100 h-100 object-fit-cover" alt="You" />
+                                      {MY_IMAGE ? (
+                                        <img src={MY_IMAGE} className="rounded-circle w-100 h-100 object-fit-cover" alt="You" />
+                                      ) : (
+                                        <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center w-100 h-100">
+                                          <span className="text-white fw-bold fs-12">{MY_NAME.charAt(0).toUpperCase()}</span>
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -1529,31 +1437,23 @@ const Chat = () => {
                             );
                           })
                         )}
-
-                        {/* Typing indicator */}
                         {isTyping && (
                           <div className="d-flex align-items-center text-muted fs-13 mb-2">
                             <span className="me-2">{typingUser} is typing</span>
                             <span className="d-flex gap-1">
-                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#adb5bd", animation: "blink 1.2s 0s infinite" }} />
-                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#adb5bd", animation: "blink 1.2s 0.2s infinite" }} />
-                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#adb5bd", animation: "blink 1.2s 0.4s infinite" }} />
+                              {[0, 0.2, 0.4].map((delay, i) => (
+                                <span key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "#adb5bd", animation: `blink 1.2s ${delay}s infinite` }} />
+                              ))}
                             </span>
                           </div>
                         )}
                         <div ref={messagesEndRef} />
                       </div>
 
-                      {/* Message Input */}
                       <div className="border-top p-3" style={{ flexShrink: 0 }}>
                         <form onSubmit={handleSendMessage} className="d-flex align-items-center gap-2">
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Type something..."
-                            value={newMessage}
-                            onChange={handleTyping}
-                          />
+                          <input type="text" className="form-control" placeholder="Type something..."
+                            value={newMessage} onChange={handleTyping} />
                           <button type="submit" className="btn btn-primary px-3" disabled={!newMessage.trim()}>
                             <i className="ti ti-send" />
                           </button>
@@ -1561,12 +1461,11 @@ const Chat = () => {
                       </div>
                     </>
                   ) : (
-                    /* Empty State */
                     <div className="flex-fill d-flex align-items-center justify-content-center text-center">
                       <div>
                         <i className="ti ti-message-2 text-muted" style={{ fontSize: "4rem" }} />
                         <h5 className="mt-3 text-muted">Select a conversation</h5>
-                        <p className="text-muted fs-14">Choose from existing conversations or start a new one</p>
+                        <p className="text-muted fs-14">Choose from existing or start a new chat</p>
                         <button className="btn btn-primary" onClick={() => setShowNewChatModal(true)}>
                           <i className="ti ti-plus me-2" />New Chat
                         </button>
@@ -1578,58 +1477,74 @@ const Chat = () => {
             </div>
           </div>
         </div>
-
-        {/* Footer */}
         <div className="footer text-center bg-white p-2 border-top">
-          <p className="text-dark mb-0">
-            2025 © <Link to="#" className="link-primary">Preclinic</Link>, All Rights Reserved
-          </p>
+          <p className="text-dark mb-0">2025 © <Link to="#" className="link-primary">Preclinic</Link>, All Rights Reserved</p>
         </div>
       </div>
 
-      {/* ===== New Chat Modal ===== */}
+      {/* ✅ New Chat Modal — Staff list with search */}
       {showNewChatModal && (
         <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title fw-bold">New Chat</h5>
-                <button type="button" className="btn-close" onClick={() => setShowNewChatModal(false)} />
+                <button type="button" className="btn-close" onClick={() => { setShowNewChatModal(false); setStaffSearch(""); setSelectedStaff(null); }} />
               </div>
-              <form onSubmit={handleNewConversation}>
-                <div className="modal-body">
-                  <div className="mb-3">
-                    <label className="form-label">Contact Name <span className="text-danger">*</span></label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="e.g. Dr. Ramesh Kumar"
-                      value={newContactName}
-                      onChange={(e) => setNewContactName(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label">Search Staff / Doctor</label>
+                  <input type="text" className="form-control" placeholder="Search by name or role..."
+                    value={staffSearch} onChange={(e) => setStaffSearch(e.target.value)} autoFocus />
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-light" onClick={() => setShowNewChatModal(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary" disabled={!newContactName.trim()}>
-                    Start Chat
-                  </button>
+                <div style={{ maxHeight: "280px", overflowY: "auto" }}>
+                  {filteredStaff.length === 0 ? (
+                    <p className="text-muted text-center py-3 fs-13">No staff found</p>
+                  ) : (
+                    filteredStaff.map((staff) => (
+                      <div key={staff._id}
+                        className={`d-flex align-items-center p-2 rounded mb-1 ${selectedStaff?._id === staff._id ? "bg-primary bg-opacity-10 border border-primary" : "border"}`}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setSelectedStaff(staff)}>
+                        <div className="avatar me-2 flex-shrink-0" style={{ width: "38px", height: "38px" }}>
+                          {staff.image ? (
+                            <img src={staff.image} className="rounded-circle w-100 h-100 object-fit-cover" alt={staff.name} />
+                          ) : (
+                            <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center w-100 h-100">
+                              <span className="text-white fw-bold">{staff.name.charAt(0).toUpperCase()}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-fill">
+                          <h6 className="mb-0 fs-14">{staff.name}</h6>
+                          <p className="mb-0 text-muted fs-12">{staff.role || staff.designation || "Staff"}</p>
+                        </div>
+                        {selectedStaff?._id === staff._id && (
+                          <i className="ti ti-check text-primary fs-16" />
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
-              </form>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-light"
+                  onClick={() => { setShowNewChatModal(false); setStaffSearch(""); setSelectedStaff(null); }}>
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-primary"
+                  disabled={!selectedStaff}
+                  onClick={() => selectedStaff && handleNewConversation(selectedStaff)}>
+                  <i className="ti ti-message me-1" />Start Chat
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Typing dots animation */}
       <style>{`
-        @keyframes blink {
-          0%, 80%, 100% { opacity: 0; }
-          40% { opacity: 1; }
-        }
+        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
       `}</style>
     </>
   );
