@@ -353,13 +353,15 @@ export const publicRoutes = [
     element: <DoctorsNotificationSettings />,
     route: Route,
   },
-  { path: routes.doctorsaccountsettings, 
-    element: <DoctorsAccountSettings />, 
-    route: Route 
+  {
+    path: routes.doctorsaccountsettings,
+    element: <DoctorsAccountSettings />,
+    route: Route
   },
-  { path: routes.doctorstransactions, 
-    element: <DoctorsTransactions />, 
-    route: Route 
+  {
+    path: routes.doctorstransactions,
+    element: <DoctorsTransactions />,
+    route: Route
   },
   {
     path: routes.patientdashboard,
@@ -1266,8 +1268,13 @@ export const publicRoutes = [
     element: <Blogs />,
     route: Route,
   },
+  // {
+  //   path: routes.editBlogs,
+  //   element: <EditBlog />,
+  //   route: Route,
+  // },
   {
-    path: routes.editBlogs,
+    path: `${routes.editBlogs}/:id`,  // ✅ ADD :id parameter HERE
     element: <EditBlog />,
     route: Route,
   },

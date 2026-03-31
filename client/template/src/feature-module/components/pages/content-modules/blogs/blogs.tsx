@@ -593,6 +593,7 @@ const Blogs = () => {
                   <div className="card blog-item">
                     <div className="card-body p-0">
                       <div className="position-relative rounded-top overflow-hidden">
+
                         <Link to={`${all_routes.blogDetails}/${blog._id}`} className="blog-img">
                           <img
                             src={blog.featureImage || "assets/img/blogs/blog-placeholder.jpg"}
@@ -601,6 +602,7 @@ const Blogs = () => {
                             style={{ height: '200px', width: '100%', objectFit: 'cover' }}
                           />
                         </Link>
+
                         <Link
                           to="#"
                           className="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"
@@ -611,6 +613,7 @@ const Blogs = () => {
                         >
                           <i className="ti ti-trash" />
                         </Link>
+
                         <Link
                           to={`${all_routes.editBlogs}/${blog._id}`}
                           className="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"
@@ -618,6 +621,7 @@ const Blogs = () => {
                           <i className="ti ti-edit" />
                         </Link>
                       </div>
+
                       <div className="p-3">
                         <span className="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">
                           {blog.category}
