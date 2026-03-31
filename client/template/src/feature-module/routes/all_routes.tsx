@@ -170,7 +170,7 @@ export const all_routes = {
   editPage: "/edit-page",
   blogs: "/blogs",
   addBlogs: "/add-blog",
-  editBlogs: "/edit-blog",
+  editBlogs: "/edit-blog/:id",
   blogDetails: "/blog-details",
   blogCategories: "/blog-categories",
   blogTags: "/blog-tags",

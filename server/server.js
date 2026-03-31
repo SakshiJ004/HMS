@@ -99,6 +99,7 @@ app.use('/api/locations', require('./routes/locationRoutes'));
 app.use('/api/payrolls', require('./routes/payrollRoutes'));
 app.use('/api/assets', require('./routes/assetRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/blogs', require('./routes/blogRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
