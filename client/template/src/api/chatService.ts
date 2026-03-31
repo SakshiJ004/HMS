@@ -20,6 +20,15 @@ export interface MessageData {
     createdAt: string;
 }
 
+export interface ChatUser {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+    image: string;
+    type: "staff" | "doctor";
+}
+
 export const getConversations = async () => {
     const res = await axios.get(`${BASE_URL}/api/chat/conversations`);
     return res.data;
@@ -58,4 +67,10 @@ export const deleteMessage = async (id: string) => {
 export const deleteConversation = async (id: string) => {
     const res = await axios.delete(`${BASE_URL}/api/chat/conversations/${id}`);
     return res.data;
+};
+
+// ✅ Staff + Doctors combined list for New Chat modal
+export const getChatUsers = async (): Promise<ChatUser[]> => {
+    const res = await axios.get(`${BASE_URL}/api/chat/users`);
+    return res.data.data || [];
 };

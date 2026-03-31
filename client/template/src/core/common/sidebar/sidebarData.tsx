@@ -579,17 +579,17 @@ export const SidebarData = [
     showAsTab: true,
     separateRoute: false,
     submenuItems: [
-      {
-        label: "Pages",
-        link: routes.pages,
-        submenu: false,
-        showSubRoute: false,
-        icon: "brand-pagekit",
-        base: "frontent",
-        materialicons: "start",
-        dot: true,
-        submenuItems: [],
-      },
+      // {
+      //   label: "Pages",
+      //   link: routes.pages,
+      //   submenu: false,
+      //   showSubRoute: false,
+      //   icon: "brand-pagekit",
+      //   base: "frontent",
+      //   materialicons: "start",
+      //   dot: true,
+      //   submenuItems: [],
+      // },
       {
         label: "Blogs",
         link: "apps",

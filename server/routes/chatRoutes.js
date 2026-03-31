@@ -6,7 +6,8 @@ const {
     getMessages,
     sendMessage,
     deleteMessage,
-    deleteConversation
+    deleteConversation,
+    getChatUsers
 } = require('../controllers/chatController');
 
 router.get('/conversations', getConversations);
@@ -15,5 +16,6 @@ router.get('/messages/:conversationId', getMessages);
 router.post('/messages', sendMessage);
 router.delete('/messages/:id', deleteMessage);
 router.delete('/conversations/:id', deleteConversation);
+router.get('/users', getChatUsers); // ✅ Staff + Doctors combined
 
 module.exports = router;

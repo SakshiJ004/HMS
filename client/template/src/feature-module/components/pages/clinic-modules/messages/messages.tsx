@@ -2075,9 +2075,8 @@
 
 // export default Messages;
 
-
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router";
+// import { Link } from "react-router";
 import { io, Socket } from "socket.io-client";
 import {
   getConversations,
@@ -2086,10 +2085,11 @@ import {
   deleteMessage,
   deleteConversation,
   createConversation,
+  getChatUsers,
   type ConversationData,
   type MessageData,
+  type ChatUser,
 } from "../../../../../api/chatService";
-import { getStaffs } from "../../../../../api/staffService";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 
@@ -2099,10 +2099,15 @@ const getUserInfo = () => {
     const raw = localStorage.getItem("userData");
     if (raw) {
       const u = JSON.parse(raw);
-      return { name: u.fullName || u.firstName || "User", image: u.profileImage || "", role: u.role || "admin" };
+      return {
+        name: u.fullName || u.firstName || "User",
+        image: u.profileImage || "",
+        role: u.role || "admin",
+        id: u._id || "",
+      };
     }
   } catch { /* ignore */ }
-  return { name: "Admin", image: "", role: "admin" };
+  return { name: "User", image: "", role: "admin", id: "" };
 };
 
 const currentUser = getUserInfo();
@@ -2121,17 +2126,24 @@ const Messages = () => {
   const [typingUser, setTypingUser] = useState("");
   const [loading, setLoading] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
-  const [staffList, setStaffList] = useState<any[]>([]);
-  const [selectedStaff, setSelectedStaff] = useState<any>(null);
-  const [staffSearch, setStaffSearch] = useState("");
+  const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
+  const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
+  const [userSearch, setUserSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<any>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Socket setup
   useEffect(() => {
     socket = io(BACKEND_URL, { transports: ["websocket"] });
-    socket.on("receive_message", (msg: MessageData) => { setMessages((prev) => [...prev, msg]); scrollToBottom(); });
+    socket.on("receive_message", (msg: MessageData) => {
+      setMessages((prev) => [...prev, msg]);
+      scrollToBottom();
+      fetchConversations();
+    });
     socket.on("conversation_updated", () => fetchConversations());
-    socket.on("user_typing", ({ sender }: { sender: string }) => { setTypingUser(sender); setIsTyping(true); });
+    socket.on("user_typing", ({ sender }: { sender: string }) => {
+      setTypingUser(sender); setIsTyping(true);
+    });
     socket.on("user_stop_typing", () => { setIsTyping(false); setTypingUser(""); });
     return () => { socket.disconnect(); };
   }, []);
@@ -2139,12 +2151,10 @@ const Messages = () => {
   useEffect(() => { fetchConversations(); }, []);
   useEffect(() => { scrollToBottom(); }, [messages]);
 
-  // ✅ Staff list fetch करतो New Chat modal साठी
+  // Load chat users when modal opens
   useEffect(() => {
-    if (showNewChatModal) {
-      getStaffs().then((res) => {
-        if (res.success && res.data) setStaffList(res.data);
-      }).catch(console.error);
+    if (showNewChatModal && chatUsers.length === 0) {
+      getChatUsers().then(setChatUsers).catch(console.error);
     }
   }, [showNewChatModal]);
 
@@ -2175,10 +2185,19 @@ const Messages = () => {
     if (!newMessage.trim() || !activeConversation) return;
     const msgText = newMessage.trim();
     setNewMessage("");
-    socket.emit("stop_typing", { conversationId: activeConversation._id });
+    if (activeConversation) socket.emit("stop_typing", { conversationId: activeConversation._id });
     try {
-      const res = await sendMessage({ conversationId: activeConversation._id, sender: MY_NAME, senderImage: MY_IMAGE, text: msgText });
-      if (res.success) { setMessages((prev) => [...prev, res.data]); socket.emit("send_message", res.data); fetchConversations(); }
+      const res = await sendMessage({
+        conversationId: activeConversation._id,
+        sender: MY_NAME,
+        senderImage: MY_IMAGE,
+        text: msgText,
+      });
+      if (res.success) {
+        setMessages((prev) => [...prev, res.data]);
+        socket.emit("send_message", res.data);
+        fetchConversations();
+      }
     } catch (err) { console.error(err); }
   };
 
@@ -2186,12 +2205,15 @@ const Messages = () => {
     setNewMessage(e.target.value);
     if (!activeConversation) return;
     socket.emit("typing", { conversationId: activeConversation._id, sender: MY_NAME });
-    clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => socket.emit("stop_typing", { conversationId: activeConversation._id }), 1500);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("stop_typing", { conversationId: activeConversation._id });
+    }, 1500);
   };
 
   const handleDeleteMessage = async (msgId: string) => {
-    try { await deleteMessage(msgId); setMessages((prev) => prev.filter((m) => m._id !== msgId)); } catch (err) { console.error(err); }
+    try { await deleteMessage(msgId); setMessages((prev) => prev.filter((m) => m._id !== msgId)); }
+    catch (err) { console.error(err); }
   };
 
   const handleDeleteConversation = async (convId: string) => {
@@ -2203,269 +2225,335 @@ const Messages = () => {
     } catch (err) { console.error(err); }
   };
 
-  const handleNewConversation = async (staff: any) => {
+  const handleStartChat = async () => {
+    if (!selectedUser) return;
     try {
-      const res = await createConversation({ participantName: staff.name, participantImage: staff.image || "", myName: MY_NAME, myImage: MY_IMAGE });
+      const res = await createConversation({
+        participantName: selectedUser.name,
+        participantImage: selectedUser.image || "",
+        myName: MY_NAME,
+        myImage: MY_IMAGE,
+      });
       if (res.success) {
-        setConversations((prev) => [res.data, ...prev]);
-        setShowNewChatModal(false); setSelectedStaff(null); setStaffSearch("");
-        openConversation(res.data);
+        await fetchConversations();
+        setShowNewChatModal(false);
+        setSelectedUser(null);
+        setUserSearch("");
+        // Open the conversation
+        const conv = res.data;
+        openConversation(conv);
       }
     } catch (err) { console.error(err); }
   };
 
-  const getOtherParticipant = (conv: ConversationData) =>
-    conv.participants.find((p) => p.name !== MY_NAME) || conv.participants[0];
+  // ✅ Get the OTHER participant (not me)
+  const getOtherParticipant = (conv: ConversationData) => {
+    const other = conv.participants.find((p) => p.name !== MY_NAME);
+    return other || conv.participants[0];
+  };
 
-  const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const formatTime = (dateStr: string) =>
+    new Date(dateStr).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
   const formatConvTime = (dateStr: string) => {
-    const d = new Date(dateStr); const diff = Date.now() - d.getTime();
+    const d = new Date(dateStr);
+    const diff = Date.now() - d.getTime();
     if (diff < 86400000) return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
     if (diff < 172800000) return "Yesterday";
     return d.toLocaleDateString("en-US", { weekday: "short" });
   };
 
-  const filteredConversations = conversations.filter((c) =>
-    getOtherParticipant(c).name.toLowerCase().includes(searchText.toLowerCase())
+  const filteredConversations = conversations.filter((c) => {
+    const other = getOtherParticipant(c);
+    return other.name.toLowerCase().includes(searchText.toLowerCase());
+  });
+
+  // Filter chat users excluding myself
+  const filteredUsers = chatUsers.filter((u) =>
+    u.name !== MY_NAME &&
+    (u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.role.toLowerCase().includes(userSearch.toLowerCase()))
   );
 
-  const filteredStaff = staffList.filter((s) =>
-    s.name.toLowerCase().includes(staffSearch.toLowerCase()) ||
-    (s.role || "").toLowerCase().includes(staffSearch.toLowerCase())
+  const AvatarCircle = ({ name, image, size = 40 }: { name: string; image?: string; size?: number }) => (
+    <div style={{ width: size, height: size, flexShrink: 0 }}>
+      {image ? (
+        <img src={image} className="rounded-circle" alt={name}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      ) : (
+        <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center"
+          style={{ width: "100%", height: "100%", background: `hsl(${name.charCodeAt(0) * 15 % 360}, 60%, 50%)` }}>
+          <span style={{ color: "white", fontWeight: "bold", fontSize: size * 0.35 }}>
+            {name.charAt(0).toUpperCase()}
+          </span>
+        </div>
+      )}
+    </div>
   );
 
   return (
     <>
       <div className="page-wrapper">
-        <div className="content content-two">
-          <div className="chat-wrapper">
+        <div className="content content-two" style={{ padding: 0 }}>
+          <div className="chat-wrapper" style={{ display: "flex", height: "calc(100vh - 60px)" }}>
 
-            {/* SIDEBAR */}
-            <div className="sidebar-group">
-              <div id="chats" className="sidebar-content active slimscroll">
-                <div className="slimscroll">
-                  <div className="chat-search-header">
-                    <div className="header-title d-flex align-items-center justify-content-between">
-                      <h6 className="mb-3">Chats</h6>
-                      <button className="btn btn-primary btn-sm mb-3" onClick={() => setShowNewChatModal(true)}>
-                        <i className="ti ti-plus me-1" />New
-                      </button>
-                    </div>
-                    <div className="search-wrap">
-                      <div className="input-group">
-                        <input type="text" className="form-control" placeholder="Search"
-                          value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-                        <span className="input-group-text"><i className="ti ti-search" /></span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="sidebar-body chat-body" id="chatsidebar">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h6 className="chat-title mb-0">All Chats</h6>
-                    </div>
-                    <div className="chat-users-wrap">
-                      {filteredConversations.length === 0 ? (
-                        <div className="text-center text-muted py-4">
-                          <i className="ti ti-message-off fs-2 d-block mb-2" />
-                          <p className="fs-13">No conversations yet</p>
-                          <button className="btn btn-primary btn-sm" onClick={() => setShowNewChatModal(true)}>Start Chat</button>
-                        </div>
-                      ) : (
-                        filteredConversations.map((conv) => {
-                          const other = getOtherParticipant(conv);
-                          const isActiveConv = activeConversation?._id === conv._id;
-                          return (
-                            <div key={conv._id} className={`chat-list ${isActiveConv ? "active" : ""}`}>
-                              <Link to="#" className="chat-user-list" onClick={(e) => { e.preventDefault(); openConversation(conv); }}>
-                                <div className="avatar avatar-lg online me-2">
-                                  {other.image ? (
-                                    <img src={other.image} className="rounded-circle" alt={other.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                  ) : (
-                                    <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center" style={{ width: "100%", height: "100%" }}>
-                                      <span className="text-white fw-bold">{other.name.charAt(0).toUpperCase()}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="chat-user-info">
-                                  <div className="chat-user-msg">
-                                    <h6>{other.name}</h6>
-                                    <p className="text-truncate" style={{ maxWidth: "130px" }}>{conv.lastMessage || "No messages yet"}</p>
-                                  </div>
-                                  <div className="chat-user-time">
-                                    <span className="time">{formatConvTime(conv.lastMessageTime)}</span>
-                                    <div className="chat-pin">
-                                      {conv.unreadCount > 0 && <span className="count-message fs-12 fw-semibold">{conv.unreadCount}</span>}
-                                    </div>
-                                  </div>
-                                </div>
-                              </Link>
-                              <div className="chat-dropdown">
-                                <Link to="#" data-bs-toggle="dropdown"><i className="ti ti-dots-vertical" /></Link>
-                                <ul className="dropdown-menu dropdown-menu-end p-3">
-                                  <li>
-                                    <button className="dropdown-item text-danger d-flex align-items-center" type="button"
-                                      onClick={() => handleDeleteConversation(conv._id)}>
-                                      <i className="ti ti-trash me-2" />Delete Chat
-                                    </button>
-                                  </li>
-                                </ul>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
+            {/* ===== LEFT SIDEBAR ===== */}
+            <div style={{
+              width: "320px", flexShrink: 0, borderRight: "1px solid #e9ecef",
+              display: "flex", flexDirection: "column", background: "#fff"
+            }}>
+              {/* Header */}
+              <div style={{ padding: "16px", borderBottom: "1px solid #e9ecef", flexShrink: 0 }}>
+                <div className="d-flex align-items-center justify-content-between mb-3">
+                  <h5 className="mb-0 fw-bold">Messages</h5>
+                  <button className="btn btn-primary btn-sm px-3" onClick={() => setShowNewChatModal(true)}>
+                    <i className="ti ti-plus me-1" />New
+                  </button>
                 </div>
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="ti ti-search text-muted" />
+                  </span>
+                  <input type="text" className="form-control border-start-0 ps-0"
+                    placeholder="Search conversations..."
+                    value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+                </div>
+              </div>
+
+              {/* My info */}
+              <div style={{ padding: "12px 16px", background: "#f8f9fa", borderBottom: "1px solid #e9ecef", flexShrink: 0 }}>
+                <div className="d-flex align-items-center">
+                  <AvatarCircle name={MY_NAME} image={MY_IMAGE} size={36} />
+                  <div className="ms-2">
+                    <p className="mb-0 fw-semibold fs-14">{MY_NAME}</p>
+                    <p className="mb-0 text-muted fs-12 text-capitalize">{currentUser.role}</p>
+                  </div>
+                  <span className="ms-auto badge bg-success bg-opacity-10 text-success fs-11 px-2">Online</span>
+                </div>
+              </div>
+
+              {/* Conversation List */}
+              <div style={{ overflowY: "auto", flex: 1 }}>
+                {filteredConversations.length === 0 ? (
+                  <div className="text-center text-muted py-5">
+                    <i className="ti ti-message-off fs-2 d-block mb-2" />
+                    <p className="fs-14 mb-2">No conversations yet</p>
+                    <button className="btn btn-primary btn-sm" onClick={() => setShowNewChatModal(true)}>
+                      Start a Chat
+                    </button>
+                  </div>
+                ) : (
+                  filteredConversations.map((conv) => {
+                    const other = getOtherParticipant(conv);
+                    const isActiveConv = activeConversation?._id === conv._id;
+                    return (
+                      <div key={conv._id}
+                        onClick={() => openConversation(conv)}
+                        style={{
+                          display: "flex", alignItems: "center", padding: "12px 16px",
+                          cursor: "pointer", borderBottom: "1px solid #f0f0f0",
+                          background: isActiveConv ? "#e8f0fe" : "transparent",
+                          borderLeft: isActiveConv ? "3px solid #4f46e5" : "3px solid transparent",
+                          transition: "all 0.15s"
+                        }}>
+                        <div style={{ position: "relative", marginRight: 12, flexShrink: 0 }}>
+                          <AvatarCircle name={other.name} image={other.image} size={44} />
+                          <span style={{
+                            position: "absolute", bottom: 1, right: 1,
+                            width: 10, height: 10, borderRadius: "50%",
+                            background: "#22c55e", border: "2px solid white"
+                          }} />
+                        </div>
+                        <div style={{ flex: 1, overflow: "hidden" }}>
+                          <div className="d-flex align-items-center justify-content-between">
+                            <span className="fw-semibold fs-14 text-truncate" style={{ maxWidth: "140px" }}>{other.name}</span>
+                            <span className="text-muted fs-11 flex-shrink-0">{formatConvTime(conv.lastMessageTime)}</span>
+                          </div>
+                          <div className="d-flex align-items-center justify-content-between">
+                            <p className="mb-0 text-muted fs-12 text-truncate" style={{ maxWidth: "160px" }}>
+                              {conv.lastMessage || "No messages yet"}
+                            </p>
+                            {conv.unreadCount > 0 && (
+                              <span className="badge rounded-pill bg-primary fs-11 ms-1">{conv.unreadCount}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
-            {/* CHAT AREA */}
+            {/* ===== RIGHT CHAT AREA ===== */}
             {activeConversation ? (
-              <div className="chat chat-messages show" id="middle">
-                <div className="chat-header">
-                  <div className="user-details">
-                    <div className="avatar avatar-lg online flex-shrink-0">
-                      {getOtherParticipant(activeConversation).image ? (
-                        <img src={getOtherParticipant(activeConversation).image} className="rounded-circle" alt="user"
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center" style={{ width: "100%", height: "100%" }}>
-                          <span className="text-white fw-bold">{getOtherParticipant(activeConversation).name.charAt(0).toUpperCase()}</span>
-                        </div>
-                      )}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#f8f9fa" }}>
+
+                {/* Chat Header */}
+                <div style={{
+                  padding: "12px 20px", background: "#fff", borderBottom: "1px solid #e9ecef",
+                  flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between"
+                }}>
+                  <div className="d-flex align-items-center">
+                    <div style={{ position: "relative", marginRight: 12 }}>
+                      <AvatarCircle name={getOtherParticipant(activeConversation).name}
+                        image={getOtherParticipant(activeConversation).image} size={42} />
+                      <span style={{
+                        position: "absolute", bottom: 1, right: 1, width: 10, height: 10,
+                        borderRadius: "50%", background: "#22c55e", border: "2px solid white"
+                      }} />
                     </div>
-                    <div className="ms-2 overflow-hidden">
-                      <h6 className="mb-0">{getOtherParticipant(activeConversation).name}</h6>
-                      <span className="last-seen text-success">Online</span>
+                    <div>
+                      <h6 className="mb-0 fw-semibold">{getOtherParticipant(activeConversation).name}</h6>
+                      <span className="text-success fs-12">● Online</span>
                     </div>
                   </div>
-                  <div className="chat-options">
-                    <ul className="list-unstyled">
-                      <li>
-                        <Link to="#" className="btn no-bg" data-bs-toggle="dropdown"><i className="ti ti-dots-vertical" /></Link>
-                        <ul className="dropdown-menu dropdown-menu-end p-3">
-                          <li>
-                            <button className="dropdown-item text-danger d-flex align-items-center" type="button"
-                              onClick={() => handleDeleteConversation(activeConversation._id)}>
-                              <i className="ti ti-trash me-2" />Delete Chat
+                  <div className="d-flex gap-2">
+                    <button className="btn btn-light btn-sm btn-icon" title="Voice Call">
+                      <i className="ti ti-phone" />
+                    </button>
+                    <button className="btn btn-light btn-sm btn-icon" title="Video Call">
+                      <i className="ti ti-video" />
+                    </button>
+                    <div className="dropdown">
+                      <button className="btn btn-light btn-sm btn-icon" data-bs-toggle="dropdown">
+                        <i className="ti ti-dots-vertical" />
+                      </button>
+                      <ul className="dropdown-menu dropdown-menu-end p-2">
+                        <li>
+                          <button className="dropdown-item text-danger d-flex align-items-center fs-13" type="button"
+                            onClick={() => handleDeleteConversation(activeConversation._id)}>
+                            <i className="ti ti-trash me-2" />Delete Chat
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Messages Area */}
+                <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+                  {loading ? (
+                    <div className="text-center py-5">
+                      <div className="spinner-border text-primary" />
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="text-center text-muted py-5">
+                      <i className="ti ti-message" style={{ fontSize: "3rem" }} />
+                      <p className="mt-2">No messages yet. Say hello! 👋</p>
+                    </div>
+                  ) : (
+                    messages.map((msg) => {
+                      const isMe = msg.sender === MY_NAME;
+                      return (
+                        <div key={msg._id} style={{
+                          display: "flex", marginBottom: 16,
+                          flexDirection: isMe ? "row-reverse" : "row",
+                          alignItems: "flex-end", gap: 8
+                        }}>
+                          {/* Avatar */}
+                          <div style={{ flexShrink: 0 }}>
+                            <AvatarCircle
+                              name={isMe ? MY_NAME : msg.sender}
+                              image={isMe ? MY_IMAGE : msg.senderImage}
+                              size={34}
+                            />
+                          </div>
+
+                          {/* Message bubble */}
+                          <div style={{ maxWidth: "60%" }}>
+                            <div style={{
+                              fontSize: 11, color: "#888", marginBottom: 4,
+                              textAlign: isMe ? "right" : "left"
+                            }}>
+                              {isMe ? "You" : msg.sender} • {formatTime(msg.createdAt)}
+                            </div>
+                            <div style={{
+                              padding: "10px 14px", borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                              background: isMe ? "#4f46e5" : "#fff",
+                              color: isMe ? "#fff" : "#1a1a1a",
+                              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                              wordBreak: "break-word", fontSize: 14, lineHeight: 1.5,
+                              position: "relative"
+                            }}>
+                              {msg.text}
+                            </div>
+                            {isMe && (
+                              <div style={{ textAlign: "right", marginTop: 2 }}>
+                                <i className="ti ti-checks text-success fs-11" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Delete button */}
+                          <div className="dropdown" style={{ alignSelf: "center" }}>
+                            <button className="btn btn-sm p-0 border-0 bg-transparent" data-bs-toggle="dropdown"
+                              style={{ opacity: 0.5 }}>
+                              <i className="ti ti-dots-vertical fs-12" />
                             </button>
-                          </li>
-                        </ul>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="chat-body chat-page-group slimscroll">
-                  <div className="messages">
-                    {loading ? (
-                      <div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>
-                    ) : messages.length === 0 ? (
-                      <div className="text-center text-muted py-5">
-                        <i className="ti ti-message fs-1 d-block mb-2" /><p>No messages yet. Say hello! 👋</p>
-                      </div>
-                    ) : (
-                      messages.map((msg) => {
-                        const isMe = msg.sender === MY_NAME;
-                        return isMe ? (
-                          <div key={msg._id} className="chats chats-right">
-                            <div className="chat-content">
-                              <div className="chat-info">
-                                <div className="chat-actions">
-                                  <Link to="#" data-bs-toggle="dropdown"><i className="ti ti-dots-vertical" /></Link>
-                                  <ul className="dropdown-menu dropdown-menu-end p-3">
-                                    <li><button className="dropdown-item text-danger d-flex align-items-center" type="button"
-                                      onClick={() => handleDeleteMessage(msg._id)}><i className="ti ti-trash me-2" />Delete</button></li>
-                                  </ul>
-                                </div>
-                                <div className="message-content">{msg.text}</div>
-                              </div>
-                              <div className="chat-profile-name text-end">
-                                <h6>You <i className="ti ti-circle-filled fs-7 mx-2" />
-                                  <span className="chat-time">{formatTime(msg.createdAt)}</span>
-                                  <span className="msg-read success ms-1"><i className="ti ti-checks" /></span>
-                                </h6>
-                              </div>
-                            </div>
-                            <div className="chat-avatar">
-                              {MY_IMAGE ? (
-                                <img src={MY_IMAGE} className="rounded-circle dreams_chat" alt="You" style={{ width: "36px", height: "36px", objectFit: "cover" }} />
-                              ) : (
-                                <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center dreams_chat" style={{ width: "36px", height: "36px" }}>
-                                  <span className="text-white fw-bold fs-12">{MY_NAME.charAt(0).toUpperCase()}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <div key={msg._id} className="chats">
-                            <div className="chat-avatar">
-                              {msg.senderImage ? (
-                                <img src={msg.senderImage} className="rounded-circle" alt={msg.sender} style={{ width: "36px", height: "36px", objectFit: "cover" }} />
-                              ) : (
-                                <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center" style={{ width: "36px", height: "36px" }}>
-                                  <span className="text-white fw-bold fs-14">{msg.sender.charAt(0).toUpperCase()}</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="chat-content">
-                              <div className="chat-info">
-                                <div className="message-content">{msg.text}</div>
-                                <div className="chat-actions">
-                                  <Link to="#" data-bs-toggle="dropdown"><i className="ti ti-dots-vertical" /></Link>
-                                  <ul className="dropdown-menu dropdown-menu-end p-3">
-                                    <li><button className="dropdown-item text-danger d-flex align-items-center" type="button"
-                                      onClick={() => handleDeleteMessage(msg._id)}><i className="ti ti-trash me-2" />Delete</button></li>
-                                  </ul>
-                                </div>
-                              </div>
-                              <div className="chat-profile-name">
-                                <h6>{msg.sender} <i className="ti ti-circle-filled fs-7 mx-2" /><span className="chat-time">{formatTime(msg.createdAt)}</span></h6>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                    {isTyping && (
-                      <div className="chats">
-                        <div className="chat-content">
-                          <div className="message-content">
-                            <span className="animate-typing">{typingUser} is typing<span className="dot" /><span className="dot" /><span className="dot" /></span>
+                            <ul className="dropdown-menu dropdown-menu-end p-1">
+                              <li>
+                                <button className="dropdown-item text-danger fs-12 py-1" type="button"
+                                  onClick={() => handleDeleteMessage(msg._id)}>
+                                  <i className="ti ti-trash me-1" />Delete
+                                </button>
+                              </li>
+                            </ul>
                           </div>
                         </div>
-                      </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
+                      );
+                    })
+                  )}
+
+                  {/* Typing indicator */}
+                  {isTyping && (
+                    <div className="d-flex align-items-center gap-2 text-muted fs-13 mb-2">
+                      <span>{typingUser} is typing</span>
+                      <span className="d-flex gap-1">
+                        {[0, 0.2, 0.4].map((d, i) => (
+                          <span key={i} style={{
+                            width: 6, height: 6, borderRadius: "50%", background: "#adb5bd",
+                            animation: `blink 1.2s ${d}s infinite`
+                          }} />
+                        ))}
+                      </span>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
 
-                <div className="chat-footer">
-                  <form className="footer-form" onSubmit={handleSendMessage}>
-                    <div className="chat-footer-wrap">
-                      <div className="form-wrap flex-fill">
-                        <input type="text" className="form-control" placeholder="Type Your Message"
-                          value={newMessage} onChange={handleTyping} />
-                      </div>
-                      <div className="form-btn">
-                        <button className="btn btn-primary" type="submit" disabled={!newMessage.trim()}>
-                          <i className="ti ti-send" />
-                        </button>
-                      </div>
+                {/* Message Input */}
+                <div style={{
+                  padding: "12px 16px", background: "#fff", borderTop: "1px solid #e9ecef", flexShrink: 0
+                }}>
+                  <form onSubmit={handleSendMessage}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <input type="text" className="form-control"
+                        style={{ borderRadius: 24, paddingLeft: 16, paddingRight: 16 }}
+                        placeholder="Type your message..."
+                        value={newMessage} onChange={handleTyping} />
+                      <button type="submit" className="btn btn-primary"
+                        style={{ borderRadius: "50%", width: 42, height: 42, padding: 0, flexShrink: 0 }}
+                        disabled={!newMessage.trim()}>
+                        <i className="ti ti-send" />
+                      </button>
                     </div>
                   </form>
                 </div>
               </div>
             ) : (
-              <div className="chat chat-messages show d-flex align-items-center justify-content-center" id="middle">
+              /* Empty state */
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div className="text-center text-muted">
-                  <i className="ti ti-message-2" style={{ fontSize: "4rem" }} />
-                  <h5 className="mt-3">Select a conversation</h5>
-                  <p className="fs-14">Choose from the list or start a new chat</p>
-                  <button className="btn btn-primary" onClick={() => setShowNewChatModal(true)}>
+                  <div style={{
+                    width: 80, height: 80, borderRadius: "50%", background: "#e8f0fe",
+                    display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px"
+                  }}>
+                    <i className="ti ti-message-2 text-primary" style={{ fontSize: "2.5rem" }} />
+                  </div>
+                  <h5 className="fw-semibold mb-2">Your Messages</h5>
+                  <p className="fs-14 mb-4">Select a conversation or start a new chat</p>
+                  <button className="btn btn-primary px-4" onClick={() => setShowNewChatModal(true)}>
                     <i className="ti ti-plus me-2" />New Chat
                   </button>
                 </div>
@@ -2475,61 +2563,69 @@ const Messages = () => {
         </div>
       </div>
 
-      {/* ✅ New Chat Modal — Staff list */}
+      {/* ===== New Chat Modal ===== */}
       {showNewChatModal && (
         <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className="modal-header">
+              <div className="modal-header border-0 pb-0">
                 <h5 className="modal-title fw-bold">New Chat</h5>
-                <button type="button" className="btn-close" onClick={() => { setShowNewChatModal(false); setStaffSearch(""); setSelectedStaff(null); }} />
+                <button type="button" className="btn-close"
+                  onClick={() => { setShowNewChatModal(false); setUserSearch(""); setSelectedUser(null); }} />
               </div>
               <div className="modal-body">
-                <div className="mb-3">
-                  <label className="form-label">Search Staff / Doctor</label>
-                  <input type="text" className="form-control" placeholder="Search by name or role..."
-                    value={staffSearch} onChange={(e) => setStaffSearch(e.target.value)} autoFocus />
-                </div>
-                <div style={{ maxHeight: "280px", overflowY: "auto" }}>
-                  {filteredStaff.length === 0 ? (
-                    <p className="text-muted text-center py-3 fs-13">No staff found</p>
+                <input type="text" className="form-control mb-3"
+                  placeholder="🔍 Search by name or role..."
+                  value={userSearch} onChange={(e) => setUserSearch(e.target.value)} autoFocus />
+
+                <div style={{ maxHeight: 320, overflowY: "auto" }}>
+                  {filteredUsers.length === 0 ? (
+                    <p className="text-muted text-center py-3 fs-13">No users found</p>
                   ) : (
-                    filteredStaff.map((staff) => (
-                      <div key={staff._id}
-                        className={`d-flex align-items-center p-2 rounded mb-1 ${selectedStaff?._id === staff._id ? "bg-primary bg-opacity-10 border border-primary" : "border"}`}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setSelectedStaff(staff)}>
-                        <div className="avatar me-2 flex-shrink-0" style={{ width: "38px", height: "38px" }}>
-                          {staff.image ? (
-                            <img src={staff.image} className="rounded-circle w-100 h-100 object-fit-cover" alt={staff.name} />
-                          ) : (
-                            <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center w-100 h-100">
-                              <span className="text-white fw-bold">{staff.name.charAt(0).toUpperCase()}</span>
-                            </div>
-                          )}
+                    filteredUsers.map((user) => (
+                      <div key={user._id}
+                        onClick={() => setSelectedUser(user)}
+                        style={{
+                          display: "flex", alignItems: "center", padding: "10px 12px",
+                          borderRadius: 8, marginBottom: 6, cursor: "pointer",
+                          border: selectedUser?._id === user._id ? "2px solid #4f46e5" : "1px solid #e9ecef",
+                          background: selectedUser?._id === user._id ? "#eef2ff" : "#fff",
+                          transition: "all 0.15s"
+                        }}>
+                        <AvatarCircle name={user.name} image={user.image} size={40} />
+                        <div className="ms-3 flex-fill">
+                          <p className="mb-0 fw-semibold fs-14">{user.name}</p>
+                          <p className="mb-0 text-muted fs-12">{user.role}</p>
                         </div>
-                        <div className="flex-fill">
-                          <h6 className="mb-0 fs-14">{staff.name}</h6>
-                          <p className="mb-0 text-muted fs-12">{staff.role || staff.designation || "Staff"}</p>
-                        </div>
-                        {selectedStaff?._id === staff._id && <i className="ti ti-check text-primary fs-16" />}
+                        <span className={`badge fs-11 ${user.type === "doctor" ? "bg-primary bg-opacity-10 text-primary" : "bg-success bg-opacity-10 text-success"}`}>
+                          {user.type === "doctor" ? "Doctor" : "Staff"}
+                        </span>
+                        {selectedUser?._id === user._id && (
+                          <i className="ti ti-check text-primary fs-18 ms-2" />
+                        )}
                       </div>
                     ))
                   )}
                 </div>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer border-0 pt-0">
                 <button type="button" className="btn btn-light"
-                  onClick={() => { setShowNewChatModal(false); setStaffSearch(""); setSelectedStaff(null); }}>Cancel</button>
-                <button type="button" className="btn btn-primary" disabled={!selectedStaff}
-                  onClick={() => selectedStaff && handleNewConversation(selectedStaff)}>
-                  <i className="ti ti-message me-1" />Start Chat
+                  onClick={() => { setShowNewChatModal(false); setUserSearch(""); setSelectedUser(null); }}>
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-primary px-4"
+                  disabled={!selectedUser} onClick={handleStartChat}>
+                  <i className="ti ti-message me-2" />Start Chat
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
+      `}</style>
     </>
   );
 };
