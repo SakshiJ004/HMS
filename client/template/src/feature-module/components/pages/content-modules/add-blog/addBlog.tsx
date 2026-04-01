@@ -101,37 +101,51 @@
 // export default AddBlog;
 
 
-
 import { Link, useNavigate } from "react-router";
 import CommonSelect from "../../../../../core/common/common-select/commonSelect";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TagInput from "../../../../../core/common/Taginput";
 import { all_routes } from "../../../../routes/all_routes";
 import DefaultEditor from "react-simple-wysiwyg";
-import { createBlog, type BlogPayload } from "../../../../../api/blogService"; // ✅ Import BlogPayload type
+import { createBlog, type BlogPayload } from "../../../../../api/blogService";
+import { getCategories } from "../../../../../api/blogCategoryService"; // ✅ Import
 import { message } from "antd";
-
-const Category = [
-  { value: 'Health Tips', label: 'Health Tips' },
-  { value: 'Medical News', label: 'Medical News' },
-  { value: 'Patient Stories', label: 'Patient Stories' },
-  { value: 'Hospital Updates', label: 'Hospital Updates' },
-  { value: 'Wellness', label: 'Wellness' },
-  { value: 'Technology', label: 'Technology' },
-  { value: 'Research', label: 'Research' }
-];
 
 const AddBlog = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
+  const [categories, setCategories] = useState<any[]>([]); // ✅ Dynamic categories
   const [formData, setFormData] = useState({
     title: "",
-    category: "Health Tips",
+    category: "",
     content: "",
     featureImage: "",
     status: "Published"
   });
+
+  // ✅ Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const response = await getCategories();
+      if (response.success && response.data) {
+        const categoryOptions = response.data
+          .filter((cat: any) => cat.status === 'Active')
+          .map((cat: any) => ({
+            value: cat.name,
+            label: cat.name
+          }));
+        setCategories(categoryOptions);
+
+        // Set first category as default
+        if (categoryOptions.length > 0) {
+          setFormData(prev => ({ ...prev, category: categoryOptions[0].value }));
+        }
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleTagsChange = (newTags: string[]) => {
     setTags(newTags);
@@ -164,13 +178,12 @@ const AddBlog = () => {
     setLoading(true);
 
     try {
-      // ✅ FIX: Properly type the blogData object
       const blogData: BlogPayload = {
         title: formData.title,
         category: formData.category,
         content: formData.content,
         tags: tags,
-        featureImage: formData.featureImage || undefined, // ✅ Use undefined instead of null
+        featureImage: formData.featureImage || undefined,
         status: formData.status
       };
 
@@ -178,7 +191,7 @@ const AddBlog = () => {
 
       if (response.success) {
         message.success('Blog created successfully!');
-        navigate(all_routes.blogs); // ✅ Redirect to blogs page
+        navigate(all_routes.blogs);
       } else {
         message.error(response.message || 'Failed to create blog');
       }
@@ -223,10 +236,11 @@ const AddBlog = () => {
                     <label className="form-label">
                       Category <span className="text-danger">*</span>
                     </label>
+                    {/* ✅ Dynamic categories from database */}
                     <CommonSelect
-                      options={Category}
+                      options={categories}
                       className="select"
-                      defaultValue={Category[0]}
+                      defaultValue={categories[0]}
                       onChange={(option: any) => setFormData({ ...formData, category: option?.value })}
                     />
                   </div>
