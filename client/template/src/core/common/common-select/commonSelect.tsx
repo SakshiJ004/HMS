@@ -65,12 +65,13 @@ export type Option = {
 
 export interface SelectProps {
   options: Option[];
-  defaultValue?: Option;
-  value?: Option;
+  defaultValue?: Option | null;
+  value?: Option | null;   // ✅ important change
   className?: string;
   placeholder?: string;
   styles?: any;
   onChange?: (option: Option | null) => void;
+  isDisabled?: boolean;
 }
 
 const CommonSelect: React.FC<SelectProps> = ({
@@ -79,9 +80,10 @@ const CommonSelect: React.FC<SelectProps> = ({
   value,
   className,
   placeholder = "Select",
-  onChange
+  onChange,
+  isDisabled 
 }) => {
-  const [selectedOption, setSelectedOption] = useState<Option | undefined>(value || defaultValue);
+  const [selectedOption, setSelectedOption] = useState<Option | null>(value || defaultValue || null);
 
   const customStyles = {
     option: (base: any, state: any) => ({
@@ -97,19 +99,18 @@ const CommonSelect: React.FC<SelectProps> = ({
   };
 
   const handleChange = (option: Option | null) => {
-    setSelectedOption(option || undefined);
+    setSelectedOption(option);
 
-    // ✅ FIX: Call the parent's onChange handler
     if (onChange) {
       onChange(option);
     }
   };
 
   useEffect(() => {
-    if (value) {
-      setSelectedOption(value);
-    } else if (defaultValue) {
-      setSelectedOption(defaultValue);
+    if (value !== undefined) {
+      setSelectedOption(value || null);
+    } else if (defaultValue !== undefined) {
+      setSelectedOption(defaultValue || null);
     }
   }, [value, defaultValue]);
 
@@ -122,6 +123,7 @@ const CommonSelect: React.FC<SelectProps> = ({
       value={selectedOption}
       onChange={handleChange}
       placeholder={placeholder}
+      isDisabled={isDisabled}
     />
   );
 };
