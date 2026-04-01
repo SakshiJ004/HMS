@@ -2075,557 +2075,581 @@
 
 // export default Messages;
 
-import { useState, useEffect, useRef } from "react";
-// import { Link } from "react-router";
-import { io, Socket } from "socket.io-client";
-import {
-  getConversations,
-  getMessages,
-  sendMessage,
-  deleteMessage,
-  deleteConversation,
-  createConversation,
-  getChatUsers,
-  type ConversationData,
-  type MessageData,
-  type ChatUser,
-} from "../../../../../api/chatService";
+// import { useState, useEffect, useRef } from "react";
+// // import { Link } from "react-router";
+// import { io, Socket } from "socket.io-client";
+// import {
+//   getConversations,
+//   getMessages,
+//   sendMessage,
+//   deleteMessage,
+//   deleteConversation,
+//   createConversation,
+//   getChatUsers,
+//   type ConversationData,
+//   type MessageData,
+//   type ChatUser,
+// } from "../../../../../api/chatService";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
+// const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 
-// ✅ localStorage मधून logged-in user घेतो
-const getUserInfo = () => {
-  try {
-    const raw = localStorage.getItem("userData");
-    if (raw) {
-      const u = JSON.parse(raw);
-      return {
-        name: u.fullName || u.firstName || "User",
-        image: u.profileImage || "",
-        role: u.role || "admin",
-        id: u._id || "",
-      };
-    }
-  } catch { /* ignore */ }
-  return { name: "User", image: "", role: "admin", id: "" };
-};
+// // ✅ localStorage मधून logged-in user घेतो
+// const getUserInfo = () => {
+//   try {
+//     const raw = localStorage.getItem("userData");
+//     if (raw) {
+//       const u = JSON.parse(raw);
+//       return {
+//         name: u.fullName || u.firstName || "User",
+//         image: u.profileImage || "",
+//         role: u.role || "admin",
+//         id: u._id || "",
+//       };
+//     }
+//   } catch { /* ignore */ }
+//   return { name: "User", image: "", role: "admin", id: "" };
+// };
 
-const currentUser = getUserInfo();
-const MY_NAME = currentUser.name;
-const MY_IMAGE = currentUser.image;
+// const currentUser = getUserInfo();
+// const MY_NAME = currentUser.name;
+// const MY_IMAGE = currentUser.image;
 
-let socket: Socket;
+// let socket: Socket;
+
+// const Messages = () => {
+//   const [conversations, setConversations] = useState<ConversationData[]>([]);
+//   const [activeConversation, setActiveConversation] = useState<ConversationData | null>(null);
+//   const [messages, setMessages] = useState<MessageData[]>([]);
+//   const [newMessage, setNewMessage] = useState("");
+//   const [searchText, setSearchText] = useState("");
+//   const [isTyping, setIsTyping] = useState(false);
+//   const [typingUser, setTypingUser] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [showNewChatModal, setShowNewChatModal] = useState(false);
+//   const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
+//   const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
+//   const [userSearch, setUserSearch] = useState("");
+//   const messagesEndRef = useRef<HTMLDivElement>(null);
+//   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+//   // Socket setup
+//   useEffect(() => {
+//     socket = io(BACKEND_URL, { transports: ["websocket"] });
+//     socket.on("receive_message", (msg: MessageData) => {
+//       setMessages((prev) => [...prev, msg]);
+//       scrollToBottom();
+//       fetchConversations();
+//     });
+//     socket.on("conversation_updated", () => fetchConversations());
+//     socket.on("user_typing", ({ sender }: { sender: string }) => {
+//       setTypingUser(sender); setIsTyping(true);
+//     });
+//     socket.on("user_stop_typing", () => { setIsTyping(false); setTypingUser(""); });
+//     return () => { socket.disconnect(); };
+//   }, []);
+
+//   useEffect(() => { fetchConversations(); }, []);
+//   useEffect(() => { scrollToBottom(); }, [messages]);
+
+//   // Load chat users when modal opens
+//   useEffect(() => {
+//     if (showNewChatModal && chatUsers.length === 0) {
+//       getChatUsers().then(setChatUsers).catch(console.error);
+//     }
+//   }, [showNewChatModal]);
+
+//   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+//   const fetchConversations = async () => {
+//     try {
+//       const res = await getConversations();
+//       if (res.success) setConversations(res.data);
+//     } catch (err) { console.error(err); }
+//   };
+
+//   const openConversation = async (conv: ConversationData) => {
+//     if (activeConversation) socket.emit("leave_conversation", activeConversation._id);
+//     setActiveConversation(conv);
+//     setLoading(true);
+//     try {
+//       const res = await getMessages(conv._id);
+//       if (res.success) setMessages(res.data);
+//     } catch (err) { console.error(err); }
+//     finally { setLoading(false); }
+//     socket.emit("join_conversation", conv._id);
+//     setConversations((prev) => prev.map((c) => c._id === conv._id ? { ...c, unreadCount: 0 } : c));
+//   };
+
+//   const handleSendMessage = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     if (!newMessage.trim() || !activeConversation) return;
+//     const msgText = newMessage.trim();
+//     setNewMessage("");
+//     if (activeConversation) socket.emit("stop_typing", { conversationId: activeConversation._id });
+//     try {
+//       const res = await sendMessage({
+//         conversationId: activeConversation._id,
+//         sender: MY_NAME,
+//         senderImage: MY_IMAGE,
+//         text: msgText,
+//       });
+//       if (res.success) {
+//         setMessages((prev) => [...prev, res.data]);
+//         socket.emit("send_message", res.data);
+//         fetchConversations();
+//       }
+//     } catch (err) { console.error(err); }
+//   };
+
+//   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setNewMessage(e.target.value);
+//     if (!activeConversation) return;
+//     socket.emit("typing", { conversationId: activeConversation._id, sender: MY_NAME });
+//     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+//     typingTimeoutRef.current = setTimeout(() => {
+//       socket.emit("stop_typing", { conversationId: activeConversation._id });
+//     }, 1500);
+//   };
+
+//   const handleDeleteMessage = async (msgId: string) => {
+//     try { await deleteMessage(msgId); setMessages((prev) => prev.filter((m) => m._id !== msgId)); }
+//     catch (err) { console.error(err); }
+//   };
+
+//   const handleDeleteConversation = async (convId: string) => {
+//     if (!confirm("Delete this conversation?")) return;
+//     try {
+//       await deleteConversation(convId);
+//       setConversations((prev) => prev.filter((c) => c._id !== convId));
+//       if (activeConversation?._id === convId) { setActiveConversation(null); setMessages([]); }
+//     } catch (err) { console.error(err); }
+//   };
+
+//   const handleStartChat = async () => {
+//     if (!selectedUser) return;
+//     try {
+//       const res = await createConversation({
+//         participantName: selectedUser.name,
+//         participantImage: selectedUser.image || "",
+//         myName: MY_NAME,
+//         myImage: MY_IMAGE,
+//       });
+//       if (res.success) {
+//         await fetchConversations();
+//         setShowNewChatModal(false);
+//         setSelectedUser(null);
+//         setUserSearch("");
+//         // Open the conversation
+//         const conv = res.data;
+//         openConversation(conv);
+//       }
+//     } catch (err) { console.error(err); }
+//   };
+
+//   // ✅ Get the OTHER participant (not me)
+//   const getOtherParticipant = (conv: ConversationData) => {
+//     const other = conv.participants.find((p) => p.name !== MY_NAME);
+//     return other || conv.participants[0];
+//   };
+
+//   const formatTime = (dateStr: string) =>
+//     new Date(dateStr).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+//   const formatConvTime = (dateStr: string) => {
+//     const d = new Date(dateStr);
+//     const diff = Date.now() - d.getTime();
+//     if (diff < 86400000) return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+//     if (diff < 172800000) return "Yesterday";
+//     return d.toLocaleDateString("en-US", { weekday: "short" });
+//   };
+
+//   const filteredConversations = conversations.filter((c) => {
+//     const other = getOtherParticipant(c);
+//     return other.name.toLowerCase().includes(searchText.toLowerCase());
+//   });
+
+//   // Filter chat users excluding myself
+//   const filteredUsers = chatUsers.filter((u) =>
+//     u.name !== MY_NAME &&
+//     (u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+//       u.role.toLowerCase().includes(userSearch.toLowerCase()))
+//   );
+
+//   const AvatarCircle = ({ name, image, size = 40 }: { name: string; image?: string; size?: number }) => (
+//     <div style={{ width: size, height: size, flexShrink: 0 }}>
+//       {image ? (
+//         <img src={image} className="rounded-circle" alt={name}
+//           style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+//       ) : (
+//         <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center"
+//           style={{ width: "100%", height: "100%", background: `hsl(${name.charCodeAt(0) * 15 % 360}, 60%, 50%)` }}>
+//           <span style={{ color: "white", fontWeight: "bold", fontSize: size * 0.35 }}>
+//             {name.charAt(0).toUpperCase()}
+//           </span>
+//         </div>
+//       )}
+//     </div>
+//   );
+
+//   return (
+//     <>
+//       <div className="page-wrapper">
+//         <div className="content content-two" style={{ padding: 0 }}>
+//           <div className="chat-wrapper" style={{ display: "flex", height: "calc(100vh - 60px)" }}>
+
+//             {/* ===== LEFT SIDEBAR ===== */}
+//             <div style={{
+//               width: "320px", flexShrink: 0, borderRight: "1px solid #e9ecef",
+//               display: "flex", flexDirection: "column", background: "#fff"
+//             }}>
+//               {/* Header */}
+//               <div style={{ padding: "16px", borderBottom: "1px solid #e9ecef", flexShrink: 0 }}>
+//                 <div className="d-flex align-items-center justify-content-between mb-3">
+//                   <h5 className="mb-0 fw-bold">Messages</h5>
+//                   <button className="btn btn-primary btn-sm px-3" onClick={() => setShowNewChatModal(true)}>
+//                     <i className="ti ti-plus me-1" />New
+//                   </button>
+//                 </div>
+//                 <div className="input-group">
+//                   <span className="input-group-text bg-white border-end-0">
+//                     <i className="ti ti-search text-muted" />
+//                   </span>
+//                   <input type="text" className="form-control border-start-0 ps-0"
+//                     placeholder="Search conversations..."
+//                     value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+//                 </div>
+//               </div>
+
+//               {/* My info */}
+//               <div style={{ padding: "12px 16px", background: "#f8f9fa", borderBottom: "1px solid #e9ecef", flexShrink: 0 }}>
+//                 <div className="d-flex align-items-center">
+//                   <AvatarCircle name={MY_NAME} image={MY_IMAGE} size={36} />
+//                   <div className="ms-2">
+//                     <p className="mb-0 fw-semibold fs-14">{MY_NAME}</p>
+//                     <p className="mb-0 text-muted fs-12 text-capitalize">{currentUser.role}</p>
+//                   </div>
+//                   <span className="ms-auto badge bg-success bg-opacity-10 text-success fs-11 px-2">Online</span>
+//                 </div>
+//               </div>
+
+//               {/* Conversation List */}
+//               <div style={{ overflowY: "auto", flex: 1 }}>
+//                 {filteredConversations.length === 0 ? (
+//                   <div className="text-center text-muted py-5">
+//                     <i className="ti ti-message-off fs-2 d-block mb-2" />
+//                     <p className="fs-14 mb-2">No conversations yet</p>
+//                     <button className="btn btn-primary btn-sm" onClick={() => setShowNewChatModal(true)}>
+//                       Start a Chat
+//                     </button>
+//                   </div>
+//                 ) : (
+//                   filteredConversations.map((conv) => {
+//                     const other = getOtherParticipant(conv);
+//                     const isActiveConv = activeConversation?._id === conv._id;
+//                     return (
+//                       <div key={conv._id}
+//                         onClick={() => openConversation(conv)}
+//                         style={{
+//                           display: "flex", alignItems: "center", padding: "12px 16px",
+//                           cursor: "pointer", borderBottom: "1px solid #f0f0f0",
+//                           background: isActiveConv ? "#e8f0fe" : "transparent",
+//                           borderLeft: isActiveConv ? "3px solid #4f46e5" : "3px solid transparent",
+//                           transition: "all 0.15s"
+//                         }}>
+//                         <div style={{ position: "relative", marginRight: 12, flexShrink: 0 }}>
+//                           <AvatarCircle name={other.name} image={other.image} size={44} />
+//                           <span style={{
+//                             position: "absolute", bottom: 1, right: 1,
+//                             width: 10, height: 10, borderRadius: "50%",
+//                             background: "#22c55e", border: "2px solid white"
+//                           }} />
+//                         </div>
+//                         <div style={{ flex: 1, overflow: "hidden" }}>
+//                           <div className="d-flex align-items-center justify-content-between">
+//                             <span className="fw-semibold fs-14 text-truncate" style={{ maxWidth: "140px" }}>{other.name}</span>
+//                             <span className="text-muted fs-11 flex-shrink-0">{formatConvTime(conv.lastMessageTime)}</span>
+//                           </div>
+//                           <div className="d-flex align-items-center justify-content-between">
+//                             <p className="mb-0 text-muted fs-12 text-truncate" style={{ maxWidth: "160px" }}>
+//                               {conv.lastMessage || "No messages yet"}
+//                             </p>
+//                             {conv.unreadCount > 0 && (
+//                               <span className="badge rounded-pill bg-primary fs-11 ms-1">{conv.unreadCount}</span>
+//                             )}
+//                           </div>
+//                         </div>
+//                       </div>
+//                     );
+//                   })
+//                 )}
+//               </div>
+//             </div>
+
+//             {/* ===== RIGHT CHAT AREA ===== */}
+//             {activeConversation ? (
+//               <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#f8f9fa" }}>
+
+//                 {/* Chat Header */}
+//                 <div style={{
+//                   padding: "12px 20px", background: "#fff", borderBottom: "1px solid #e9ecef",
+//                   flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between"
+//                 }}>
+//                   <div className="d-flex align-items-center">
+//                     <div style={{ position: "relative", marginRight: 12 }}>
+//                       <AvatarCircle name={getOtherParticipant(activeConversation).name}
+//                         image={getOtherParticipant(activeConversation).image} size={42} />
+//                       <span style={{
+//                         position: "absolute", bottom: 1, right: 1, width: 10, height: 10,
+//                         borderRadius: "50%", background: "#22c55e", border: "2px solid white"
+//                       }} />
+//                     </div>
+//                     <div>
+//                       <h6 className="mb-0 fw-semibold">{getOtherParticipant(activeConversation).name}</h6>
+//                       <span className="text-success fs-12">● Online</span>
+//                     </div>
+//                   </div>
+//                   <div className="d-flex gap-2">
+//                     <button className="btn btn-light btn-sm btn-icon" title="Voice Call">
+//                       <i className="ti ti-phone" />
+//                     </button>
+//                     <button className="btn btn-light btn-sm btn-icon" title="Video Call">
+//                       <i className="ti ti-video" />
+//                     </button>
+//                     <div className="dropdown">
+//                       <button className="btn btn-light btn-sm btn-icon" data-bs-toggle="dropdown">
+//                         <i className="ti ti-dots-vertical" />
+//                       </button>
+//                       <ul className="dropdown-menu dropdown-menu-end p-2">
+//                         <li>
+//                           <button className="dropdown-item text-danger d-flex align-items-center fs-13" type="button"
+//                             onClick={() => handleDeleteConversation(activeConversation._id)}>
+//                             <i className="ti ti-trash me-2" />Delete Chat
+//                           </button>
+//                         </li>
+//                       </ul>
+//                     </div>
+//                   </div>
+//                 </div>
+
+//                 {/* Messages Area */}
+//                 <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+//                   {loading ? (
+//                     <div className="text-center py-5">
+//                       <div className="spinner-border text-primary" />
+//                     </div>
+//                   ) : messages.length === 0 ? (
+//                     <div className="text-center text-muted py-5">
+//                       <i className="ti ti-message" style={{ fontSize: "3rem" }} />
+//                       <p className="mt-2">No messages yet. Say hello! 👋</p>
+//                     </div>
+//                   ) : (
+//                     messages.map((msg) => {
+//                       const isMe = msg.sender === MY_NAME;
+//                       return (
+//                         <div key={msg._id} style={{
+//                           display: "flex", marginBottom: 16,
+//                           flexDirection: isMe ? "row-reverse" : "row",
+//                           alignItems: "flex-end", gap: 8
+//                         }}>
+//                           {/* Avatar */}
+//                           <div style={{ flexShrink: 0 }}>
+//                             <AvatarCircle
+//                               name={isMe ? MY_NAME : msg.sender}
+//                               image={isMe ? MY_IMAGE : msg.senderImage}
+//                               size={34}
+//                             />
+//                           </div>
+
+//                           {/* Message bubble */}
+//                           <div style={{ maxWidth: "60%" }}>
+//                             <div style={{
+//                               fontSize: 11, color: "#888", marginBottom: 4,
+//                               textAlign: isMe ? "right" : "left"
+//                             }}>
+//                               {isMe ? "You" : msg.sender} • {formatTime(msg.createdAt)}
+//                             </div>
+//                             <div style={{
+//                               padding: "10px 14px", borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+//                               background: isMe ? "#4f46e5" : "#fff",
+//                               color: isMe ? "#fff" : "#1a1a1a",
+//                               boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+//                               wordBreak: "break-word", fontSize: 14, lineHeight: 1.5,
+//                               position: "relative"
+//                             }}>
+//                               {msg.text}
+//                             </div>
+//                             {isMe && (
+//                               <div style={{ textAlign: "right", marginTop: 2 }}>
+//                                 <i className="ti ti-checks text-success fs-11" />
+//                               </div>
+//                             )}
+//                           </div>
+
+//                           {/* Delete button */}
+//                           <div className="dropdown" style={{ alignSelf: "center" }}>
+//                             <button className="btn btn-sm p-0 border-0 bg-transparent" data-bs-toggle="dropdown"
+//                               style={{ opacity: 0.5 }}>
+//                               <i className="ti ti-dots-vertical fs-12" />
+//                             </button>
+//                             <ul className="dropdown-menu dropdown-menu-end p-1">
+//                               <li>
+//                                 <button className="dropdown-item text-danger fs-12 py-1" type="button"
+//                                   onClick={() => handleDeleteMessage(msg._id)}>
+//                                   <i className="ti ti-trash me-1" />Delete
+//                                 </button>
+//                               </li>
+//                             </ul>
+//                           </div>
+//                         </div>
+//                       );
+//                     })
+//                   )}
+
+//                   {/* Typing indicator */}
+//                   {isTyping && (
+//                     <div className="d-flex align-items-center gap-2 text-muted fs-13 mb-2">
+//                       <span>{typingUser} is typing</span>
+//                       <span className="d-flex gap-1">
+//                         {[0, 0.2, 0.4].map((d, i) => (
+//                           <span key={i} style={{
+//                             width: 6, height: 6, borderRadius: "50%", background: "#adb5bd",
+//                             animation: `blink 1.2s ${d}s infinite`
+//                           }} />
+//                         ))}
+//                       </span>
+//                     </div>
+//                   )}
+//                   <div ref={messagesEndRef} />
+//                 </div>
+
+//                 {/* Message Input */}
+//                 <div style={{
+//                   padding: "12px 16px", background: "#fff", borderTop: "1px solid #e9ecef", flexShrink: 0
+//                 }}>
+//                   <form onSubmit={handleSendMessage}>
+//                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+//                       <input type="text" className="form-control"
+//                         style={{ borderRadius: 24, paddingLeft: 16, paddingRight: 16 }}
+//                         placeholder="Type your message..."
+//                         value={newMessage} onChange={handleTyping} />
+//                       <button type="submit" className="btn btn-primary"
+//                         style={{ borderRadius: "50%", width: 42, height: 42, padding: 0, flexShrink: 0 }}
+//                         disabled={!newMessage.trim()}>
+//                         <i className="ti ti-send" />
+//                       </button>
+//                     </div>
+//                   </form>
+//                 </div>
+//               </div>
+//             ) : (
+//               /* Empty state */
+//               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+//                 <div className="text-center text-muted">
+//                   <div style={{
+//                     width: 80, height: 80, borderRadius: "50%", background: "#e8f0fe",
+//                     display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px"
+//                   }}>
+//                     <i className="ti ti-message-2 text-primary" style={{ fontSize: "2.5rem" }} />
+//                   </div>
+//                   <h5 className="fw-semibold mb-2">Your Messages</h5>
+//                   <p className="fs-14 mb-4">Select a conversation or start a new chat</p>
+//                   <button className="btn btn-primary px-4" onClick={() => setShowNewChatModal(true)}>
+//                     <i className="ti ti-plus me-2" />New Chat
+//                   </button>
+//                 </div>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* ===== New Chat Modal ===== */}
+//       {showNewChatModal && (
+//         <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+//           <div className="modal-dialog modal-dialog-centered">
+//             <div className="modal-content">
+//               <div className="modal-header border-0 pb-0">
+//                 <h5 className="modal-title fw-bold">New Chat</h5>
+//                 <button type="button" className="btn-close"
+//                   onClick={() => { setShowNewChatModal(false); setUserSearch(""); setSelectedUser(null); }} />
+//               </div>
+//               <div className="modal-body">
+//                 <input type="text" className="form-control mb-3"
+//                   placeholder="🔍 Search by name or role..."
+//                   value={userSearch} onChange={(e) => setUserSearch(e.target.value)} autoFocus />
+
+//                 <div style={{ maxHeight: 320, overflowY: "auto" }}>
+//                   {filteredUsers.length === 0 ? (
+//                     <p className="text-muted text-center py-3 fs-13">No users found</p>
+//                   ) : (
+//                     filteredUsers.map((user) => (
+//                       <div key={user._id}
+//                         onClick={() => setSelectedUser(user)}
+//                         style={{
+//                           display: "flex", alignItems: "center", padding: "10px 12px",
+//                           borderRadius: 8, marginBottom: 6, cursor: "pointer",
+//                           border: selectedUser?._id === user._id ? "2px solid #4f46e5" : "1px solid #e9ecef",
+//                           background: selectedUser?._id === user._id ? "#eef2ff" : "#fff",
+//                           transition: "all 0.15s"
+//                         }}>
+//                         <AvatarCircle name={user.name} image={user.image} size={40} />
+//                         <div className="ms-3 flex-fill">
+//                           <p className="mb-0 fw-semibold fs-14">{user.name}</p>
+//                           <p className="mb-0 text-muted fs-12">{user.role}</p>
+//                         </div>
+//                         <span className={`badge fs-11 ${user.type === "doctor" ? "bg-primary bg-opacity-10 text-primary" : "bg-success bg-opacity-10 text-success"}`}>
+//                           {user.type === "doctor" ? "Doctor" : "Staff"}
+//                         </span>
+//                         {selectedUser?._id === user._id && (
+//                           <i className="ti ti-check text-primary fs-18 ms-2" />
+//                         )}
+//                       </div>
+//                     ))
+//                   )}
+//                 </div>
+//               </div>
+//               <div className="modal-footer border-0 pt-0">
+//                 <button type="button" className="btn btn-light"
+//                   onClick={() => { setShowNewChatModal(false); setUserSearch(""); setSelectedUser(null); }}>
+//                   Cancel
+//                 </button>
+//                 <button type="button" className="btn btn-primary px-4"
+//                   disabled={!selectedUser} onClick={handleStartChat}>
+//                   <i className="ti ti-message me-2" />Start Chat
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       <style>{`
+//         @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
+//       `}</style>
+//     </>
+//   );
+// };
+
+// export default Messages;
+
+
+import { Link } from "react-router";
+import ChatCore from "./ChatCore";
+// ChatCore is at same level — adjust path as needed based on your folder structure
 
 const Messages = () => {
-  const [conversations, setConversations] = useState<ConversationData[]>([]);
-  const [activeConversation, setActiveConversation] = useState<ConversationData | null>(null);
-  const [messages, setMessages] = useState<MessageData[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [searchText, setSearchText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [typingUser, setTypingUser] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showNewChatModal, setShowNewChatModal] = useState(false);
-  const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
-  const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
-  const [userSearch, setUserSearch] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Socket setup
-  useEffect(() => {
-    socket = io(BACKEND_URL, { transports: ["websocket"] });
-    socket.on("receive_message", (msg: MessageData) => {
-      setMessages((prev) => [...prev, msg]);
-      scrollToBottom();
-      fetchConversations();
-    });
-    socket.on("conversation_updated", () => fetchConversations());
-    socket.on("user_typing", ({ sender }: { sender: string }) => {
-      setTypingUser(sender); setIsTyping(true);
-    });
-    socket.on("user_stop_typing", () => { setIsTyping(false); setTypingUser(""); });
-    return () => { socket.disconnect(); };
-  }, []);
-
-  useEffect(() => { fetchConversations(); }, []);
-  useEffect(() => { scrollToBottom(); }, [messages]);
-
-  // Load chat users when modal opens
-  useEffect(() => {
-    if (showNewChatModal && chatUsers.length === 0) {
-      getChatUsers().then(setChatUsers).catch(console.error);
-    }
-  }, [showNewChatModal]);
-
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-
-  const fetchConversations = async () => {
-    try {
-      const res = await getConversations();
-      if (res.success) setConversations(res.data);
-    } catch (err) { console.error(err); }
-  };
-
-  const openConversation = async (conv: ConversationData) => {
-    if (activeConversation) socket.emit("leave_conversation", activeConversation._id);
-    setActiveConversation(conv);
-    setLoading(true);
-    try {
-      const res = await getMessages(conv._id);
-      if (res.success) setMessages(res.data);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
-    socket.emit("join_conversation", conv._id);
-    setConversations((prev) => prev.map((c) => c._id === conv._id ? { ...c, unreadCount: 0 } : c));
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !activeConversation) return;
-    const msgText = newMessage.trim();
-    setNewMessage("");
-    if (activeConversation) socket.emit("stop_typing", { conversationId: activeConversation._id });
-    try {
-      const res = await sendMessage({
-        conversationId: activeConversation._id,
-        sender: MY_NAME,
-        senderImage: MY_IMAGE,
-        text: msgText,
-      });
-      if (res.success) {
-        setMessages((prev) => [...prev, res.data]);
-        socket.emit("send_message", res.data);
-        fetchConversations();
-      }
-    } catch (err) { console.error(err); }
-  };
-
-  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewMessage(e.target.value);
-    if (!activeConversation) return;
-    socket.emit("typing", { conversationId: activeConversation._id, sender: MY_NAME });
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("stop_typing", { conversationId: activeConversation._id });
-    }, 1500);
-  };
-
-  const handleDeleteMessage = async (msgId: string) => {
-    try { await deleteMessage(msgId); setMessages((prev) => prev.filter((m) => m._id !== msgId)); }
-    catch (err) { console.error(err); }
-  };
-
-  const handleDeleteConversation = async (convId: string) => {
-    if (!confirm("Delete this conversation?")) return;
-    try {
-      await deleteConversation(convId);
-      setConversations((prev) => prev.filter((c) => c._id !== convId));
-      if (activeConversation?._id === convId) { setActiveConversation(null); setMessages([]); }
-    } catch (err) { console.error(err); }
-  };
-
-  const handleStartChat = async () => {
-    if (!selectedUser) return;
-    try {
-      const res = await createConversation({
-        participantName: selectedUser.name,
-        participantImage: selectedUser.image || "",
-        myName: MY_NAME,
-        myImage: MY_IMAGE,
-      });
-      if (res.success) {
-        await fetchConversations();
-        setShowNewChatModal(false);
-        setSelectedUser(null);
-        setUserSearch("");
-        // Open the conversation
-        const conv = res.data;
-        openConversation(conv);
-      }
-    } catch (err) { console.error(err); }
-  };
-
-  // ✅ Get the OTHER participant (not me)
-  const getOtherParticipant = (conv: ConversationData) => {
-    const other = conv.participants.find((p) => p.name !== MY_NAME);
-    return other || conv.participants[0];
-  };
-
-  const formatTime = (dateStr: string) =>
-    new Date(dateStr).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-
-  const formatConvTime = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const diff = Date.now() - d.getTime();
-    if (diff < 86400000) return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-    if (diff < 172800000) return "Yesterday";
-    return d.toLocaleDateString("en-US", { weekday: "short" });
-  };
-
-  const filteredConversations = conversations.filter((c) => {
-    const other = getOtherParticipant(c);
-    return other.name.toLowerCase().includes(searchText.toLowerCase());
-  });
-
-  // Filter chat users excluding myself
-  const filteredUsers = chatUsers.filter((u) =>
-    u.name !== MY_NAME &&
-    (u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.role.toLowerCase().includes(userSearch.toLowerCase()))
-  );
-
-  const AvatarCircle = ({ name, image, size = 40 }: { name: string; image?: string; size?: number }) => (
-    <div style={{ width: size, height: size, flexShrink: 0 }}>
-      {image ? (
-        <img src={image} className="rounded-circle" alt={name}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      ) : (
-        <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center"
-          style={{ width: "100%", height: "100%", background: `hsl(${name.charCodeAt(0) * 15 % 360}, 60%, 50%)` }}>
-          <span style={{ color: "white", fontWeight: "bold", fontSize: size * 0.35 }}>
-            {name.charAt(0).toUpperCase()}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <>
       <div className="page-wrapper">
-        <div className="content content-two" style={{ padding: 0 }}>
-          <div className="chat-wrapper" style={{ display: "flex", height: "calc(100vh - 60px)" }}>
-
-            {/* ===== LEFT SIDEBAR ===== */}
-            <div style={{
-              width: "320px", flexShrink: 0, borderRight: "1px solid #e9ecef",
-              display: "flex", flexDirection: "column", background: "#fff"
-            }}>
-              {/* Header */}
-              <div style={{ padding: "16px", borderBottom: "1px solid #e9ecef", flexShrink: 0 }}>
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <h5 className="mb-0 fw-bold">Messages</h5>
-                  <button className="btn btn-primary btn-sm px-3" onClick={() => setShowNewChatModal(true)}>
-                    <i className="ti ti-plus me-1" />New
-                  </button>
-                </div>
-                <div className="input-group">
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="ti ti-search text-muted" />
-                  </span>
-                  <input type="text" className="form-control border-start-0 ps-0"
-                    placeholder="Search conversations..."
-                    value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-                </div>
-              </div>
-
-              {/* My info */}
-              <div style={{ padding: "12px 16px", background: "#f8f9fa", borderBottom: "1px solid #e9ecef", flexShrink: 0 }}>
-                <div className="d-flex align-items-center">
-                  <AvatarCircle name={MY_NAME} image={MY_IMAGE} size={36} />
-                  <div className="ms-2">
-                    <p className="mb-0 fw-semibold fs-14">{MY_NAME}</p>
-                    <p className="mb-0 text-muted fs-12 text-capitalize">{currentUser.role}</p>
-                  </div>
-                  <span className="ms-auto badge bg-success bg-opacity-10 text-success fs-11 px-2">Online</span>
-                </div>
-              </div>
-
-              {/* Conversation List */}
-              <div style={{ overflowY: "auto", flex: 1 }}>
-                {filteredConversations.length === 0 ? (
-                  <div className="text-center text-muted py-5">
-                    <i className="ti ti-message-off fs-2 d-block mb-2" />
-                    <p className="fs-14 mb-2">No conversations yet</p>
-                    <button className="btn btn-primary btn-sm" onClick={() => setShowNewChatModal(true)}>
-                      Start a Chat
-                    </button>
-                  </div>
-                ) : (
-                  filteredConversations.map((conv) => {
-                    const other = getOtherParticipant(conv);
-                    const isActiveConv = activeConversation?._id === conv._id;
-                    return (
-                      <div key={conv._id}
-                        onClick={() => openConversation(conv)}
-                        style={{
-                          display: "flex", alignItems: "center", padding: "12px 16px",
-                          cursor: "pointer", borderBottom: "1px solid #f0f0f0",
-                          background: isActiveConv ? "#e8f0fe" : "transparent",
-                          borderLeft: isActiveConv ? "3px solid #4f46e5" : "3px solid transparent",
-                          transition: "all 0.15s"
-                        }}>
-                        <div style={{ position: "relative", marginRight: 12, flexShrink: 0 }}>
-                          <AvatarCircle name={other.name} image={other.image} size={44} />
-                          <span style={{
-                            position: "absolute", bottom: 1, right: 1,
-                            width: 10, height: 10, borderRadius: "50%",
-                            background: "#22c55e", border: "2px solid white"
-                          }} />
-                        </div>
-                        <div style={{ flex: 1, overflow: "hidden" }}>
-                          <div className="d-flex align-items-center justify-content-between">
-                            <span className="fw-semibold fs-14 text-truncate" style={{ maxWidth: "140px" }}>{other.name}</span>
-                            <span className="text-muted fs-11 flex-shrink-0">{formatConvTime(conv.lastMessageTime)}</span>
-                          </div>
-                          <div className="d-flex align-items-center justify-content-between">
-                            <p className="mb-0 text-muted fs-12 text-truncate" style={{ maxWidth: "160px" }}>
-                              {conv.lastMessage || "No messages yet"}
-                            </p>
-                            {conv.unreadCount > 0 && (
-                              <span className="badge rounded-pill bg-primary fs-11 ms-1">{conv.unreadCount}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            {/* ===== RIGHT CHAT AREA ===== */}
-            {activeConversation ? (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#f8f9fa" }}>
-
-                {/* Chat Header */}
-                <div style={{
-                  padding: "12px 20px", background: "#fff", borderBottom: "1px solid #e9ecef",
-                  flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between"
-                }}>
-                  <div className="d-flex align-items-center">
-                    <div style={{ position: "relative", marginRight: 12 }}>
-                      <AvatarCircle name={getOtherParticipant(activeConversation).name}
-                        image={getOtherParticipant(activeConversation).image} size={42} />
-                      <span style={{
-                        position: "absolute", bottom: 1, right: 1, width: 10, height: 10,
-                        borderRadius: "50%", background: "#22c55e", border: "2px solid white"
-                      }} />
-                    </div>
-                    <div>
-                      <h6 className="mb-0 fw-semibold">{getOtherParticipant(activeConversation).name}</h6>
-                      <span className="text-success fs-12">● Online</span>
-                    </div>
-                  </div>
-                  <div className="d-flex gap-2">
-                    <button className="btn btn-light btn-sm btn-icon" title="Voice Call">
-                      <i className="ti ti-phone" />
-                    </button>
-                    <button className="btn btn-light btn-sm btn-icon" title="Video Call">
-                      <i className="ti ti-video" />
-                    </button>
-                    <div className="dropdown">
-                      <button className="btn btn-light btn-sm btn-icon" data-bs-toggle="dropdown">
-                        <i className="ti ti-dots-vertical" />
-                      </button>
-                      <ul className="dropdown-menu dropdown-menu-end p-2">
-                        <li>
-                          <button className="dropdown-item text-danger d-flex align-items-center fs-13" type="button"
-                            onClick={() => handleDeleteConversation(activeConversation._id)}>
-                            <i className="ti ti-trash me-2" />Delete Chat
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Messages Area */}
-                <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
-                  {loading ? (
-                    <div className="text-center py-5">
-                      <div className="spinner-border text-primary" />
-                    </div>
-                  ) : messages.length === 0 ? (
-                    <div className="text-center text-muted py-5">
-                      <i className="ti ti-message" style={{ fontSize: "3rem" }} />
-                      <p className="mt-2">No messages yet. Say hello! 👋</p>
-                    </div>
-                  ) : (
-                    messages.map((msg) => {
-                      const isMe = msg.sender === MY_NAME;
-                      return (
-                        <div key={msg._id} style={{
-                          display: "flex", marginBottom: 16,
-                          flexDirection: isMe ? "row-reverse" : "row",
-                          alignItems: "flex-end", gap: 8
-                        }}>
-                          {/* Avatar */}
-                          <div style={{ flexShrink: 0 }}>
-                            <AvatarCircle
-                              name={isMe ? MY_NAME : msg.sender}
-                              image={isMe ? MY_IMAGE : msg.senderImage}
-                              size={34}
-                            />
-                          </div>
-
-                          {/* Message bubble */}
-                          <div style={{ maxWidth: "60%" }}>
-                            <div style={{
-                              fontSize: 11, color: "#888", marginBottom: 4,
-                              textAlign: isMe ? "right" : "left"
-                            }}>
-                              {isMe ? "You" : msg.sender} • {formatTime(msg.createdAt)}
-                            </div>
-                            <div style={{
-                              padding: "10px 14px", borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                              background: isMe ? "#4f46e5" : "#fff",
-                              color: isMe ? "#fff" : "#1a1a1a",
-                              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-                              wordBreak: "break-word", fontSize: 14, lineHeight: 1.5,
-                              position: "relative"
-                            }}>
-                              {msg.text}
-                            </div>
-                            {isMe && (
-                              <div style={{ textAlign: "right", marginTop: 2 }}>
-                                <i className="ti ti-checks text-success fs-11" />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Delete button */}
-                          <div className="dropdown" style={{ alignSelf: "center" }}>
-                            <button className="btn btn-sm p-0 border-0 bg-transparent" data-bs-toggle="dropdown"
-                              style={{ opacity: 0.5 }}>
-                              <i className="ti ti-dots-vertical fs-12" />
-                            </button>
-                            <ul className="dropdown-menu dropdown-menu-end p-1">
-                              <li>
-                                <button className="dropdown-item text-danger fs-12 py-1" type="button"
-                                  onClick={() => handleDeleteMessage(msg._id)}>
-                                  <i className="ti ti-trash me-1" />Delete
-                                </button>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-
-                  {/* Typing indicator */}
-                  {isTyping && (
-                    <div className="d-flex align-items-center gap-2 text-muted fs-13 mb-2">
-                      <span>{typingUser} is typing</span>
-                      <span className="d-flex gap-1">
-                        {[0, 0.2, 0.4].map((d, i) => (
-                          <span key={i} style={{
-                            width: 6, height: 6, borderRadius: "50%", background: "#adb5bd",
-                            animation: `blink 1.2s ${d}s infinite`
-                          }} />
-                        ))}
-                      </span>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* Message Input */}
-                <div style={{
-                  padding: "12px 16px", background: "#fff", borderTop: "1px solid #e9ecef", flexShrink: 0
-                }}>
-                  <form onSubmit={handleSendMessage}>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <input type="text" className="form-control"
-                        style={{ borderRadius: 24, paddingLeft: 16, paddingRight: 16 }}
-                        placeholder="Type your message..."
-                        value={newMessage} onChange={handleTyping} />
-                      <button type="submit" className="btn btn-primary"
-                        style={{ borderRadius: "50%", width: 42, height: 42, padding: 0, flexShrink: 0 }}
-                        disabled={!newMessage.trim()}>
-                        <i className="ti ti-send" />
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            ) : (
-              /* Empty state */
-              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div className="text-center text-muted">
-                  <div style={{
-                    width: 80, height: 80, borderRadius: "50%", background: "#e8f0fe",
-                    display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px"
-                  }}>
-                    <i className="ti ti-message-2 text-primary" style={{ fontSize: "2.5rem" }} />
-                  </div>
-                  <h5 className="fw-semibold mb-2">Your Messages</h5>
-                  <p className="fs-14 mb-4">Select a conversation or start a new chat</p>
-                  <button className="btn btn-primary px-4" onClick={() => setShowNewChatModal(true)}>
-                    <i className="ti ti-plus me-2" />New Chat
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="content" style={{ paddingBottom: 0 }}>
+          <ChatCore />
+        </div>
+        <div className="footer text-center bg-white p-2 border-top mt-2">
+          <p className="text-dark mb-0">
+            2025 © <Link to="#" className="link-primary">Preclinic</Link>, All Rights Reserved
+          </p>
         </div>
       </div>
-
-      {/* ===== New Chat Modal ===== */}
-      {showNewChatModal && (
-        <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header border-0 pb-0">
-                <h5 className="modal-title fw-bold">New Chat</h5>
-                <button type="button" className="btn-close"
-                  onClick={() => { setShowNewChatModal(false); setUserSearch(""); setSelectedUser(null); }} />
-              </div>
-              <div className="modal-body">
-                <input type="text" className="form-control mb-3"
-                  placeholder="🔍 Search by name or role..."
-                  value={userSearch} onChange={(e) => setUserSearch(e.target.value)} autoFocus />
-
-                <div style={{ maxHeight: 320, overflowY: "auto" }}>
-                  {filteredUsers.length === 0 ? (
-                    <p className="text-muted text-center py-3 fs-13">No users found</p>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <div key={user._id}
-                        onClick={() => setSelectedUser(user)}
-                        style={{
-                          display: "flex", alignItems: "center", padding: "10px 12px",
-                          borderRadius: 8, marginBottom: 6, cursor: "pointer",
-                          border: selectedUser?._id === user._id ? "2px solid #4f46e5" : "1px solid #e9ecef",
-                          background: selectedUser?._id === user._id ? "#eef2ff" : "#fff",
-                          transition: "all 0.15s"
-                        }}>
-                        <AvatarCircle name={user.name} image={user.image} size={40} />
-                        <div className="ms-3 flex-fill">
-                          <p className="mb-0 fw-semibold fs-14">{user.name}</p>
-                          <p className="mb-0 text-muted fs-12">{user.role}</p>
-                        </div>
-                        <span className={`badge fs-11 ${user.type === "doctor" ? "bg-primary bg-opacity-10 text-primary" : "bg-success bg-opacity-10 text-success"}`}>
-                          {user.type === "doctor" ? "Doctor" : "Staff"}
-                        </span>
-                        {selectedUser?._id === user._id && (
-                          <i className="ti ti-check text-primary fs-18 ms-2" />
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-              <div className="modal-footer border-0 pt-0">
-                <button type="button" className="btn btn-light"
-                  onClick={() => { setShowNewChatModal(false); setUserSearch(""); setSelectedUser(null); }}>
-                  Cancel
-                </button>
-                <button type="button" className="btn btn-primary px-4"
-                  disabled={!selectedUser} onClick={handleStartChat}>
-                  <i className="ti ti-message me-2" />Start Chat
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
-      `}</style>
     </>
   );
 };
