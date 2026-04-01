@@ -100,6 +100,8 @@ app.use('/api/payrolls', require('./routes/payrollRoutes'));
 app.use('/api/assets', require('./routes/assetRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/blogs', require('./routes/blogRoutes'));
+app.use('/api/blog-categories', require('./routes/blogCategoryRoutes'));
+app.use('/api/blog-comments', require('./routes/blogCommentRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

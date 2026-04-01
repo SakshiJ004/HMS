@@ -1,0 +1,21 @@
+const express = require('express');
+const router = express.Router();
+const {
+    getAllCategories,
+    getCategoryById,
+    createCategory,
+    updateCategory,
+    deleteCategory
+} = require('../controllers/blogCategoryController');
+const { protect } = require('../middleware/authMiddleware');
+
+// Public routes
+router.get('/', getAllCategories);
+router.get('/:id', getCategoryById);
+
+// Protected routes (admin only)
+router.post('/', protect, createCategory);
+router.put('/:id', protect, updateCategory);
+router.delete('/:id', protect, deleteCategory);
+
+module.exports = router;
