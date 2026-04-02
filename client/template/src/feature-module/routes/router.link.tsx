@@ -234,7 +234,6 @@ import DoctorAppointments from "../components/pages/doctor-modules/doctor-appoin
 import DoctorScheduleAdmin from "../components/pages/doctor-modules/doctors-schedules/doctorScheduleAdmin";
 import DoctorsAccountSettings from "../components/pages/doctor-modules/doctor-accounts-settings/doctorAccountSettings";
 import DoctorsTransactions from "../components/pages/doctor-modules/doctor-transactions/doctorTransactions";
-import path from "node:path";
 import BlogDetails from "../components/pages/content-modules/blog-details/blogDetails";
 
 const routes = all_routes;
