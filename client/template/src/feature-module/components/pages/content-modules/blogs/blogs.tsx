@@ -594,7 +594,10 @@ const Blogs = () => {
                     <div className="card-body p-0">
                       <div className="position-relative rounded-top overflow-hidden">
 
-                        <Link to={`${all_routes.blogDetails}/${blog._id}`} className="blog-img">
+                        <Link
+                          to={`${all_routes.blogDetails}/${blog._id}`}  // ✅ Add blog ID
+                          className="blog-img"
+                        >
                           <img
                             src={blog.featureImage || "assets/img/blogs/blog-placeholder.jpg"}
                             alt={blog.title}
