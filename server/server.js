@@ -103,6 +103,7 @@ app.use('/api/blogs', require('./routes/blogRoutes'));
 app.use('/api/blog-categories', require('./routes/blogCategoryRoutes'));
 app.use('/api/blog-comments', require('./routes/blogCommentRoutes'));
 app.use('/api/content-locations', require('./routes/contentLocationRoutes'));
+app.use('/api/faqs', require('./routes/faqRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
