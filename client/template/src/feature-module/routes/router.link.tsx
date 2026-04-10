@@ -235,6 +235,8 @@ import DoctorScheduleAdmin from "../components/pages/doctor-modules/doctors-sche
 import DoctorsAccountSettings from "../components/pages/doctor-modules/doctor-accounts-settings/doctorAccountSettings";
 import DoctorsTransactions from "../components/pages/doctor-modules/doctor-transactions/doctorTransactions";
 import BlogDetails from "../components/pages/content-modules/blog-details/blogDetails";
+import PatientMessages from "../components/pages/patient-modules/patient-messages/patientMessages";
+import DoctorMessages from "../components/pages/doctor-modules/doctor-messages/doctorMessages";
 
 const routes = all_routes;
 
@@ -365,6 +367,10 @@ export const publicRoutes = [
     route: Route
   },
   {
+    path: routes.doctorMessages,
+    element: <DoctorMessages />
+  },
+  {
     path: routes.patientdashboard,
     element: <PatientDashboard />,
     route: Route,
@@ -418,6 +424,10 @@ export const publicRoutes = [
     path: routes.patientnotificationssettings,
     element: <PatientNotificationsSettings />,
     route: Route,
+  },
+  {
+    path: routes.patientMessages,
+    element: <PatientMessages />
   },
   {
     path: routes.chat,

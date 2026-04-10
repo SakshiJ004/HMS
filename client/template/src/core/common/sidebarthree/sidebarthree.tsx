@@ -401,7 +401,7 @@ const Sidebarthree = () => {
 
                   {/* ✅ Messages — नवीन ADD */}
                   <li className={isActive(routes.messages) ? "active" : ""}>
-                    <Link to={routes.messages}>
+                    <Link to={routes.patientMessages}>
                       <i className="ti ti-message-2" />
                       <span>Messages</span>
                     </Link>

@@ -718,7 +718,7 @@ const SidebarTwo = () => {
 
                   {/* ✅ Messages — नवीन ADD */}
                   <li className={isActive(all_routes.messages) ? "active" : ""}>
-                    <Link to={all_routes.messages}>
+                    <Link to={all_routes.doctorMessages}>
                       <i className="ti ti-message-2" />
                       <span>Messages</span>
                     </Link>

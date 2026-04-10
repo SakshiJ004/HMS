@@ -44,6 +44,7 @@ export const all_routes = {
   patientnotificationssettings: "/patient/patient-notifications-settings",
   patientprescriptiondetails: "/patient/patient-prescription-details",
   patientinvoicedetails: "/patient/patient-invoice-details",
+  patientMessages: "/patient/patient-messages",
 
   //Doctor
   doctorschedule: "/doctor/doctor-schedule",
@@ -64,6 +65,7 @@ export const all_routes = {
   // doctorstransactions: "/doctor/doctors-transactions",
   doctorsaccountsettings: "/doctor/doctor-accounts-settings",
   doctorstransactions: "/doctor/doctor-transactions",
+  doctorMessages: "/doctor/doctor-messages",
 
   //Super Admin routes
   superAdminDashboard: "/super-admin/super-admin-dashboard",

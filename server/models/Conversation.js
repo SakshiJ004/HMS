@@ -13,9 +13,12 @@ const conversationSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    unreadCount: {
-        type: Number,
-        default: 0
+    // ✅ Per-user unread count — key = participant name, value = count
+    // Example: { "sakshi": 0, "Priyanka Desai": 2 }
+    unreadCounts: {
+        type: Map,
+        of: Number,
+        default: {}
     }
 }, { timestamps: true });
 
