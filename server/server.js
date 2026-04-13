@@ -168,22 +168,37 @@ io.on('connection', (socket) => {
         socket.to(conversationId).emit('user_stop_typing');
     });
 
-    // Mark read
+    // ✅ Seen status — दुसऱ्याने conversation उघडलं
     socket.on("mark_read", ({ conversationId, readerName }) => {
+        // Conversation room मधल्या बाकी सगळ्यांना सांग
         socket.to(conversationId).emit("messages_read", { conversationId, readerName });
     });
 
-    // User online झाला
+    // ✅ User online झाला — app उघडताना frontend emit करेल
     socket.on("user_online", ({ userName }) => {
+        // जुना socket असेल तर update करा
         onlineUsers.set(userName, { socketId: socket.id, lastSeen: null });
-        // सगळ्यांना broadcast करा
+
+        // सगळ्यांना broadcast
         io.emit("online_status_update", {
             userName,
             isOnline: true,
+            lastSeen: null
         });
     });
 
-    // User disconnect झाला
+    // ✅ कोणाचा online status जाणून घ्यायचा असेल तर
+    socket.on("get_online_status", ({ userNames }) => {
+        const statuses = {};
+        userNames.forEach(name => {
+            statuses[name] = onlineUsers.has(name)
+                ? { isOnline: true, lastSeen: null }
+                : { isOnline: false, lastSeen: null };
+        });
+        socket.emit("online_statuses", statuses);
+    });
+
+    // ✅ Disconnect — last seen save करा
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
 
@@ -196,11 +211,14 @@ io.on('connection', (socket) => {
         }
 
         if (disconnectedUser) {
+            const lastSeenTime = new Date().toISOString();
             onlineUsers.delete(disconnectedUser);
+
+            // सगळ्यांना broadcast
             io.emit("online_status_update", {
                 userName: disconnectedUser,
                 isOnline: false,
-                lastSeen: new Date().toISOString(),
+                lastSeen: lastSeenTime
             });
         }
     });

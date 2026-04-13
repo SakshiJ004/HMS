@@ -13,6 +13,10 @@ import {
     type ChatUser,
 } from "../../../../api/chatService";
 
+// ⚠️ chatService import path — adjust करा:
+// pages/ChatCore.tsx → "../../../../api/chatService" ← हे adjust होणार नाही, ChatCore.tsx जिथे आहे त्यावर अवलंबून
+// जर ChatCore pages/ मध्ये आहे तर: "../../../api/chatService"
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 
 export const getUserInfo = () => {
@@ -61,16 +65,44 @@ const Avatar = ({
     </div>
 );
 
+// ✅ Tick component — 3 states
+// single grey  = sent (delivered to server)
+// double grey  = delivered (other person is online but not read)
+// double blue  = seen (other person opened conversation)
+const MessageTick = ({ isRead, isOtherOnline }: { isRead: boolean; isOtherOnline: boolean }) => {
+    if (isRead) {
+        // Double blue — seen
+        return (
+            <span style={{ display: "inline-flex", gap: 1, marginLeft: 2 }}>
+                <i className="ti ti-check" style={{ fontSize: 10, color: "#22c55e", marginRight: -5 }} />
+                <i className="ti ti-check" style={{ fontSize: 10, color: "#22c55e" }} />
+            </span>
+        );
+    }
+    if (isOtherOnline) {
+        // Double grey — delivered (online but not read)
+        return (
+            <span style={{ display: "inline-flex", gap: 1, marginLeft: 2 }}>
+                <i className="ti ti-check" style={{ fontSize: 10, color: "#adb5bd", marginRight: -5 }} />
+                <i className="ti ti-check" style={{ fontSize: 10, color: "#adb5bd" }} />
+            </span>
+        );
+    }
+    // Single grey — sent (other person offline)
+    return (
+        <i className="ti ti-check" style={{ fontSize: 10, color: "#adb5bd", marginLeft: 2 }} />
+    );
+};
+
 let socket: Socket;
 
 interface ChatCoreProps {
     forRole: "admin" | "doctor" | "patient";
 }
 
-// ✅ Online status type
 interface OnlineStatus {
     isOnline: boolean;
-    lastSeen?: string;
+    lastSeen?: string | null;
 }
 
 const ChatCore = ({ forRole }: ChatCoreProps) => {
@@ -90,20 +122,31 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
     const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
     const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
     const [userSearch, setUserSearch] = useState("");
-    // ✅ PROBLEM 3 — Online status state
+    // ✅ Online status — key = userName, value = { isOnline, lastSeen }
     const [onlineUsers, setOnlineUsers] = useState<Record<string, OnlineStatus>>({});
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    // ✅ activeConvRef — socket handler मध्ये latest activeConv मिळवायला
     const activeConvRef = useRef<ConversationData | null>(null);
 
     useEffect(() => {
         socket = io(BACKEND_URL, { transports: ["websocket"], reconnection: true });
 
+        // ✅ App उघडताना online सांगा
+        socket.emit("user_online", { userName: MY_NAME });
+
+        // ✅ Message receive
         socket.on("receive_message", (msg: MessageData) => {
             if (activeConvRef.current?._id === msg.conversationId) {
                 setMessages(prev => [...prev, msg]);
                 setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+                // ✅ हे conversation आत्ता open आहे — sender ला seen सांगा
+                socket.emit("mark_read", {
+                    conversationId: msg.conversationId,
+                    readerName: MY_NAME
+                });
             }
             fetchConversations();
         });
@@ -115,41 +158,44 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         });
         socket.on("user_stop_typing", () => { setIsTyping(false); setTypingUser(""); });
 
-        // ✅ PROBLEM 2 — Seen status: जेव्हा दुसऱ्याने messages read केले
-        socket.on("messages_read", ({ conversationId }: { conversationId: string; readerName: string }) => {
+        // ✅ SEEN — दुसऱ्याने read केलं — माझे messages blue करा
+        socket.on("messages_read", ({ conversationId }: { conversationId: string }) => {
             if (activeConvRef.current?._id === conversationId) {
-                // माझे सगळे messages isRead: true करा
                 setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
             }
         });
 
-        // ✅ PROBLEM 3 — Online status events
-        socket.emit("user_online", { userName: MY_NAME });
-
+        // ✅ ONLINE STATUS UPDATE — कोणी online/offline झाला
         socket.on("online_status_update", ({ userName, isOnline, lastSeen }: {
-            userName: string; isOnline: boolean; lastSeen?: string;
+            userName: string; isOnline: boolean; lastSeen?: string | null;
         }) => {
             setOnlineUsers(prev => ({
                 ...prev,
-                [userName]: { isOnline, lastSeen }
+                [userName]: { isOnline, lastSeen: lastSeen || prev[userName]?.lastSeen }
             }));
         });
 
-        return () => { socket.disconnect(); };
-    }, []);
-
-    // Fix: update receive_message handler when activeConv changes
-    useEffect(() => {
-        if (!socket) return;
-        socket.off("receive_message");
-        socket.on("receive_message", (msg: MessageData) => {
-            if (activeConv && msg.conversationId === activeConv._id) {
-                setMessages(prev => [...prev, msg]);
-                setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-            }
-            fetchConversations();
+        // ✅ Initial status response
+        socket.on("online_statuses", (statuses: Record<string, OnlineStatus>) => {
+            setOnlineUsers(prev => ({ ...prev, ...statuses }));
         });
-    }, [activeConv]);
+
+        return () => { socket.disconnect(); };
+    }, [MY_NAME]);
+
+    // ✅ Conversation list मध्ये participants चा online status fetch करा
+    useEffect(() => {
+        if (conversations.length > 0) {
+            const otherNames = conversations.map(c => {
+                const other = c.participants.find(p => p.name !== MY_NAME);
+                return other?.name;
+            }).filter(Boolean) as string[];
+
+            if (otherNames.length > 0) {
+                socket?.emit("get_online_status", { userNames: otherNames });
+            }
+        }
+    }, [conversations, MY_NAME]);
 
     const fetchConversations = useCallback(async () => {
         try {
@@ -174,7 +220,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         if (activeConv?._id === conv._id) return;
         if (activeConv) socket.emit("leave_conversation", activeConv._id);
         setActiveConv(conv);
-        // ✅ activeConvRef update करा — receive_message साठी
         activeConvRef.current = conv;
         setMessages([]);
         setLoadingMsgs(true);
@@ -184,7 +229,7 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         } catch (err) { console.error(err); }
         finally { setLoadingMsgs(false); }
         socket.emit("join_conversation", conv._id);
-        // ✅ PROBLEM 2 — Conversation उघडल्यावर mark_read emit करा
+        // ✅ Conversation उघडताना sender ला seen सांगा
         socket.emit("mark_read", { conversationId: conv._id, readerName: MY_NAME });
         setConversations(prev => prev.map(c =>
             c._id === conv._id ? { ...c, myUnreadCount: 0 } : c
@@ -275,38 +320,32 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         return new Date(d).toLocaleDateString("en-US", { weekday: "short" });
     };
 
-    // ✅ PROBLEM 3 — Online status text helper
-    const getOnlineStatusText = (userName: string) => {
-        const status = onlineUsers[userName];
-        if (!status) return null; // अजून कळलं नाही
-        if (status.isOnline) return { text: "● Online", color: "#22c55e" };
-        if (status.lastSeen) {
-            const d = new Date(status.lastSeen);
-            const now = new Date();
-            const diff = now.getTime() - d.getTime();
-            let timeStr: string;
-            if (diff < 60000) {
-                timeStr = "just now";
-            } else if (diff < 3600000) {
-                timeStr = `${Math.floor(diff / 60000)} min ago`;
-            } else if (diff < 86400000) {
-                timeStr = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-            } else {
-                timeStr = d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
-            }
-            return { text: `Last seen ${timeStr}`, color: "#888" };
+    // ✅ Online status text — Online / Last seen X / Offline
+    const getStatusText = (userName: string): { text: string; color: string } => {
+        const s = onlineUsers[userName];
+        if (!s) return { text: "Offline", color: "#aaa" };
+        if (s.isOnline) return { text: "● Online", color: "#22c55e" };
+        if (s.lastSeen) {
+            const d = new Date(s.lastSeen);
+            const diff = Date.now() - d.getTime();
+            let time: string;
+            if (diff < 60000) time = "just now";
+            else if (diff < 3600000) time = `${Math.floor(diff / 60000)}m ago`;
+            else if (diff < 86400000) time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+            else time = d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+            return { text: `Last seen ${time}`, color: "#888" };
         }
         return { text: "Offline", color: "#aaa" };
     };
 
     const typeBadgeStyle = (type: string) => {
-        const styles: Record<string, { bg: string; color: string }> = {
+        const s: Record<string, { bg: string; color: string }> = {
             doctor: { bg: "#ede9fe", color: "#7c3aed" },
             staff: { bg: "#dcfce7", color: "#16a34a" },
             patient: { bg: "#fef9c3", color: "#a16207" },
             admin: { bg: "#fee2e2", color: "#dc2626" },
         };
-        return styles[type] || { bg: "#f3f4f6", color: "#374151" };
+        return s[type] || { bg: "#f3f4f6", color: "#374151" };
     };
 
     const filtered = conversations.filter(c =>
@@ -382,7 +421,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                             const other = getOther(conv);
                             const isActive = activeConv?._id === conv._id;
                             const unread = conv.myUnreadCount || 0;
-                            // ✅ PROBLEM 3 — conversation list मध्ये real online dot
                             const isOtherOnline = onlineUsers[other.name]?.isOnline === true;
                             return (
                                 <div key={conv._id} onClick={() => openConversation(conv)} style={{
@@ -393,7 +431,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                     borderBottom: "1px solid #f8f8f8",
                                     transition: "background 0.1s", position: "relative"
                                 }}>
-                                    {/* ✅ showOnline real status वापरतो */}
                                     <Avatar name={other.name} image={other.image} size={42} showOnline={isOtherOnline} />
                                     <div style={{ flex: 1, overflow: "hidden", marginLeft: 10 }}>
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -457,7 +494,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                             display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0
                         }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                {/* ✅ PROBLEM 3 — header मध्ये real online status */}
                                 <Avatar
                                     name={getOther(activeConv).name}
                                     image={getOther(activeConv).image}
@@ -465,12 +501,13 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                     showOnline={onlineUsers[getOther(activeConv).name]?.isOnline === true}
                                 />
                                 <div>
-                                    <h6 style={{ margin: 0, fontWeight: 600, fontSize: 15 }}>{getOther(activeConv).name}</h6>
-                                    {/* ✅ PROBLEM 3 — Online / Last seen / Offline */}
+                                    <h6 style={{ margin: 0, fontWeight: 600, fontSize: 15 }}>
+                                        {getOther(activeConv).name}
+                                    </h6>
+                                    {/* ✅ Real online status */}
                                     {(() => {
-                                        const status = getOnlineStatusText(getOther(activeConv).name);
-                                        if (!status) return <span style={{ fontSize: 12, color: "#aaa" }}>...</span>;
-                                        return <span style={{ fontSize: 12, color: status.color }}>{status.text}</span>;
+                                        const s = getStatusText(getOther(activeConv).name);
+                                        return <span style={{ fontSize: 12, color: s.color }}>{s.text}</span>;
                                     })()}
                                 </div>
                             </div>
@@ -507,6 +544,9 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                             ) : (
                                 messages.map(msg => {
                                     const isMe = msg.sender === MY_NAME;
+                                    // ✅ दुसरा व्यक्ती online आहे का
+                                    const otherName = getOther(activeConv).name;
+                                    const isOtherOnline = onlineUsers[otherName]?.isOnline === true;
                                     return (
                                         <div key={msg._id} style={{
                                             display: "flex", marginBottom: 12,
@@ -553,13 +593,13 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                                         </ul>
                                                     </div>
                                                 </div>
-                                                {/* ✅ PROBLEM 2 — isRead based blue/grey tick */}
+                                                {/* ✅ Tick — माझ्या messages साठी फक्त */}
                                                 {isMe && (
-                                                    <div style={{ textAlign: "right", marginTop: 2 }}>
-                                                        <i className="ti ti-checks" style={{
-                                                            fontSize: 11,
-                                                            color: msg.isRead ? "#22c55e" : "#adb5bd"
-                                                        }} />
+                                                    <div style={{ textAlign: "right", marginTop: 3 }}>
+                                                        <MessageTick
+                                                            isRead={msg.isRead}
+                                                            isOtherOnline={isOtherOnline}
+                                                        />
                                                     </div>
                                                 )}
                                             </div>
@@ -653,14 +693,12 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                 ×
                             </button>
                         </div>
-
                         <div style={{ padding: "14px 24px" }}>
                             <div style={{ position: "relative", marginBottom: 12 }}>
                                 <i className="ti ti-search" style={{
                                     position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa"
                                 }} />
-                                <input
-                                    type="text" autoFocus
+                                <input type="text" autoFocus
                                     placeholder="Search by name or role..."
                                     value={userSearch} onChange={e => setUserSearch(e.target.value)}
                                     style={{
@@ -670,12 +708,9 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                     }}
                                 />
                             </div>
-
                             <div style={{ maxHeight: 300, overflowY: "auto", scrollbarWidth: "none" }}>
                                 {filteredUsers.length === 0 ? (
-                                    <p style={{ textAlign: "center", color: "#aaa", padding: "20px 0", fontSize: 13 }}>
-                                        No users found
-                                    </p>
+                                    <p style={{ textAlign: "center", color: "#aaa", padding: "20px 0", fontSize: 13 }}>No users found</p>
                                 ) : filteredUsers.map(user => {
                                     const badge = typeBadgeStyle(user.type);
                                     return (
@@ -688,9 +723,7 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                         }}>
                                             <Avatar name={user.name} image={user.image} size={40} />
                                             <div style={{ marginLeft: 12, flex: 1, overflow: "hidden" }}>
-                                                <p style={{ margin: 0, fontWeight: 600, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                                    {user.name}
-                                                </p>
+                                                <p style={{ margin: 0, fontWeight: 600, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</p>
                                                 <p style={{ margin: 0, fontSize: 12, color: "#888" }}>{user.role}</p>
                                             </div>
                                             <span style={{
@@ -707,13 +740,9 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                 })}
                             </div>
                         </div>
-
                         <div style={{ padding: "10px 24px 20px", display: "flex", justifyContent: "flex-end", gap: 8 }}>
                             <button onClick={() => { setShowNewChat(false); setUserSearch(""); setSelectedUser(null); }}
-                                style={{
-                                    padding: "8px 20px", border: "1px solid #e9ecef", borderRadius: 8,
-                                    background: "white", cursor: "pointer", fontSize: 14
-                                }}>
+                                style={{ padding: "8px 20px", border: "1px solid #e9ecef", borderRadius: 8, background: "white", cursor: "pointer", fontSize: 14 }}>
                                 Cancel
                             </button>
                             <button onClick={handleStartChat} disabled={!selectedUser} style={{
