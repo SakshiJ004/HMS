@@ -1,9 +1,22 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
-const api = axios.create({ baseURL: BASE_URL, withCredentials: true });
+const API_URL = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/profile`;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Get auth token
+const getAuthConfig = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        throw new Error('Authentication required');
+    }
+    return {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+    };
+};
+
+// Types
 export interface IProfile {
     _id: string;
     fullName: string;
@@ -42,22 +55,48 @@ export interface ChangePasswordPayload {
     confirmPassword: string;
 }
 
-// ─── API calls ────────────────────────────────────────────────────────────────
-
-export const getProfile = async (): Promise<IProfile> => {
-    const res = await api.get("/api/profile");
-    return res.data.data;
+// Get profile
+export const getProfile = async () => {
+    try {
+        const response = await axios.get(API_URL, getAuthConfig());
+        return response.data;
+    } catch (error: any) {
+        console.error('Get profile error:', error);
+        return {
+            success: false,
+            message: error.response?.data?.message || error.message
+        };
+    }
 };
 
-export const updateProfile = async (
-    payload: UpdateProfilePayload
-): Promise<IProfile> => {
-    const res = await api.put("/api/profile", payload);
-    return res.data.data;
+// Update profile
+export const updateProfile = async (payload: UpdateProfilePayload) => {
+    try {
+        const response = await axios.put(API_URL, payload, getAuthConfig());
+        return response.data;
+    } catch (error: any) {
+        console.error('Update profile error:', error);
+        return {
+            success: false,
+            message: error.response?.data?.message || error.message
+        };
+    }
 };
 
-export const changePassword = async (
-    payload: ChangePasswordPayload
-): Promise<void> => {
-    await api.put("/api/profile/change-password", payload);
+// Change password
+export const changePassword = async (payload: ChangePasswordPayload) => {
+    try {
+        const response = await axios.put(
+            `${API_URL}/change-password`,
+            payload,
+            getAuthConfig()
+        );
+        return response.data;
+    } catch (error: any) {
+        console.error('Change password error:', error);
+        return {
+            success: false,
+            message: error.response?.data?.message || error.message
+        };
+    }
 };
