@@ -13,17 +13,8 @@ import {
     type ChatUser,
 } from "../../../../api/chatService";
 
-// ⚠️ IMPORT PATH NOTE:
-// This file is used by:
-//   - Admin Chat: application-modules/application/chat/  → import from "../../../../../../api/chatService"
-//   - Admin Messages: clinic-modules/messages/           → import from "../../../../../api/chatService"
-//   - Doctor Messages: doctor-modules/doctor-messages/   → adjust path as needed
-//   - Patient Messages: patient-modules/patient-messages/→ adjust path as needed
-// Make sure to adjust the import path above when copying to different folders!
-
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 
-// ✅ Get logged-in user from localStorage
 export const getUserInfo = () => {
     try {
         const raw = localStorage.getItem("userData");
@@ -40,7 +31,6 @@ export const getUserInfo = () => {
     return { name: "User", image: "", role: "admin", id: "" };
 };
 
-// ✅ Avatar component
 const Avatar = ({
     name, image, size = 40, showOnline = false
 }: {
@@ -74,11 +64,13 @@ const Avatar = ({
 let socket: Socket;
 
 interface ChatCoreProps {
-    // ✅ forRole controls which users appear in New Chat modal
-    // 'admin'   → Staff + Doctors + Patients
-    // 'doctor'  → Admin + Patients
-    // 'patient' → Admin + Doctors
     forRole: "admin" | "doctor" | "patient";
+}
+
+// ✅ Online status type
+interface OnlineStatus {
+    isOnline: boolean;
+    lastSeen?: string;
 }
 
 const ChatCore = ({ forRole }: ChatCoreProps) => {
@@ -98,23 +90,21 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
     const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
     const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
     const [userSearch, setUserSearch] = useState("");
+    // ✅ PROBLEM 3 — Online status state
+    const [onlineUsers, setOnlineUsers] = useState<Record<string, OnlineStatus>>({});
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const activeConvRef = useRef<ConversationData | null>(null);
 
-    // ✅ Socket setup
     useEffect(() => {
         socket = io(BACKEND_URL, { transports: ["websocket"], reconnection: true });
 
         socket.on("receive_message", (msg: MessageData) => {
-            // Only add if it's for the active conversation
-            setMessages(prev => {
-                if (activeConv && msg.conversationId === activeConv._id) {
-                    return [...prev, msg];
-                }
-                return prev;
-            });
-            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+            if (activeConvRef.current?._id === msg.conversationId) {
+                setMessages(prev => [...prev, msg]);
+                setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+            }
             fetchConversations();
         });
 
@@ -124,6 +114,26 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
             setTypingUser(sender); setIsTyping(true);
         });
         socket.on("user_stop_typing", () => { setIsTyping(false); setTypingUser(""); });
+
+        // ✅ PROBLEM 2 — Seen status: जेव्हा दुसऱ्याने messages read केले
+        socket.on("messages_read", ({ conversationId }: { conversationId: string; readerName: string }) => {
+            if (activeConvRef.current?._id === conversationId) {
+                // माझे सगळे messages isRead: true करा
+                setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
+            }
+        });
+
+        // ✅ PROBLEM 3 — Online status events
+        socket.emit("user_online", { userName: MY_NAME });
+
+        socket.on("online_status_update", ({ userName, isOnline, lastSeen }: {
+            userName: string; isOnline: boolean; lastSeen?: string;
+        }) => {
+            setOnlineUsers(prev => ({
+                ...prev,
+                [userName]: { isOnline, lastSeen }
+            }));
+        });
 
         return () => { socket.disconnect(); };
     }, []);
@@ -141,7 +151,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         });
     }, [activeConv]);
 
-    // ✅ Fetch only MY conversations
     const fetchConversations = useCallback(async () => {
         try {
             const res = await getConversations(MY_NAME);
@@ -155,7 +164,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // Load users when modal opens — filtered by forRole
     useEffect(() => {
         if (showNewChat) {
             getChatUsers(forRole).then(setChatUsers).catch(console.error);
@@ -166,16 +174,18 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         if (activeConv?._id === conv._id) return;
         if (activeConv) socket.emit("leave_conversation", activeConv._id);
         setActiveConv(conv);
+        // ✅ activeConvRef update करा — receive_message साठी
+        activeConvRef.current = conv;
         setMessages([]);
         setLoadingMsgs(true);
         try {
-            // ✅ Pass myName so backend resets only MY unread count
             const res = await getMessages(conv._id, MY_NAME);
             if (res.success) setMessages(res.data);
         } catch (err) { console.error(err); }
         finally { setLoadingMsgs(false); }
         socket.emit("join_conversation", conv._id);
-        // Reset my unread count locally
+        // ✅ PROBLEM 2 — Conversation उघडल्यावर mark_read emit करा
+        socket.emit("mark_read", { conversationId: conv._id, readerName: MY_NAME });
         setConversations(prev => prev.map(c =>
             c._id === conv._id ? { ...c, myUnreadCount: 0 } : c
         ));
@@ -227,7 +237,11 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         try {
             await deleteConversation(convId);
             setConversations(prev => prev.filter(c => c._id !== convId));
-            if (activeConv?._id === convId) { setActiveConv(null); setMessages([]); }
+            if (activeConv?._id === convId) {
+                setActiveConv(null);
+                activeConvRef.current = null;
+                setMessages([]);
+            }
         } catch (err) { console.error(err); }
     };
 
@@ -248,7 +262,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         } catch (err) { console.error(err); }
     };
 
-    // ✅ Get the OTHER person in this conversation
     const getOther = (conv: ConversationData) =>
         conv.participants.find(p => p.name !== MY_NAME) || conv.participants[0];
 
@@ -262,7 +275,30 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         return new Date(d).toLocaleDateString("en-US", { weekday: "short" });
     };
 
-    // ✅ Badge color per user type
+    // ✅ PROBLEM 3 — Online status text helper
+    const getOnlineStatusText = (userName: string) => {
+        const status = onlineUsers[userName];
+        if (!status) return null; // अजून कळलं नाही
+        if (status.isOnline) return { text: "● Online", color: "#22c55e" };
+        if (status.lastSeen) {
+            const d = new Date(status.lastSeen);
+            const now = new Date();
+            const diff = now.getTime() - d.getTime();
+            let timeStr: string;
+            if (diff < 60000) {
+                timeStr = "just now";
+            } else if (diff < 3600000) {
+                timeStr = `${Math.floor(diff / 60000)} min ago`;
+            } else if (diff < 86400000) {
+                timeStr = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+            } else {
+                timeStr = d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+            }
+            return { text: `Last seen ${timeStr}`, color: "#888" };
+        }
+        return { text: "Offline", color: "#aaa" };
+    };
+
     const typeBadgeStyle = (type: string) => {
         const styles: Record<string, { bg: string; color: string }> = {
             doctor: { bg: "#ede9fe", color: "#7c3aed" },
@@ -296,7 +332,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                     width: 300, flexShrink: 0, borderRight: "1px solid #f0f0f0",
                     display: "flex", flexDirection: "column", background: "#fff"
                 }}>
-                    {/* Header with MY info */}
                     <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid #f0f0f0" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -315,7 +350,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                 <i className="ti ti-plus" /> New
                             </button>
                         </div>
-                        {/* Search */}
                         <div style={{ position: "relative" }}>
                             <i className="ti ti-search" style={{
                                 position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
@@ -334,8 +368,7 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                         </div>
                     </div>
 
-                    {/* Conversation list */}
-                    <div style={{ overflowY: "auto", flex: 1 }}>
+                    <div style={{ overflowY: "auto", flex: 1, scrollbarWidth: "none" }}>
                         {filtered.length === 0 ? (
                             <div style={{ textAlign: "center", padding: "40px 16px", color: "#aaa" }}>
                                 <i className="ti ti-message-off" style={{ fontSize: 32, display: "block", marginBottom: 8 }} />
@@ -349,6 +382,8 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                             const other = getOther(conv);
                             const isActive = activeConv?._id === conv._id;
                             const unread = conv.myUnreadCount || 0;
+                            // ✅ PROBLEM 3 — conversation list मध्ये real online dot
+                            const isOtherOnline = onlineUsers[other.name]?.isOnline === true;
                             return (
                                 <div key={conv._id} onClick={() => openConversation(conv)} style={{
                                     display: "flex", alignItems: "center", padding: "11px 14px",
@@ -358,7 +393,8 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                     borderBottom: "1px solid #f8f8f8",
                                     transition: "background 0.1s", position: "relative"
                                 }}>
-                                    <Avatar name={other.name} image={other.image} size={42} showOnline />
+                                    {/* ✅ showOnline real status वापरतो */}
+                                    <Avatar name={other.name} image={other.image} size={42} showOnline={isOtherOnline} />
                                     <div style={{ flex: 1, overflow: "hidden", marginLeft: 10 }}>
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                             <span style={{
@@ -380,7 +416,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                             }}>
                                                 {conv.lastMessage || "No messages yet"}
                                             </p>
-                                            {/* ✅ Show MY unread count only */}
                                             {unread > 0 && (
                                                 <span style={{
                                                     background: "#4f46e5", color: "white", borderRadius: "50%",
@@ -391,7 +426,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                             )}
                                         </div>
                                     </div>
-                                    {/* Delete dropdown */}
                                     <div style={{ position: "absolute", top: 6, right: 4 }}>
                                         <div className="dropdown">
                                             <button onClick={e => e.stopPropagation()} data-bs-toggle="dropdown"
@@ -423,10 +457,21 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                             display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0
                         }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                <Avatar name={getOther(activeConv).name} image={getOther(activeConv).image} size={42} showOnline />
+                                {/* ✅ PROBLEM 3 — header मध्ये real online status */}
+                                <Avatar
+                                    name={getOther(activeConv).name}
+                                    image={getOther(activeConv).image}
+                                    size={42}
+                                    showOnline={onlineUsers[getOther(activeConv).name]?.isOnline === true}
+                                />
                                 <div>
                                     <h6 style={{ margin: 0, fontWeight: 600, fontSize: 15 }}>{getOther(activeConv).name}</h6>
-                                    <span style={{ fontSize: 12, color: "#22c55e" }}>● Online</span>
+                                    {/* ✅ PROBLEM 3 — Online / Last seen / Offline */}
+                                    {(() => {
+                                        const status = getOnlineStatusText(getOther(activeConv).name);
+                                        if (!status) return <span style={{ fontSize: 12, color: "#aaa" }}>...</span>;
+                                        return <span style={{ fontSize: 12, color: status.color }}>{status.text}</span>;
+                                    })()}
                                 </div>
                             </div>
                             <div style={{ display: "flex", gap: 8 }}>
@@ -449,7 +494,7 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                         </div>
 
                         {/* Messages */}
-                        <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+                        <div style={{ flex: 1, overflowY: "auto", padding: "16px", scrollbarWidth: "none" }}>
                             {loadingMsgs ? (
                                 <div style={{ textAlign: "center", paddingTop: 60 }}>
                                     <div className="spinner-border text-primary" style={{ width: 28, height: 28 }} />
@@ -508,9 +553,13 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                                         </ul>
                                                     </div>
                                                 </div>
+                                                {/* ✅ PROBLEM 2 — isRead based blue/grey tick */}
                                                 {isMe && (
                                                     <div style={{ textAlign: "right", marginTop: 2 }}>
-                                                        <i className="ti ti-checks" style={{ fontSize: 11, color: "#22c55e" }} />
+                                                        <i className="ti ti-checks" style={{
+                                                            fontSize: 11,
+                                                            color: msg.isRead ? "#22c55e" : "#adb5bd"
+                                                        }} />
                                                     </div>
                                                 )}
                                             </div>
@@ -519,7 +568,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                 })
                             )}
 
-                            {/* Typing indicator */}
                             {isTyping && (
                                 <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#888", fontSize: 13, marginBottom: 8 }}>
                                     <Avatar name={typingUser} size={24} />
@@ -537,7 +585,6 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Input */}
                         <div style={{ padding: "12px 16px", background: "#fff", borderTop: "1px solid #f0f0f0", flexShrink: 0 }}>
                             <form onSubmit={handleSend} style={{ display: "flex", gap: 8, alignItems: "center" }}>
                                 <input
@@ -586,7 +633,7 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                 )}
             </div>
 
-            {/* ===== New Chat Modal ===== */}
+            {/* New Chat Modal */}
             {showNewChat && (
                 <div style={{
                     position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
@@ -624,7 +671,7 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
                                 />
                             </div>
 
-                            <div style={{ maxHeight: 300, overflowY: "auto" }}>
+                            <div style={{ maxHeight: 300, overflowY: "auto", scrollbarWidth: "none" }}>
                                 {filteredUsers.length === 0 ? (
                                     <p style={{ textAlign: "center", color: "#aaa", padding: "20px 0", fontSize: 13 }}>
                                         No users found
@@ -683,8 +730,9 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
             )}
 
             <style>{`
-        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
-      `}</style>
+                @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
+                ::-webkit-scrollbar { display: none; }
+            `}</style>
         </>
     );
 };

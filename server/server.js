@@ -142,6 +142,7 @@ const PORT = process.env.PORT || 5000;
 //     console.log(`Server is running on port ${PORT}`);
 // });
 
+const onlineUsers = new Map();
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
@@ -167,8 +168,41 @@ io.on('connection', (socket) => {
         socket.to(conversationId).emit('user_stop_typing');
     });
 
+    // Mark read
+    socket.on("mark_read", ({ conversationId, readerName }) => {
+        socket.to(conversationId).emit("messages_read", { conversationId, readerName });
+    });
+
+    // User online झाला
+    socket.on("user_online", ({ userName }) => {
+        onlineUsers.set(userName, { socketId: socket.id, lastSeen: null });
+        // सगळ्यांना broadcast करा
+        io.emit("online_status_update", {
+            userName,
+            isOnline: true,
+        });
+    });
+
+    // User disconnect झाला
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
+
+        let disconnectedUser = null;
+        for (const [name, data] of onlineUsers.entries()) {
+            if (data.socketId === socket.id) {
+                disconnectedUser = name;
+                break;
+            }
+        }
+
+        if (disconnectedUser) {
+            onlineUsers.delete(disconnectedUser);
+            io.emit("online_status_update", {
+                userName: disconnectedUser,
+                isOnline: false,
+                lastSeen: new Date().toISOString(),
+            });
+        }
     });
 });
 
