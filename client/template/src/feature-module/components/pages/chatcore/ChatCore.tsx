@@ -158,11 +158,16 @@ const ChatCore = ({ forRole }: ChatCoreProps) => {
         });
         socket.on("user_stop_typing", () => { setIsTyping(false); setTypingUser(""); });
 
-        // ✅ SEEN — दुसऱ्याने read केलं — माझे messages blue करा
+        // ✅ SEEN — दुसऱ्याने read केलं — त्या conversation चे सगळे messages blue करा
+        // activeConvRef check नाही — conversationId match झाला की लगेच update
         socket.on("messages_read", ({ conversationId }: { conversationId: string }) => {
-            if (activeConvRef.current?._id === conversationId) {
-                setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
-            }
+            setMessages(prev => {
+                // फक्त त्याच conversation चे messages update करा
+                if (prev.length > 0 && prev[0].conversationId === conversationId) {
+                    return prev.map(m => ({ ...m, isRead: true }));
+                }
+                return prev;
+            });
         });
 
         // ✅ ONLINE STATUS UPDATE — कोणी online/offline झाला

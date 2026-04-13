@@ -169,8 +169,19 @@ io.on('connection', (socket) => {
     });
 
     // ✅ Seen status — दुसऱ्याने conversation उघडलं
-    socket.on("mark_read", ({ conversationId, readerName }) => {
-        // Conversation room मधल्या बाकी सगळ्यांना सांग
+    // DB मध्ये isRead update करा + sender ला blue tick दाखवा
+    socket.on("mark_read", async ({ conversationId, readerName }) => {
+        try {
+            const Message = require('./models/Message');
+            // ✅ DB मध्ये isRead: true करा — readerName ने पाठवलेले नाहीत असे सगळे
+            await Message.updateMany(
+                { conversationId, sender: { $ne: readerName }, isRead: false },
+                { isRead: true }
+            );
+        } catch (err) {
+            console.error('mark_read DB error:', err);
+        }
+        // ✅ Conversation room मधल्या sender ला सांगा
         socket.to(conversationId).emit("messages_read", { conversationId, readerName });
     });
 
