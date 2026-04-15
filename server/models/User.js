@@ -585,6 +585,14 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    twoFAEnabled: {
+        type: Boolean,
+        default: false,
+    },
+    loginAlerts: {
+        type: Boolean,
+        default: true,
+    },
 }, baseOptions);
 
 // Password hashing middleware

@@ -1,5 +1,29 @@
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+
+// ── Get Security Settings ─────────────────────────────────────────────────────
+exports.getSecuritySettings = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id)
+            .select('email phone twoFAEnabled loginAlerts status');
+
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                email: user.email || '',
+                phone: user.phone || '',
+                // ✅ Default to false if field doesn't exist yet
+                twoFAEnabled: user.twoFAEnabled === true,
+                loginAlerts: user.loginAlerts !== false, // default true
+                status: user.status || 'Available',
+            },
+        });
+    } catch (err) {
+        console.error('getSecuritySettings error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch security settings', error: err.message });
+    }
+};
 
 // ── Change Password ───────────────────────────────────────────────────────────
 exports.changePassword = async (req, res) => {
@@ -22,24 +46,25 @@ exports.changePassword = async (req, res) => {
         if (!isMatch)
             return res.status(400).json({ success: false, message: 'Current password is incorrect' });
 
-        user.password = newPassword;
+        user.password = newPassword; // pre-save hook hashes it
         await user.save();
 
         res.status(200).json({ success: true, message: 'Password changed successfully' });
     } catch (err) {
+        console.error('changePassword error:', err);
         res.status(500).json({ success: false, message: 'Failed to change password', error: err.message });
     }
 };
 
 // ── Toggle Two Factor Auth ────────────────────────────────────────────────────
+// ✅ ONLY twoFAEnabled changes — loginAlerts is NOT touched
 exports.toggleTwoFA = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-        // Toggle the twoFAEnabled field (exists in Doctor schema via discriminator)
-        // For base User model, we store it in a generic field
-        const current = user.twoFAEnabled || false;
+        // Only toggle twoFAEnabled — never touch loginAlerts
+        const current = user.twoFAEnabled === true;
         user.twoFAEnabled = !current;
         await user.save();
 
@@ -47,19 +72,24 @@ exports.toggleTwoFA = async (req, res) => {
             success: true,
             message: `Two Factor Authentication ${!current ? 'enabled' : 'disabled'}`,
             twoFAEnabled: user.twoFAEnabled,
+            // ✅ Return loginAlerts unchanged so frontend stays in sync
+            loginAlerts: user.loginAlerts !== false,
         });
     } catch (err) {
+        console.error('toggleTwoFA error:', err);
         res.status(500).json({ success: false, message: 'Failed to update 2FA', error: err.message });
     }
 };
 
-// ── Toggle Login Alerts (Google Auth placeholder) ─────────────────────────────
+// ── Toggle Login Alerts (Google Auth) ────────────────────────────────────────
+// ✅ ONLY loginAlerts changes — twoFAEnabled is NOT touched
 exports.toggleLoginAlerts = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-        const current = user.loginAlerts !== undefined ? user.loginAlerts : true;
+        // Only toggle loginAlerts — never touch twoFAEnabled
+        const current = user.loginAlerts !== false; // default true
         user.loginAlerts = !current;
         await user.save();
 
@@ -67,8 +97,11 @@ exports.toggleLoginAlerts = async (req, res) => {
             success: true,
             message: `Login alerts ${!current ? 'enabled' : 'disabled'}`,
             loginAlerts: user.loginAlerts,
+            // ✅ Return twoFAEnabled unchanged
+            twoFAEnabled: user.twoFAEnabled === true,
         });
     } catch (err) {
+        console.error('toggleLoginAlerts error:', err);
         res.status(500).json({ success: false, message: 'Failed to update login alerts', error: err.message });
     }
 };
@@ -76,7 +109,7 @@ exports.toggleLoginAlerts = async (req, res) => {
 // ── Update Phone Number ───────────────────────────────────────────────────────
 exports.updatePhone = async (req, res) => {
     try {
-        const { currentPhone, newPhone, currentPassword } = req.body;
+        const { newPhone, currentPassword } = req.body;
 
         if (!newPhone || !currentPassword)
             return res.status(400).json({ success: false, message: 'New phone and current password are required' });
@@ -97,11 +130,12 @@ exports.updatePhone = async (req, res) => {
             phone: user.phone,
         });
     } catch (err) {
+        console.error('updatePhone error:', err);
         res.status(500).json({ success: false, message: 'Failed to update phone', error: err.message });
     }
 };
 
-// ── Remove Phone Number ───────────────────────────────────────────────────────
+// ── Remove Phone ──────────────────────────────────────────────────────────────
 exports.removePhone = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
@@ -127,12 +161,13 @@ exports.updateEmail = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-        // Verify current email matches
         if (user.email !== currentEmail?.toLowerCase())
             return res.status(400).json({ success: false, message: 'Current email is incorrect' });
 
-        // Check if new email already taken
-        const existing = await User.findOne({ email: newEmail.toLowerCase(), _id: { $ne: req.user._id } });
+        const existing = await User.findOne({
+            email: newEmail.toLowerCase(),
+            _id: { $ne: req.user._id },
+        });
         if (existing)
             return res.status(400).json({ success: false, message: 'This email is already in use' });
 
@@ -149,6 +184,7 @@ exports.updateEmail = async (req, res) => {
             email: user.email,
         });
     } catch (err) {
+        console.error('updateEmail error:', err);
         res.status(500).json({ success: false, message: 'Failed to update email', error: err.message });
     }
 };
@@ -183,36 +219,11 @@ exports.deleteAccount = async (req, res) => {
         if (!isMatch)
             return res.status(400).json({ success: false, message: 'Password is incorrect' });
 
-        // Log reason if provided (optional: save to audit log)
-        if (reason) {
-            console.log(`Account deletion reason for ${user.email}: ${reason}`);
-        }
+        if (reason) console.log(`Delete reason for ${user.email}: ${reason}`);
 
         await User.findByIdAndDelete(req.user._id);
-
         res.status(200).json({ success: true, message: 'Account permanently deleted' });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Failed to delete account', error: err.message });
-    }
-};
-
-// ── Get Security Settings ─────────────────────────────────────────────────────
-exports.getSecuritySettings = async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).select('email phone twoFAEnabled loginAlerts status');
-        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-        res.status(200).json({
-            success: true,
-            data: {
-                email: user.email,
-                phone: user.phone || '',
-                twoFAEnabled: user.twoFAEnabled || false,
-                loginAlerts: user.loginAlerts !== undefined ? user.loginAlerts : true,
-                status: user.status,
-            },
-        });
-    } catch (err) {
-        res.status(500).json({ success: false, message: 'Failed to fetch security settings', error: err.message });
     }
 };

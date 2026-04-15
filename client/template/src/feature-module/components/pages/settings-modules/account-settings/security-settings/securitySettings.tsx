@@ -364,7 +364,6 @@
 // export default SecuritySettings
 
 
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import SettingsSidebar from "../../../../../../core/common/settings-sidebar/settingsSidebar";
@@ -390,11 +389,62 @@ const Toast = ({
 }) => (
   <div
     className={`alert alert-${type} alert-dismissible d-flex align-items-center`}
-    style={{ position: "fixed", top: 20, right: 20, zIndex: 9999, minWidth: 320, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
+    style={{
+      position: "fixed",
+      top: 20,
+      right: 20,
+      zIndex: 9999,
+      minWidth: 320,
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    }}
   >
-    <i className={`ti ti-${type === "success" ? "circle-check" : "alert-circle"} me-2 fs-18`} />
+    <i
+      className={`ti ti-${type === "success" ? "circle-check" : "alert-circle"
+        } me-2 fs-18`}
+    />
     {message}
     <button type="button" className="btn-close ms-auto" onClick={onClose} />
+  </div>
+);
+
+// ─── Toggle Switch Component ──────────────────────────────────────────────────
+// ✅ Proper sliding toggle — blue dot slides right when ON
+const ToggleSwitch = ({
+  checked,
+  onChange,
+  disabled = false,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+}) => (
+  <div
+    onClick={!disabled ? onChange : undefined}
+    style={{
+      width: 44,
+      height: 24,
+      borderRadius: 12,
+      background: checked ? "#4f46e5" : "#d1d5db",
+      position: "relative",
+      cursor: disabled ? "not-allowed" : "pointer",
+      transition: "background 0.25s ease",
+      opacity: disabled ? 0.6 : 1,
+      flexShrink: 0,
+    }}
+  >
+    <div
+      style={{
+        width: 18,
+        height: 18,
+        borderRadius: "50%",
+        background: "#fff",
+        position: "absolute",
+        top: 3,
+        left: checked ? 23 : 3,
+        transition: "left 0.25s ease",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+      }}
+    />
   </div>
 );
 
@@ -402,88 +452,121 @@ const Toast = ({
 const SecuritySettings = () => {
   const navigate = useNavigate();
 
-  const [settings, setSettings] = useState<ISecuritySettings | null>(null);
+  const [settings, setSettings] = useState<ISecuritySettings>({
+    email: "",
+    phone: "",
+    twoFAEnabled: false,
+    loginAlerts: true,
+    status: "Available",
+  });
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "danger" } | null>(null);
+  // ✅ Separate loading states for each toggle — so they don't block each other
+  const [toggling2FA, setToggling2FA] = useState(false);
+  const [togglingAlerts, setTogglingAlerts] = useState(false);
+
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "danger";
+  } | null>(null);
 
   const showToast = (message: string, type: "success" | "danger" = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
 
-  // ── Load security settings ──────────────────────────────────────────────
+  // ── Load on mount ───────────────────────────────────────────────────────
   useEffect(() => {
     getSecuritySettings()
-      .then(setSettings)
+      .then((data) => setSettings(data))
       .catch(() => showToast("Failed to load security settings.", "danger"))
       .finally(() => setLoading(false));
   }, []);
 
   // ── Toggle 2FA ──────────────────────────────────────────────────────────
+  // ✅ Only updates twoFAEnabled — loginAlerts stays exactly as is
   const handleToggle2FA = async () => {
+    if (toggling2FA) return;
+    setToggling2FA(true);
+    // Optimistic update
+    const prev2FA = settings.twoFAEnabled;
+    setSettings((p) => ({ ...p, twoFAEnabled: !p.twoFAEnabled }));
     try {
       const res = await toggleTwoFA();
-      setSettings((p) => p ? { ...p, twoFAEnabled: res.twoFAEnabled } : p);
+      // Use server response to confirm — loginAlerts from server (unchanged)
+      setSettings((p) => ({
+        ...p,
+        twoFAEnabled: res.twoFAEnabled,
+        // ✅ loginAlerts is NOT changed — keep existing value
+      }));
       showToast(`Two Factor Authentication ${res.twoFAEnabled ? "enabled" : "disabled"}`);
     } catch (err: any) {
+      // Revert on error
+      setSettings((p) => ({ ...p, twoFAEnabled: prev2FA }));
       showToast(err?.response?.data?.message ?? "Failed to update 2FA.", "danger");
+    } finally {
+      setToggling2FA(false);
     }
   };
 
   // ── Toggle Login Alerts ─────────────────────────────────────────────────
+  // ✅ Only updates loginAlerts — twoFAEnabled stays exactly as is
   const handleToggleLoginAlerts = async () => {
+    if (togglingAlerts) return;
+    setTogglingAlerts(true);
+    // Optimistic update
+    const prevAlerts = settings.loginAlerts;
+    setSettings((p) => ({ ...p, loginAlerts: !p.loginAlerts }));
     try {
       const res = await toggleLoginAlerts();
-      setSettings((p) => p ? { ...p, loginAlerts: res.loginAlerts } : p);
+      // Use server response — twoFAEnabled is NOT changed
+      setSettings((p) => ({
+        ...p,
+        loginAlerts: res.loginAlerts,
+        // ✅ twoFAEnabled is NOT changed — keep existing value
+      }));
       showToast(`Login alerts ${res.loginAlerts ? "enabled" : "disabled"}`);
     } catch (err: any) {
+      // Revert on error
+      setSettings((p) => ({ ...p, loginAlerts: prevAlerts }));
       showToast(err?.response?.data?.message ?? "Failed to update.", "danger");
+    } finally {
+      setTogglingAlerts(false);
     }
   };
 
   // ── Remove Phone ────────────────────────────────────────────────────────
   const handleRemovePhone = async () => {
-    if (!window.confirm("Are you sure you want to remove your phone number?")) return;
+    if (!window.confirm("Remove your phone number?")) return;
     try {
       await removePhone();
-      setSettings((p) => p ? { ...p, phone: "" } : p);
+      setSettings((p) => ({ ...p, phone: "" }));
       showToast("Phone number removed.");
     } catch (err: any) {
       showToast(err?.response?.data?.message ?? "Failed to remove phone.", "danger");
     }
   };
 
-  // ── Deactivate Account ──────────────────────────────────────────────────
+  // ── Deactivate ──────────────────────────────────────────────────────────
   const handleDeactivate = async () => {
-    if (!window.confirm("Are you sure you want to deactivate your account? You can reactivate by signing in again.")) return;
+    if (!window.confirm("Deactivate your account? You can reactivate by signing in again.")) return;
     try {
       await deactivateAccount();
-      // Clear local storage and redirect to login
       localStorage.clear();
       sessionStorage.clear();
       showToast("Account deactivated.");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err: any) {
-      showToast(err?.response?.data?.message ?? "Failed to deactivate account.", "danger");
+      showToast(err?.response?.data?.message ?? "Failed to deactivate.", "danger");
     }
   };
 
-  // ── After account deleted ───────────────────────────────────────────────
-  const handleAccountDeleted = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    showToast("Account permanently deleted.");
-    setTimeout(() => navigate("/login"), 1500);
-  };
-
-  // ── Sync updated values back to state ──────────────────────────────────
-  const handlePhoneUpdated = (phone: string) => {
-    setSettings((p) => p ? { ...p, phone } : p);
-  };
+  // ── Callbacks for Modals ────────────────────────────────────────────────
+  const handlePhoneUpdated = (phone: string) =>
+    setSettings((p) => ({ ...p, phone }));
 
   const handleEmailUpdated = (email: string) => {
-    setSettings((p) => p ? { ...p, email } : p);
-    // Force logout since email changed
+    setSettings((p) => ({ ...p, email }));
+    showToast("Email updated. Logging out...");
     setTimeout(() => {
       localStorage.clear();
       sessionStorage.clear();
@@ -491,10 +574,20 @@ const SecuritySettings = () => {
     }, 2000);
   };
 
+  const handleAccountDeleted = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    showToast("Account deleted.");
+    setTimeout(() => navigate("/login"), 1500);
+  };
+
   if (loading) {
     return (
       <div className="page-wrapper">
-        <div className="content d-flex align-items-center justify-content-center" style={{ minHeight: 400 }}>
+        <div
+          className="content d-flex align-items-center justify-content-center"
+          style={{ minHeight: 400 }}
+        >
           <div className="spinner-border text-primary" />
         </div>
       </div>
@@ -504,12 +597,15 @@ const SecuritySettings = () => {
   return (
     <>
       {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
 
       <div className="page-wrapper">
         <div className="content" id="profilePage">
-          {/* Page Header */}
           <div className="mb-3 border-bottom pb-3">
             <h4 className="fw-bold mb-0">Settings</h4>
           </div>
@@ -517,106 +613,84 @@ const SecuritySettings = () => {
           <div className="card">
             <div className="card-body p-0">
               <div className="settings-wrapper d-flex">
-                {/* Settings Sidebar */}
                 <SettingsSidebar />
 
                 <div className="card flex-fill mb-0 border-0 bg-light-500 shadow-none">
                   <div className="card-header border-bottom px-0 mx-3">
-                    <div className="d-flex">
-                      <h5 className="fw-bold">Security</h5>
-                    </div>
+                    <h5 className="fw-bold">Security</h5>
                   </div>
 
                   <div className="card-body px-0 mx-3">
                     <div className="row">
                       <div className="col-lg-8">
                         <div>
-                          {/* ── Password ─────────────────────────────── */}
+                          {/* ── Password ─────────────────────────── */}
                           <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 border-bottom mb-3 pb-3">
-                            <div className="d-flex align-items-center">
-                              <div>
-                                <h5 className="fs-16 fw-semibold mb-1">Password</h5>
-                                <p className="fs-14">Set a unique password to secure the account</p>
-                              </div>
+                            <div>
+                              <h5 className="fs-16 fw-semibold mb-1">Password</h5>
+                              <p className="fs-14 mb-0">Set a unique password to secure the account</p>
                             </div>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" data-bs-toggle="modal" data-bs-target="#change_password">
-                                <span className="btn btn-md btn-light p-1 shadow-sm border">
-                                  <i className="ti ti-edit" />
-                                </span>
-                              </Link>
-                            </div>
+                            <Link to="#" data-bs-toggle="modal" data-bs-target="#change_password">
+                              <span className="btn btn-md btn-light p-1 shadow-sm border">
+                                <i className="ti ti-edit" />
+                              </span>
+                            </Link>
                           </div>
 
-                          {/* ── Two Factor Authentication ─────────────── */}
+                          {/* ── Two Factor Auth ───────────────────── */}
                           <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 border-bottom mb-3 pb-3">
-                            <div className="d-flex align-items-center">
-                              <div>
-                                <h5 className="fs-16 fw-semibold mb-1">Two Factor Authentication</h5>
-                                <p className="fs-14">Use your mobile phone to receive security PIN.</p>
-                                {settings?.twoFAEnabled && (
-                                  <span className="badge bg-success fs-12">Enabled</span>
+                            <div>
+                              <h5 className="fs-16 fw-semibold mb-1">Two Factor Authentication</h5>
+                              <p className="fs-14 mb-0">Use your mobile phone to receive security PIN.</p>
+                              <small className={`mt-1 d-block ${settings.twoFAEnabled ? "text-success" : "text-muted"}`}>
+                                {settings.twoFAEnabled ? "● Enabled" : "○ Disabled"}
+                              </small>
+                            </div>
+                            <ToggleSwitch
+                              checked={settings.twoFAEnabled}
+                              onChange={handleToggle2FA}
+                              disabled={toggling2FA}
+                            />
+                          </div>
+
+                          {/* ── Google Auth ───────────────────────── */}
+                          <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 border-bottom mb-3 pb-3">
+                            <div>
+                              <h5 className="fs-16 fw-semibold mb-1">Google Authentication</h5>
+                              <p className="fs-14 mb-0">Receive login alert notifications</p>
+                              <small className={`mt-1 d-block ${settings.loginAlerts ? "text-success" : "text-muted"}`}>
+                                {settings.loginAlerts ? "● Enabled" : "○ Disabled"}
+                              </small>
+                            </div>
+                            <ToggleSwitch
+                              checked={settings.loginAlerts}
+                              onChange={handleToggleLoginAlerts}
+                              disabled={togglingAlerts}
+                            />
+                          </div>
+
+                          {/* ── Phone Number ──────────────────────── */}
+                          <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 border-bottom mb-3 pb-3">
+                            <div>
+                              <h5 className="fs-16 fw-semibold mb-1">Phone Number</h5>
+                              <p className="fs-14 mb-0">
+                                {settings.phone ? (
+                                  <span className="fw-medium text-dark">{settings.phone}</span>
+                                ) : (
+                                  <span className="text-muted">No phone number set</span>
                                 )}
-                              </div>
+                              </p>
                             </div>
-                            <div className="d-flex align-items-center">
-                              <label className="d-flex align-items-center form-switch ps-3">
-                                <input
-                                  className="form-check-input m-0 me-2"
-                                  type="checkbox"
-                                  checked={settings?.twoFAEnabled || false}
-                                  onChange={handleToggle2FA}
-                                />
-                              </label>
-                            </div>
-                          </div>
-
-                          {/* ── Google Authentication (Login Alerts) ──── */}
-                          <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 border-bottom mb-3 pb-3">
-                            <div className="d-flex align-items-center">
-                              <div>
-                                <h5 className="fs-16 fw-semibold mb-1">Google Authentication</h5>
-                                <p className="fs-14">Receive login alert notifications</p>
-                                {settings?.loginAlerts && (
-                                  <span className="badge bg-success fs-12">Enabled</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="d-flex align-items-center">
-                              <label className="d-flex align-items-center form-switch ps-3">
-                                <input
-                                  className="form-check-input m-0 me-2"
-                                  type="checkbox"
-                                  checked={settings?.loginAlerts || false}
-                                  onChange={handleToggleLoginAlerts}
-                                />
-                              </label>
-                            </div>
-                          </div>
-
-                          {/* ── Phone Number ──────────────────────────── */}
-                          <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 border-bottom mb-3 pb-3">
-                            <div className="d-flex align-items-center">
-                              <div>
-                                <h5 className="fs-16 fw-semibold mb-1">Phone Number</h5>
-                                <p className="fs-14">
-                                  {settings?.phone
-                                    ? <><span className="fw-medium text-dark">{settings.phone}</span></>
-                                    : "No phone number set"}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="me-3" data-bs-toggle="modal" data-bs-target="#phone_verification">
+                            <div className="d-flex align-items-center gap-2">
+                              <Link to="#" data-bs-toggle="modal" data-bs-target="#phone_verification">
                                 <span className="btn btn-md btn-light border shadow-sm p-1">
                                   <i className="ti ti-edit" />
                                 </span>
                               </Link>
-                              {settings?.phone && (
+                              {settings.phone && (
                                 <button
                                   className="btn btn-md btn-light border shadow-sm p-1"
                                   onClick={handleRemovePhone}
-                                  title="Remove phone"
                                 >
                                   <i className="ti ti-trash" />
                                 </button>
@@ -624,51 +698,46 @@ const SecuritySettings = () => {
                             </div>
                           </div>
 
-                          {/* ── Email Address ─────────────────────────── */}
+                          {/* ── Email Address ─────────────────────── */}
                           <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 border-bottom mb-3 pb-3">
-                            <div className="d-flex align-items-center">
-                              <div>
-                                <h5 className="fs-16 fw-semibold mb-1">Email Address</h5>
-                                <p className="fs-14">
-                                  {settings?.email
-                                    ? <span className="fw-medium text-dark">{settings.email}</span>
-                                    : "No email set"}
-                                </p>
-                              </div>
+                            <div>
+                              <h5 className="fs-16 fw-semibold mb-1">Email Address</h5>
+                              <p className="fs-14 mb-0">
+                                {settings.email ? (
+                                  <span className="fw-medium text-dark">{settings.email}</span>
+                                ) : (
+                                  <span className="text-muted">No email set</span>
+                                )}
+                              </p>
                             </div>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="me-3" data-bs-toggle="modal" data-bs-target="#email_verification">
-                                <span className="btn btn-md btn-light border shadow-sm p-1">
-                                  <i className="ti ti-edit" />
-                                </span>
-                              </Link>
-                            </div>
+                            <Link to="#" data-bs-toggle="modal" data-bs-target="#email_verification">
+                              <span className="btn btn-md btn-light border shadow-sm p-1">
+                                <i className="ti ti-edit" />
+                              </span>
+                            </Link>
                           </div>
 
-                          {/* ── Deactivate Account ────────────────────── */}
+                          {/* ── Deactivate ────────────────────────── */}
                           <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 border-bottom mb-3 pb-3">
-                            <div className="d-flex align-items-center">
-                              <div>
-                                <h5 className="fs-16 fw-semibold mb-1">Deactivate Account</h5>
-                                <p className="fs-14">Your account will be deactivated and reactivated upon signing in again.</p>
-                              </div>
+                            <div>
+                              <h5 className="fs-16 fw-semibold mb-1">Deactivate Account</h5>
+                              <p className="fs-14 mb-0">
+                                Your account will be deactivated and reactivated upon signing in again.
+                              </p>
                             </div>
                             <button
                               className="btn btn-md btn-light border shadow-sm p-1"
                               onClick={handleDeactivate}
-                              title="Deactivate account"
                             >
                               <i className="ti ti-ban" />
                             </button>
                           </div>
 
-                          {/* ── Delete Account ────────────────────────── */}
+                          {/* ── Delete Account ────────────────────── */}
                           <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                            <div className="d-flex align-items-center">
-                              <div>
-                                <h5 className="fs-16 fw-semibold mb-1 text-danger">Delete Account</h5>
-                                <p className="fs-14">Your account will be permanently deleted</p>
-                              </div>
+                            <div>
+                              <h5 className="fs-16 fw-semibold mb-1 text-danger">Delete Account</h5>
+                              <p className="fs-14 mb-0">Your account will be permanently deleted</p>
                             </div>
                             <Link to="#" data-bs-toggle="modal" data-bs-target="#delete_modal">
                               <span className="btn btn-md btn-light border shadow-sm p-1">
@@ -679,7 +748,7 @@ const SecuritySettings = () => {
                         </div>
                       </div>
 
-                      {/* ── Browsers & Devices (static UI) ──────────── */}
+                      {/* ── Browsers & Devices ───────────────────── */}
                       <div className="col-lg-4">
                         <div className="card bg-light">
                           <div className="card-body">
@@ -707,8 +776,12 @@ const SecuritySettings = () => {
                               { browser: "Chrome - Windows", time: "18 Jan 2025, 03:15 PM" },
                               { browser: "Safari Macos", time: "02 Jan 2025, 09:30 AM" },
                               { browser: "Firefox Windows", time: "28 Dec 2024, 05:40 PM" },
-                            ].map((s, i) => (
-                              <div key={i} className={`d-flex align-items-center justify-content-between p-2 ${i < 7 ? "border-bottom" : ""}`}>
+                            ].map((s, i, arr) => (
+                              <div
+                                key={i}
+                                className={`d-flex align-items-center justify-content-between p-2 ${i < arr.length - 1 ? "border-bottom" : ""
+                                  }`}
+                              >
                                 <div>
                                   <h6 className="fs-14 fw-semibold">{s.browser}</h6>
                                   <span className="fs-13">{s.time}</span>
@@ -734,7 +807,11 @@ const SecuritySettings = () => {
 
         <div className="footer text-center bg-white p-2 border-top">
           <p className="text-dark mb-0">
-            2025 © <Link to="#" className="link-primary">Preclinic</Link>, All Rights Reserved
+            2025 ©{" "}
+            <Link to="#" className="link-primary">
+              Preclinic
+            </Link>
+            , All Rights Reserved
           </p>
         </div>
       </div>
@@ -742,8 +819,8 @@ const SecuritySettings = () => {
       <Modals
         onSuccess={showToast}
         onError={(msg) => showToast(msg, "danger")}
-        currentEmail={settings?.email || ""}
-        currentPhone={settings?.phone || ""}
+        currentEmail={settings.email}
+        currentPhone={settings.phone}
         onPhoneUpdated={handlePhoneUpdated}
         onEmailUpdated={handleEmailUpdated}
         onAccountDeleted={handleAccountDeleted}

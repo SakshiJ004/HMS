@@ -12,18 +12,21 @@ const {
     deleteAccount,
 } = require('../controllers/securityController');
 
-// ✅ Add your auth middleware — same one you use everywhere
-const { protect } = require('../middleware/authMiddleware');
-router.use(protect);
 
-router.get('/', getSecuritySettings);   // GET  current security info
-router.put('/password', changePassword);        // PUT  change password
-router.put('/two-fa', toggleTwoFA);           // PUT  toggle 2FA
-router.put('/login-alerts', toggleLoginAlerts);     // PUT  toggle login alerts
-router.put('/phone', updatePhone);           // PUT  update phone
-router.delete('/phone', removePhone);           // DELETE remove phone
-router.put('/email', updateEmail);           // PUT  update email
-router.put('/deactivate', deactivateAccount);     // PUT  deactivate
-router.delete('/account', deleteAccount);         // DELETE permanently delete
+const { protect } = require('../middleware/authMiddleware');
+const { verifyToken } = require('../middleware/authMiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.use(protect); 
+
+router.get('/', getSecuritySettings);
+router.put('/password', changePassword);
+router.put('/two-fa', toggleTwoFA);
+router.put('/login-alerts', toggleLoginAlerts);
+router.put('/phone', updatePhone);
+router.delete('/phone', removePhone);
+router.put('/email', updateEmail);
+router.put('/deactivate', deactivateAccount);
+router.delete('/account', deleteAccount);
 
 module.exports = router;
