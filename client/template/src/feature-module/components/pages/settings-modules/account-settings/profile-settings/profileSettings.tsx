@@ -294,13 +294,10 @@
 
 // export default ProfileSettings;
 
-
 import { Link } from "react-router";
 import SettingsSidebar from "../../../../../../core/common/settings-sidebar/settingsSidebar";
-// import { City, Country, State } from "../../../../../../core/common/selectOption";
-// import CommonSelect from "../../../../../../core/common/common-select/commonSelect";
 import { useState, useEffect } from "react";
-import { getProfile, updateProfile, type IProfile, type UpdateProfilePayload, } from "../../../../../../api/profileService";
+import { getProfile, updateProfile, type IProfile, type UpdateProfilePayload } from "../../../../../../api/profileService";
 import { message } from "antd";
 
 const ProfileSettings = () => {
@@ -369,9 +366,17 @@ const ProfileSettings = () => {
         return;
       }
 
+      // Check file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        message.error('Please upload a valid image (JPEG, PNG, GIF, WebP)');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfileImage(reader.result as string);
+        message.success('Image selected! Click "Save Changes" to update.');
       };
       reader.readAsDataURL(file);
     }
@@ -389,42 +394,66 @@ const ProfileSettings = () => {
 
     try {
       const payload: UpdateProfilePayload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        phone: formData.phone.trim(),
         profileImage: profileImage,
-        address1: formData.address1,
-        address2: formData.address2,
-        country: formData.country,
-        state: formData.state,
-        city: formData.city,
-        pincode: formData.pincode
+        address1: formData.address1.trim(),
+        address2: formData.address2.trim(),
+        country: formData.country.trim(),
+        state: formData.state.trim(),
+        city: formData.city.trim(),
+        pincode: formData.pincode.trim()
       };
+
+      console.log('📤 Updating profile:', payload);
 
       const response = await updateProfile(payload);
 
-      if (response.success) {
+      if (response.success && response.data) {
         message.success('Profile updated successfully!');
 
-        // Update local storage user data if needed
-        const currentUser = localStorage.getItem('user');
-        if (currentUser) {
-          const userData = JSON.parse(currentUser);
-          userData.fullName = `${formData.firstName} ${formData.lastName}`;
-          userData.profileImage = profileImage;
-          localStorage.setItem('user', JSON.stringify(userData));
-        }
+        // ✅ Update localStorage with new user data
+        const updatedUser = {
+          _id: response.data._id,
+          fullName: response.data.fullName,
+          firstName: response.data.firstName,
+          lastName: response.data.lastName,
+          email: response.data.email,
+          phone: response.data.phone,
+          role: response.data.role,
+          profileImage: response.data.profileImage,
+          address: response.data.address
+        };
 
-        fetchProfile(); // Refresh profile data
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        console.log('✅ localStorage updated:', updatedUser);
+
+        // ✅ Trigger custom event to update header
+        window.dispatchEvent(new Event('userProfileUpdated'));
+
+        // ✅ Refresh profile data
+        await fetchProfile();
+
+        // ✅ Force page reload after 1 second to update header
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+
       } else {
         message.error(response.message || 'Failed to update profile');
       }
     } catch (error: any) {
-      console.error('Update error:', error);
+      console.error('❌ Update error:', error);
       message.error(error.message || 'Failed to update profile');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCancel = () => {
+    fetchProfile(); // Reset form to original values
+    message.info('Changes cancelled');
   };
 
   if (loading) {
@@ -435,6 +464,7 @@ const ProfileSettings = () => {
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
+            <p className="mt-3 text-muted">Loading profile...</p>
           </div>
         </div>
       </div>
@@ -472,29 +502,51 @@ const ProfileSettings = () => {
                             </label>
                           </div>
                           <div className="col-lg-10">
-                            <div className="profile-container position-relative d-inline-block">
-                              <img
-                                src={profileImage || "assets/img/users/user-placeholder.jpg"}
-                                alt="Profile"
-                                className="rounded-circle"
-                                style={{ width: '100px', height: '100px', objectFit: 'cover' }}
-                              />
-                              <div className="overlay-btn position-absolute bottom-0 end-0">
-                                <label
-                                  htmlFor="profileUpload"
-                                  className="btn btn-primary btn-sm rounded-circle"
-                                  style={{ cursor: 'pointer' }}
-                                >
-                                  <i className="ti ti-camera" />
-                                </label>
+                            <div className="d-flex align-items-center">
+                              <div className="profile-container position-relative me-3">
+                                <img
+                                  src={profileImage || "assets/img/users/user-placeholder.jpg"}
+                                  alt="Profile"
+                                  className="rounded-circle border"
+                                  style={{
+                                    width: '120px',
+                                    height: '120px',
+                                    objectFit: 'cover'
+                                  }}
+                                />
+                                <div className="position-absolute bottom-0 end-0">
+                                  <label
+                                    htmlFor="profileUpload"
+                                    className="btn btn-primary btn-sm rounded-circle shadow"
+                                    style={{
+                                      cursor: 'pointer',
+                                      width: '36px',
+                                      height: '36px',
+                                      padding: 0,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}
+                                  >
+                                    <i className="ti ti-camera fs-18" />
+                                  </label>
+                                </div>
+                                <input
+                                  type="file"
+                                  id="profileUpload"
+                                  style={{ display: "none" }}
+                                  accept="image/*"
+                                  onChange={handleImageUpload}
+                                />
                               </div>
-                              <input
-                                type="file"
-                                id="profileUpload"
-                                style={{ display: "none" }}
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                              />
+                              <div>
+                                <p className="mb-1 text-muted">
+                                  <small>Allowed formats: JPG, PNG, GIF</small>
+                                </p>
+                                <p className="mb-0 text-muted">
+                                  <small>Max size: 5MB</small>
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -515,6 +567,7 @@ const ProfileSettings = () => {
                               className="form-control"
                               value={formData.firstName}
                               onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                              placeholder="Enter first name"
                               required
                             />
                           </div>
@@ -535,6 +588,7 @@ const ProfileSettings = () => {
                               className="form-control"
                               value={formData.lastName}
                               onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                              placeholder="Enter last name"
                               required
                             />
                           </div>
@@ -552,12 +606,15 @@ const ProfileSettings = () => {
                           <div className="col-lg-8">
                             <input
                               type="email"
-                              className="form-control"
+                              className="form-control bg-light"
                               value={formData.email}
                               disabled
                               title="Email cannot be changed"
                             />
-                            <small className="text-muted">Email cannot be changed</small>
+                            <small className="text-muted">
+                              <i className="ti ti-lock me-1" />
+                              Email cannot be changed for security reasons
+                            </small>
                           </div>
                         </div>
                       </div>
@@ -571,10 +628,11 @@ const ProfileSettings = () => {
                           </div>
                           <div className="col-lg-8">
                             <input
-                              type="text"
+                              type="tel"
                               className="form-control"
                               value={formData.phone}
                               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              placeholder="Enter phone number"
                             />
                           </div>
                         </div>
@@ -584,7 +642,10 @@ const ProfileSettings = () => {
                     {/* Address Section */}
                     <div className="row border-bottom mb-3">
                       <div className="mb-3">
-                        <h5 className="fw-bold mb-0">Address Information</h5>
+                        <h5 className="fw-bold mb-0">
+                          <i className="ti ti-map-pin me-2" />
+                          Address Information
+                        </h5>
                       </div>
 
                       <div className="col-lg-6">
@@ -598,6 +659,7 @@ const ProfileSettings = () => {
                               className="form-control"
                               value={formData.address1}
                               onChange={(e) => setFormData({ ...formData, address1: e.target.value })}
+                              placeholder="Street address"
                             />
                           </div>
                         </div>
@@ -614,6 +676,7 @@ const ProfileSettings = () => {
                               className="form-control"
                               value={formData.address2}
                               onChange={(e) => setFormData({ ...formData, address2: e.target.value })}
+                              placeholder="Apartment, suite, etc."
                             />
                           </div>
                         </div>
@@ -693,8 +756,10 @@ const ProfileSettings = () => {
                       <button
                         type="button"
                         className="btn btn-light me-3"
-                        onClick={() => fetchProfile()}
+                        onClick={handleCancel}
+                        disabled={submitting}
                       >
+                        <i className="ti ti-x me-1" />
                         Cancel
                       </button>
                       <button
@@ -702,7 +767,17 @@ const ProfileSettings = () => {
                         className="btn btn-primary"
                         disabled={submitting}
                       >
-                        {submitting ? 'Saving...' : 'Save Changes'}
+                        {submitting ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <i className="ti ti-device-floppy me-1" />
+                            Save Changes
+                          </>
+                        )}
                       </button>
                     </div>
                   </form>
