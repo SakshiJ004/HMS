@@ -105,6 +105,7 @@ app.use('/api/blog-comments', require('./routes/blogCommentRoutes'));
 app.use('/api/content-locations', require('./routes/contentLocationRoutes'));
 app.use('/api/faqs', require('./routes/faqRoutes'));
 app.use('/api/profile', require('./routes/profileRoutes'));
+app.use('/api/security', require('./routes/securityRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
