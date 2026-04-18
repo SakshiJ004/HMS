@@ -237,10 +237,16 @@ import DoctorsTransactions from "../components/pages/doctor-modules/doctor-trans
 import BlogDetails from "../components/pages/content-modules/blog-details/blogDetails";
 import PatientMessages from "../components/pages/patient-modules/patient-messages/patientMessages";
 import DoctorMessages from "../components/pages/doctor-modules/doctor-messages/doctorMessages";
+import HomePage from "../components/pages/home/homePage";
 
 const routes = all_routes;
 
 export const publicRoutes = [
+  {
+    path: "/",
+    element: <HomePage />,
+    route: Route,
+  },
 
   {
     path: routes.dashboard,

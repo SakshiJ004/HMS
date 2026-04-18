@@ -1,5 +1,6 @@
 export const all_routes = {
   //Auth routes
+  homePage: "/",
   login: "/login",
   loginCover: "/login-cover",
   loginillustration: "/login-illustration",

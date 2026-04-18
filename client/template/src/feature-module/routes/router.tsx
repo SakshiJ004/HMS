@@ -12,7 +12,7 @@ const ALLRoutes: React.FC = () => {
     <>
       <Routes>
         {/* Default Redirect to Login Page */}
-        <Route path="/" element={<Navigate to={all_routes.loginbasic} />} />
+        <Route path="/" element={<Navigate to={all_routes.homePage} />} />
 
         <Route path={all_routes.authCallback} element={<AuthCallback />} />
 
