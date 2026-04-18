@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 
 // ✅ Routing — login page route
-const LOGIN_PATH = "/login";
-const REGISTER_PATH = "/register-cover"; // adjust if needed
+const LOGIN_PATH = "/login-basic";
+const REGISTER_PATH = "/register-basic"; // adjust if needed
 
 const HomePage = () => {
     const navigate = useNavigate();
