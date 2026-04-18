@@ -106,6 +106,7 @@ app.use('/api/content-locations', require('./routes/contentLocationRoutes'));
 app.use('/api/faqs', require('./routes/faqRoutes'));
 app.use('/api/profile', require('./routes/profileRoutes'));
 app.use('/api/security', require('./routes/securityRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

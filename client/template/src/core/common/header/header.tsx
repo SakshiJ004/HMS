@@ -871,6 +871,7 @@ import { setMobileSidebar } from "../../redux/sidebarSlice";
 import { all_routes } from "../../../feature-module/routes/all_routes";
 import { globalSearch, type SearchResult } from "../../../api/searchService";
 import { debounce } from "lodash";
+import { deleteNotification, getNotifications, markAllAsRead, markAsRead, type INotification } from "../../../api/notificationService";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -895,6 +896,9 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [notifications, setNotifications] = useState<INotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -903,6 +907,70 @@ const Header = () => {
       htmlElement.setAttribute(key, value);
     });
   }, [themeSettings]);
+
+  useEffect(() => {
+    if (userData.role === 'admin') {
+      fetchNotifications();
+      // Poll every 30 seconds for new notifications
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [userData.role]);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoadingNotifications(true);
+      const response = await getNotifications({ limit: 10, unreadOnly: false });
+
+      if (response.success) {
+        setNotifications(response.data || []);
+        setUnreadCount(response.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error('Fetch notifications error:', error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const handleNotificationClick = async (notification: INotification) => {
+    // Mark as read
+    if (!notification.isRead) {
+      await markAsRead(notification._id);
+      fetchNotifications(); // Refresh
+    }
+
+    // Navigate to action URL if exists
+    if (notification.actionUrl) {
+      window.location.href = notification.actionUrl;
+    }
+  };
+
+  const getNotificationIcon = (type: string) => {
+    const icons: any = {
+      newAppointment: 'ti-calendar-time',
+      appointmentCancellation: 'ti-calendar-x',
+      labReportReady: 'ti-file-analytics',
+      followUpReminders: 'ti-activity-heartbeat',
+      billingNotification: 'ti-file-dollar',
+      systemAlerts: 'ti-alert-octagon'
+    };
+    return icons[type] || 'ti-bell';
+  };
+
+  const formatNotificationTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -1248,7 +1316,7 @@ const Header = () => {
             </div>
 
             {/* Notifications Bell */}
-            <div className="header-item">
+            {/* <div className="header-item">
               <div className="dropdown me-3">
                 <button className="topbar-link btn btn-icon topbar-link dropdown-toggle drop-arrow-none"
                   data-bs-toggle="dropdown" data-bs-offset="0,24" type="button">
@@ -1326,7 +1394,114 @@ const Header = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
+
+            {/* Notifications Bell - ✅ Admin Only */}
+            {userData.role === 'admin' && (
+              <div className="header-item">
+                <div className="dropdown me-3">
+                  <button
+                    className="topbar-link btn btn-icon topbar-link dropdown-toggle drop-arrow-none"
+                    data-bs-toggle="dropdown"
+                    data-bs-offset="0,24"
+                    type="button"
+                    onClick={() => !loadingNotifications && fetchNotifications()}
+                  >
+                    <i className="ti ti-bell-check fs-16 animate-ring" />
+                    {unreadCount > 0 && (
+                      <span className="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  <div className="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg" style={{ minHeight: 300, maxHeight: 500, overflowY: 'auto' }}>
+                    <div className="p-3 border-bottom d-flex justify-content-between align-items-center">
+                      <h6 className="m-0 fs-16 fw-semibold">
+                        Notifications
+                        {unreadCount > 0 && (
+                          <span className="badge bg-primary ms-2">{unreadCount}</span>
+                        )}
+                      </h6>
+                      {notifications.length > 0 && (
+                        <button
+                          className="btn btn-sm btn-link text-primary p-0"
+                          onClick={async () => {
+                            await markAllAsRead();
+                            fetchNotifications();
+                          }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="notification-body position-relative z-2 rounded-0">
+                      {loadingNotifications ? (
+                        <div className="text-center py-4">
+                          <div className="spinner-border spinner-border-sm text-primary" />
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="text-center py-5">
+                          <i className="ti ti-bell-off fs-48 text-muted mb-2 d-block" />
+                          <p className="text-muted mb-0">No notifications yet</p>
+                        </div>
+                      ) : (
+                        notifications.map((notification) => (
+                          <div
+                            key={notification._id}
+                            className={`dropdown-item notification-item py-3 text-wrap border-bottom ${!notification.isRead ? 'bg-light-subtle' : ''}`}
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => handleNotificationClick(notification)}
+                          >
+                            <div className="d-flex">
+                              <div className="me-2 position-relative flex-shrink-0">
+                                <div className="avatar avatar-md rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center">
+                                  <i className={`ti ${getNotificationIcon(notification.type)} fs-18`} />
+                                </div>
+                                {!notification.isRead && (
+                                  <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                    <span className="visually-hidden">Unread</span>
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex-grow-1">
+                                <p className="mb-0 fw-medium text-dark">{notification.title}</p>
+                                <p className="mb-1 text-wrap fs-13">{notification.message}</p>
+                                <div className="d-flex justify-content-between align-items-center">
+                                  <span className="fs-12 text-muted">
+                                    <i className="ti ti-clock me-1" />
+                                    {formatNotificationTime(notification.createdAt)}
+                                  </span>
+                                  <button
+                                    className="btn btn-sm p-0"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      await deleteNotification(notification._id);
+                                      fetchNotifications();
+                                    }}
+                                  >
+                                    <i className="ti ti-x" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    {notifications.length > 0 && (
+                      <div className="p-2 rounded-bottom border-top text-center">
+                        <Link
+                          to={all_routes.notifications}
+                          className="text-center text-decoration-underline fs-14 mb-0"
+                        >
+                          View All Notifications
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ✅ User Dropdown - Role-based links */}
             <div className="dropdown profile-dropdown d-flex align-items-center justify-content-center">

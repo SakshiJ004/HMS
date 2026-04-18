@@ -585,6 +585,32 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    notificationPreferences: {
+        newAppointment: {
+            email: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true }
+        },
+        appointmentCancellation: {
+            email: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true }
+        },
+        labReportReady: {
+            email: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true }
+        },
+        followUpReminders: {
+            email: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true }
+        },
+        billingNotification: {
+            email: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true }
+        },
+        systemAlerts: {
+            email: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true }
+        }
+    },
     twoFAEnabled: {
         type: Boolean,
         default: false
