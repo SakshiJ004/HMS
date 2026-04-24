@@ -1,6 +1,7 @@
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const Patient = require('../models/Patient')
+const { notificationHandlers } = require('../utils/notificationHelper')
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -248,6 +249,23 @@ const createAppointment = async (req, res) => {
             { path: 'patient', select: 'fullName email profileImage' },
             { path: 'doctor', select: 'fullName email profileImage' },
         ]);
+        // ✅ ADD NOTIFICATION TRIGGER (around line 120)
+        try {
+            await notificationHandlers.newAppointment({
+                appointmentId: appointment._id,
+                patientName: appointment.patient.fullName,
+                doctorName: appointment.doctor.fullName,
+                appointmentDate: new Date(appointmentDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                }),
+                appointmentTime: appointmentTime
+            });
+            console.log('✅ Notification sent for new appointment');
+        } catch (notifError) {
+            console.error('⚠️ Notification failed:', notifError);
+        }
 
         console.log('✅ Appointment created:', appointmentId);
 
@@ -416,6 +434,21 @@ const updateAppointment = async (req, res) => {
             { path: 'patient', select: 'fullName email profileImage' },
             { path: 'doctor', select: 'fullName email profileImage' },
         ]);
+
+        // ✅ ADD THIS BEFORE res.status(200).json (around line 220)
+        if (req.body.status === 'Cancelled') {
+            try {
+                await notificationHandlers.appointmentCancellation({
+                    appointmentId: appointment._id,
+                    patientName: appointment.patient.fullName,
+                    doctorName: appointment.doctor.fullName,
+                    reason: req.body.cancellationReason || 'No reason provided'
+                });
+                console.log('✅ Notification sent for cancelled appointment');
+            } catch (notifError) {
+                console.error('⚠️ Notification failed:', notifError);
+            }
+        }
 
         res.status(200).json({
             success: true,

@@ -872,6 +872,7 @@ import { all_routes } from "../../../feature-module/routes/all_routes";
 import { globalSearch, type SearchResult } from "../../../api/searchService";
 import { debounce } from "lodash";
 import { deleteNotification, getNotifications, markAllAsRead, markAsRead, type INotification } from "../../../api/notificationService";
+import Toast from "../toast/Toast";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -900,6 +901,43 @@ const Header = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [lastNotificationCount, setLastNotificationCount] = useState(0);
+
+  // ✅ Check for new notifications
+  useEffect(() => {
+    if (userData.role === 'admin') {
+      fetchNotifications();
+
+      // Poll every 10 seconds for new notifications
+      const interval = setInterval(async () => {
+        const response = await getNotifications({ limit: 10 });
+
+        if (response.success) {
+          const newCount = response.unreadCount || 0;
+
+          // ✅ Show toast if new notification arrived
+          if (newCount > lastNotificationCount && lastNotificationCount !== 0) {
+            setToastMessage('You have a new notification!');
+            setShowToast(true);
+
+            // Play notification sound (optional)
+            const audio = new Audio('/notification-sound.mp3');
+            audio.play().catch(() => {
+              console.log('Could not play notification sound');
+            });
+          }
+
+          setLastNotificationCount(newCount);
+          setNotifications(response.data || []);
+          setUnreadCount(newCount);
+        }
+      }, 10000); // Check every 10 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [userData.role, lastNotificationCount]);
 
   useEffect(() => {
     const htmlElement: any = document.documentElement;
@@ -1167,6 +1205,13 @@ const Header = () => {
 
   return (
     <>
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type="info"
+          onClose={() => setShowToast(false)}
+        />
+      )}
       <header className="navbar-header">
         <div className="page-container topbar-menu">
           <div className="d-flex align-items-center gap-2">
