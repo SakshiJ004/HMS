@@ -1334,7 +1334,9 @@ import {
   type RecentActivity,
   type PatientAppointment,
   type Transaction,
+  getConsultationByDepartment,
 } from "../../../../../api/patientDashboardService";
+import type { DepartmentStat } from "../../../../../api/dashboardService";
 
 const PatientDashboard = () => {
   const [stats, setStats] = useState<PatientStats>({
@@ -1352,6 +1354,8 @@ const PatientDashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [recentFilter, setRecentFilter] = useState<'today' | 'week' | 'month'>('week');
   const [txFilter, setTxFilter] = useState<'weekly' | 'monthly' | 'yearly'>('weekly');
+  const [deptData, setDeptData] = useState<DepartmentStat[]>([]);
+  const [deptPeriod, _setDeptPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
   const [selectedAppointment, setSelectedAppointment] = useState<PatientAppointment | null>(null);
   const [_loading, setLoading] = useState(true);
 
@@ -1367,6 +1371,16 @@ const PatientDashboard = () => {
     fetchTransactions();
   }, [txFilter]);
 
+  useEffect(() => {
+    const fetchDept = async () => {
+      try {
+        const res = await getConsultationByDepartment(deptPeriod);
+        if (res.success) setDeptData(res.data);
+      } catch (e) { console.error(e); }
+    };
+    fetchDept();
+  }, [deptPeriod]);
+
   const fetchAllData = async () => {
     try {
       setLoading(true);
@@ -1377,6 +1391,7 @@ const PatientDashboard = () => {
         activityRes,
         recentRes,
         txRes,
+        deptRes,
       ] = await Promise.all([
         getPatientStats(),
         getMyDoctors(),
@@ -1384,6 +1399,7 @@ const PatientDashboard = () => {
         getRecentActivity(),
         getPatientRecentAppointments(recentFilter),
         getRecentTransactions(txFilter),
+        getConsultationByDepartment(deptPeriod),
       ]);
 
       if (statsRes.success) setStats(statsRes.data);
@@ -1392,6 +1408,7 @@ const PatientDashboard = () => {
       if (activityRes.success) setRecentActivity(activityRes.data);
       if (recentRes.success) setRecentAppointments(recentRes.data);
       if (txRes.success) setTransactions(txRes.data);
+      if (deptRes.success) setDeptData(deptRes.data);
     } catch (error) {
       console.error('Error fetching patient dashboard data:', error);
     } finally {
@@ -1718,7 +1735,7 @@ const PatientDashboard = () => {
                   <h5 className="fw-bold mb-0">Consultation By Department</h5>
                 </div>
                 <div className="card-body pb-0">
-                  <SCol10Chart />
+                  <SCol10Chart data={deptData as DepartmentStat[]} />
                 </div>
               </div>
             </div>

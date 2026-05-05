@@ -261,7 +261,6 @@ const getConsultationByDepartment = async (req, res) => {
     try {
         const patientId = req.user._id;
         const { period = 'monthly' } = req.query;
-
         const now = new Date();
         let startDate;
 
@@ -269,29 +268,21 @@ const getConsultationByDepartment = async (req, res) => {
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         } else if (period === 'weekly') {
             startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        } else if (period === 'yearly') {
+        } else {
             startDate = new Date(now.getFullYear(), 0, 1);
         }
 
+        // department field directly Appointment model मध्ये आहे — lookup नको
         const data = await Appointment.aggregate([
             {
                 $match: {
-                    patient: patientId,
+                    patient: new mongoose.Types.ObjectId(patientId),
                     appointmentDate: { $gte: startDate },
                 }
             },
             {
-                $lookup: {
-                    from: 'users',
-                    localField: 'doctor',
-                    foreignField: '_id',
-                    as: 'doctorInfo',
-                }
-            },
-            { $unwind: { path: '$doctorInfo', preserveNullAndEmptyArrays: true } },
-            {
                 $group: {
-                    _id: { $ifNull: ['$doctorInfo.department', '$department', 'General'] },
+                    _id: '$department',
                     count: { $sum: 1 },
                 }
             },
@@ -301,7 +292,6 @@ const getConsultationByDepartment = async (req, res) => {
 
         res.status(200).json({ success: true, data });
     } catch (error) {
-        console.error('Get consultation by department error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

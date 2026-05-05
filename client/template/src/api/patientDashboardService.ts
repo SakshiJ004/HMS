@@ -76,7 +76,7 @@ export interface PatientAppointment {
 }
 
 export interface DepartmentStat {
-    _id: string;
+    department: string;
     count: number;
 }
 

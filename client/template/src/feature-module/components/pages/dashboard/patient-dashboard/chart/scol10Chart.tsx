@@ -1,8 +1,13 @@
 // SCol10Chart.tsx
 import React from "react";
 import Chart from "react-apexcharts";
+import type { DepartmentStat } from "../../../../../../api/dashboardService";
 
-const SCol10Chart: React.FC = () => {
+type Props = {
+  data: DepartmentStat[];
+};
+
+const SCol10Chart: React.FC<Props> = () => {
   const chartOptions = {
     chart: {
       type: "bar" as const,

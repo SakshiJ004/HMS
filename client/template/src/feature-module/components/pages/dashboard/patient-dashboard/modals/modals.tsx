@@ -993,6 +993,7 @@ import ImageWithBasePath from "../../../../../../core/imageWithBasePath";
 import {
   getDoctors,
   createAppointment,
+  getDoctorSchedule,
   type Doctor,
 } from "../../../../../../api/appointmentService";
 
@@ -1012,6 +1013,7 @@ interface ModalsProps {
 
 const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [doctorSchedule, setDoctorSchedule] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -1098,7 +1100,21 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
 
   // Disable past dates
   const disabledDate = (current: any) => {
-    return current && current.isBefore(dayjs().startOf('day'));
+    if (!current) return true;
+    const today = dayjs().startOf('day');
+    if (current.isBefore(today, 'day')) return true;
+    if (!doctorSchedule?.schedule?.length) return true;
+
+    const dateStr = current.format('YYYY-MM-DD');
+    const found = doctorSchedule.schedule.find((s: any) => s.date === dateStr);
+    return !found;
+  };
+
+  const getAvailableTimeSlots = () => {
+    if (!formData.appointmentDate || !doctorSchedule?.schedule) return [];
+    const dateStr = formData.appointmentDate.format('YYYY-MM-DD');
+    const dateSchedule = doctorSchedule.schedule.find((s: any) => s.date === dateStr);
+    return dateSchedule?.timeSlots || [];
   };
 
   // Validate create form
@@ -1259,6 +1275,7 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
     return document.getElementById("modal-datepicker") || document.body;
   };
 
+
   // ─── Render ─────────────────────────────────────────────────────────────────────
 
   return (
@@ -1308,9 +1325,28 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
                   options={doctorOptions}
                   className="select"
                   placeholder="Select Doctor"
-                  onChange={(option: any) => {
-                    setFormData(prev => ({ ...prev, doctor: option?.value || "" }));
+                  // CommonSelect onChange मध्ये replace कर:
+                  onChange={async (option: any) => {
+                    const selectedDoctorId = option?.value || "";
+                    // const selectedDoctor = doctors.find((d: Doctor) => d._id === selectedDoctorId);
+
+                    setFormData(prev => ({
+                      ...prev,
+                      doctor: selectedDoctorId,
+                      appointmentDate: null,
+                      appointmentTime: null,
+                    }));
                     setErrors(prev => ({ ...prev, doctor: "" }));
+
+                    if (selectedDoctorId) {
+                      try {
+                        const scheduleData = await getDoctorSchedule(selectedDoctorId);
+                        setDoctorSchedule(scheduleData);
+                      } catch (e) {
+                        console.error('Schedule fetch error:', e);
+                        setDoctorSchedule(null);
+                      }
+                    }
                   }}
                 />
                 {errors.doctor && (
@@ -1352,9 +1388,13 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
                     format="DD-MM-YYYY"
                     getPopupContainer={getModalContainer}
                     placeholder="DD-MM-YYYY"
-                    disabledDate={disabledDate}
+                    disabledDate={disabledDate}   // ← हे add कर
                     onChange={(date) => {
-                      setFormData(prev => ({ ...prev, appointmentDate: date, appointmentTime: null }));
+                      setFormData(prev => ({
+                        ...prev,
+                        appointmentDate: date,
+                        appointmentTime: null  // date बदलल्यावर time reset
+                      }));
                       setErrors(prev => ({ ...prev, appointmentDate: "" }));
                     }}
                     suffixIcon={null}
@@ -1368,28 +1408,61 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
             </div>
 
             {/* Time */}
+            {/* Time field replace कर: */}
             <div className="col-lg-6">
               <div className="mb-3">
                 <label className="form-label mb-1 text-dark fs-14 fw-medium">
                   Time <span className="text-danger">*</span>
                 </label>
                 <div className="input-icon-end position-relative">
-                  <TimePicker
-                    className="form-control"
-                    format="HH:mm"
-                    value={formData.appointmentTime}
-                    onChange={(time) => {
-                      setFormData(prev => ({ ...prev, appointmentTime: time }));
-                      setErrors(prev => ({ ...prev, appointmentTime: "" }));
-                    }}
-                    showNow={false}
-                    disabled={!formData.appointmentDate}
-                    placeholder="Select time"
-                  />
+                  {(() => {
+                    const slots = getAvailableTimeSlots();
+                    if (slots.length > 0) {
+                      return (
+                        <select
+                          className="form-control"
+                          value={formData.appointmentTime ?
+                            formData.appointmentTime.format('HH:mm') : ''}
+                          onChange={(e) => {
+                            const timeStr = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              appointmentTime: timeStr ? dayjs(timeStr, 'HH:mm') : null
+                            }));
+                            setErrors(prev => ({ ...prev, appointmentTime: "" }));
+                          }}
+                          disabled={!formData.appointmentDate}
+                        >
+                          <option value="">Select time slot</option>
+                          {slots.map((slot: any, i: number) => (
+                            <option key={i} value={slot.startTime}>
+                              {slot.startTime} - {slot.endTime}
+                            </option>
+                          ))}
+                        </select>
+                      );
+                    }
+                    return (
+                      <TimePicker
+                        className="form-control"
+                        format="HH:mm"
+                        value={formData.appointmentTime}
+                        onChange={(time) => {
+                          setFormData(prev => ({ ...prev, appointmentTime: time }));
+                          setErrors(prev => ({ ...prev, appointmentTime: "" }));
+                        }}
+                        showNow={false}
+                        disabled={!formData.appointmentDate}
+                        placeholder="Select time"
+                      />
+                    );
+                  })()}
                   <span className="input-icon-addon"><i className="ti ti-clock" /></span>
                 </div>
                 {errors.appointmentTime && (
-                  <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>{errors.appointmentTime}</div>
+                  <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                    {errors.appointmentTime}
+                  </div>
                 )}
               </div>
             </div>
