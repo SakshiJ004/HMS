@@ -107,6 +107,7 @@ app.use('/api/faqs', require('./routes/faqRoutes'));
 app.use('/api/profile', require('./routes/profileRoutes'));
 app.use('/api/security', require('./routes/securityRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/patient/dashboard', require('./routes/patientDashboardRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

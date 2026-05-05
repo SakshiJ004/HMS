@@ -1,18 +1,1441 @@
+// import { Link } from "react-router";
+// import ImageWithBasePath from "../../../../../core/imageWithBasePath";
+// import SCol8Chart from "./chart/scol8Chart";
+// import SCol9Chart from "./chart/scol9Chart";
+// import SCol10Chart from "./chart/scol10Chart";
+// import Modals from "./modals/modals";
+
+// const PatientDashboard = () => {
+//   return (
+//     <>
+//       {/* ========================
+// 			Start Page Content
+// 		========================= */}
+//       <div className="page-wrapper">
+//         {/* Start Content */}
+//         <div className="content pb-0">
+//           {/* Page Header */}
+//           <div className="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
+//             <div>
+//               <h4 className="fw-bold mb-0">Patient Dashboard</h4>
+//             </div>
+//             <div className="d-flex align-items-center flex-wrap gap-2">
+//               <Link
+//                 to="#"
+//                 className="btn btn-primary d-inline-flex align-items-center"
+//                 data-bs-toggle="offcanvas"
+//                 data-bs-target="#new_appointment"
+//               >
+//                 <i className="ti ti-plus me-1" />
+//                 New Appointment
+//               </Link>
+//             </div>
+//           </div>
+//           {/* End Page Header */}
+//           {/* row start */}
+//           <div className="row">
+//             {/* col start */}
+//             <div className="col-xl-3 col-md-6 d-flex">
+//               <div className="card flex-fill w-100 shadow-sm">
+//                 <div className="card-body">
+//                   <div className="d-flex align-items-center mb-4">
+//                     <span className="avatar bg-primary rounded-circle fs-20 d-inline-flex flex-shrink-0">
+//                       <i className="ti ti-calendar-heart" />
+//                     </span>
+//                     <div className="ms-2">
+//                       <p className="mb-1 text-truncate">Total Appointments</p>
+//                       <h3 className="fw-bold mb-0">24</h3>
+//                     </div>
+//                   </div>
+//                   <div className="d-flex align-items-center">
+//                     <span className="badge fw-medium bg-success flex-shrink-0 me-2">
+//                       +95%
+//                     </span>
+//                     <p className="fs-13 mb-0">in last 7 Days </p>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//             {/* col end */}
+//             {/* col start */}
+//             <div className="col-xl-3 col-md-6 d-flex">
+//               <div className="card flex-fill w-100 shadow-sm">
+//                 <div className="card-body">
+//                   <div className="d-flex align-items-center mb-4">
+//                     <span className="avatar bg-danger rounded-circle fs-20 d-inline-flex flex-shrink-0">
+//                       <i className="ti ti-users" />
+//                     </span>
+//                     <div className="ms-2">
+//                       <p className="mb-1 text-truncate">Online Consultations</p>
+//                       <h3 className="fw-bold mb-0">36</h3>
+//                     </div>
+//                   </div>
+//                   <div className="d-flex align-items-center">
+//                     <span className="badge fw-medium bg-danger flex-shrink-0 me-2">
+//                       -15%
+//                     </span>
+//                     <p className="fs-13 mb-0">in last 7 Days</p>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//             {/* col end */}
+//             {/* col start */}
+//             <div className="col-xl-3 col-md-6 d-flex">
+//               <div className="card flex-fill w-100 shadow-sm">
+//                 <div className="card-body">
+//                   <div className="d-flex align-items-center justify-content-between mb-3">
+//                     <div>
+//                       <p className="mb-1 text-truncate">Blood Pressure</p>
+//                       <span className="badge fw-medium bg-success flex-shrink-0 me-2">
+//                         +95%
+//                       </span>
+//                     </div>
+//                     <div className="d-flex align-items-center">
+//                       <h3 className="fw-bold mb-0 me-1">89</h3>
+//                       <p className="mb-0">g/dl</p>
+//                     </div>
+//                   </div>
+//                   <div id="s-col-8" className="chart-set">
+//                     <SCol8Chart />
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//             {/* col end */}
+//             {/* col start */}
+//             <div className="col-xl-3 col-md-6 d-flex">
+//               <div className="card flex-fill w-100 shadow-sm">
+//                 <div className="card-body">
+//                   <div className="d-flex align-items-center justify-content-between mb-3">
+//                     <div>
+//                       <p className="mb-1 text-truncate">Heart Rate</p>
+//                       <span className="badge fw-medium bg-success flex-shrink-0 me-2">
+//                         +95%
+//                       </span>
+//                     </div>
+//                     <div className="d-flex align-items-center">
+//                       <h3 className="fw-bold mb-0 me-1">87</h3>
+//                       <p className="mb-0">bpm</p>
+//                     </div>
+//                   </div>
+//                   <div id="s-col-9" className="chart-set">
+//                     <SCol9Chart />
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//             {/* col end */}
+//           </div>
+//           {/* row start */}
+//           {/* row start */}
+//           <div className="row">
+//             {/* col start */}
+//             <div className="col-xl-4 col-lg-6 d-flex">
+//               <div className="card shadow-sm flex-fill w-100">
+//                 <div className="card-header d-flex align-items-center justify-content-between">
+//                   <h5 className="fw-bold mb-0">My Doctors</h5>
+//                 </div>
+//                 <div className="card-body">
+//                   <div className="d-flex align-items-center justify-content-between mb-3">
+//                     <div className="d-flex align-items-center">
+//                       <Link to="#" className="avatar me-2 flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="assets/img/doctors/doctor-01.jpg"
+//                           alt="img"
+//                           className="rounded-circle"
+//                         />
+//                       </Link>
+//                       <div>
+//                         <h6 className="fs-14 mb-1 text-truncate">
+//                           <Link to="#" className="fw-semibold">
+//                             Dr. Mick Thompson
+//                           </Link>
+//                         </h6>
+//                         <p className="mb-0 fs-13 text-truncate">Cardiologist</p>
+//                       </div>
+//                     </div>
+//                     <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
+//                       20 Bookings
+//                     </span>
+//                   </div>
+//                   <div className="d-flex align-items-center justify-content-between mb-3">
+//                     <div className="d-flex align-items-center">
+//                       <Link to="#" className="avatar me-2 flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="assets/img/doctors/doctor-02.jpg"
+//                           alt="img"
+//                           className="rounded-circle"
+//                         />
+//                       </Link>
+//                       <div>
+//                         <h6 className="fs-14 mb-1 text-truncate">
+//                           <Link to="#" className="fw-semibold">
+//                             Dr. Sarah Johnson
+//                           </Link>
+//                         </h6>
+//                         <p className="mb-0 fs-13 text-truncate">
+//                           Orthopedic Surgeon
+//                         </p>
+//                       </div>
+//                     </div>
+//                     <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
+//                       15 Bookings
+//                     </span>
+//                   </div>
+//                   <div className="d-flex align-items-center justify-content-between mb-3">
+//                     <div className="d-flex align-items-center">
+//                       <Link to="#" className="avatar me-2 flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="assets/img/doctors/doctor-03.jpg"
+//                           alt="img"
+//                           className="rounded-circle"
+//                         />
+//                       </Link>
+//                       <div>
+//                         <h6 className="fs-14 mb-1 text-truncate">
+//                           <Link to="#" className="fw-semibold">
+//                             Dr. Emily Carter
+//                           </Link>
+//                         </h6>
+//                         <p className="mb-0 fs-13 text-truncate">Pediatrician</p>
+//                       </div>
+//                     </div>
+//                     <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
+//                       12 Bookings
+//                     </span>
+//                   </div>
+//                   <div className="d-flex align-items-center justify-content-between mb-3">
+//                     <div className="d-flex align-items-center">
+//                       <Link to="#" className="avatar me-2 flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="assets/img/doctors/doctor-04.jpg"
+//                           alt="img"
+//                           className="rounded-circle"
+//                         />
+//                       </Link>
+//                       <div>
+//                         <h6 className="fs-14 mb-1 text-truncate">
+//                           <Link to="#" className="fw-semibold">
+//                             Dr. David Lee
+//                           </Link>
+//                         </h6>
+//                         <p className="mb-0 fs-13 text-truncate">Gynecologist</p>
+//                       </div>
+//                     </div>
+//                     <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
+//                       08 Bookings
+//                     </span>
+//                   </div>
+//                   <div className="d-flex align-items-center justify-content-between mb-0">
+//                     <div className="d-flex align-items-center">
+//                       <Link to="#" className="avatar me-2 flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="assets/img/doctors/doctor-05.jpg"
+//                           alt="img"
+//                           className="rounded-circle"
+//                         />
+//                       </Link>
+//                       <div>
+//                         <h6 className="fs-14 mb-1 text-truncate">
+//                           <Link to="#" className="fw-semibold">
+//                             Dr. Anna Kim
+//                           </Link>
+//                         </h6>
+//                         <p className="mb-0 fs-13 text-truncate">Psychiatrist</p>
+//                       </div>
+//                     </div>
+//                     <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
+//                       06 Bookings
+//                     </span>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//             {/* col end */}
+//             {/* col start */}
+//             <div className="col-xl-4 col-lg-6 d-flex">
+//               <div className="card shadow-sm flex-fill w-100">
+//                 <div className="card-header d-flex align-items-center justify-content-between">
+//                   <h5 className="fw-bold mb-0">Prescriptions</h5>
+//                 </div>
+//                 <div className="card-body">
+//                   <div className="overflow-auto">
+//                     <div className="d-flex align-items-center justify-content-between mb-3">
+//                       <div className="d-flex align-items-center flex-shrink-0">
+//                         <Link
+//                           to="#"
+//                           className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
+//                         >
+//                           <i className="ti ti-file-description fs-20" />
+//                         </Link>
+//                         <div>
+//                           <h6 className="fs-14 mb-1 text-truncate">
+//                             <Link to="#" className="fw-semibold">
+//                               Cardiology Prescription
+//                             </Link>
+//                           </h6>
+//                           <p className="mb-0 fs-13 text-truncate">
+//                             20 Apr 2025
+//                           </p>
+//                         </div>
+//                       </div>
+//                       <div className="d-flex align-items-center">
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
+//                         >
+//                           <i className="ti ti-eye" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
+//                         >
+//                           <i className="ti ti-download" />
+//                         </Link>
+//                       </div>
+//                     </div>
+//                     <div className="d-flex align-items-center justify-content-between mb-3">
+//                       <div className="d-flex align-items-center flex-shrink-0">
+//                         <Link
+//                           to="#"
+//                           className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
+//                         >
+//                           <i className="ti ti-file-description fs-20" />
+//                         </Link>
+//                         <div>
+//                           <h6 className="fs-14 mb-1 text-truncate">
+//                             <Link to="#" className="fw-semibold">
+//                               Dentist Prescription
+//                             </Link>
+//                           </h6>
+//                           <p className="mb-0 fs-13 text-truncate">
+//                             25 Mar 2025
+//                           </p>
+//                         </div>
+//                       </div>
+//                       <div className="d-flex align-items-center">
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
+//                         >
+//                           <i className="ti ti-eye" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
+//                         >
+//                           <i className="ti ti-download" />
+//                         </Link>
+//                       </div>
+//                     </div>
+//                     <div className="d-flex align-items-center justify-content-between mb-3">
+//                       <div className="d-flex align-items-center flex-shrink-0">
+//                         <Link
+//                           to="#"
+//                           className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
+//                         >
+//                           <i className="ti ti-file-description fs-20" />
+//                         </Link>
+//                         <div>
+//                           <h6 className="fs-14 mb-1 text-truncate">
+//                             <Link to="#" className="fw-semibold">
+//                               Dentist Prescription
+//                             </Link>
+//                           </h6>
+//                           <p className="mb-0 fs-13 text-truncate">
+//                             16 Mar 2025
+//                           </p>
+//                         </div>
+//                       </div>
+//                       <div className="d-flex align-items-center">
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
+//                         >
+//                           <i className="ti ti-eye" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
+//                         >
+//                           <i className="ti ti-download" />
+//                         </Link>
+//                       </div>
+//                     </div>
+//                     <div className="d-flex align-items-center justify-content-between mb-3">
+//                       <div className="d-flex align-items-center flex-shrink-0">
+//                         <Link
+//                           to="#"
+//                           className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
+//                         >
+//                           <i className="ti ti-file-description fs-20" />
+//                         </Link>
+//                         <div>
+//                           <h6 className="fs-14 mb-1 text-truncate">
+//                             <Link to="#" className="fw-semibold">
+//                               Dentist Prescription
+//                             </Link>
+//                           </h6>
+//                           <p className="mb-0 fs-13 text-truncate">
+//                             12 Feb 2025
+//                           </p>
+//                         </div>
+//                       </div>
+//                       <div className="d-flex align-items-center">
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
+//                         >
+//                           <i className="ti ti-eye" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
+//                         >
+//                           <i className="ti ti-download" />
+//                         </Link>
+//                       </div>
+//                     </div>
+//                     <div className="d-flex align-items-center justify-content-between mb-0">
+//                       <div className="d-flex align-items-center flex-shrink-0">
+//                         <Link
+//                           to="#"
+//                           className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
+//                         >
+//                           <i className="ti ti-file-description fs-20" />
+//                         </Link>
+//                         <div>
+//                           <h6 className="fs-14 mb-1 text-truncate">
+//                             <Link to="#" className="fw-semibold">
+//                               Cardiology Prescription
+//                             </Link>
+//                           </h6>
+//                           <p className="mb-0 fs-13 text-truncate">
+//                             04 Jan 2025
+//                           </p>
+//                         </div>
+//                       </div>
+//                       <div className="d-flex align-items-center">
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
+//                         >
+//                           <i className="ti ti-eye" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
+//                         >
+//                           <i className="ti ti-download" />
+//                         </Link>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//             {/* col end */}
+//             {/* col start */}
+//             <div className="col-xl-4 d-flex">
+//               <div className="card shadow-sm flex-fill w-100">
+//                 <div className="card-header d-flex align-items-center justify-content-between">
+//                   <h5 className="fw-bold mb-0">Recent Activity</h5>
+//                 </div>
+//                 <div className="card-body">
+//                   <div className="recent-activity">
+//                     <div className="d-flex align-items-center mb-3">
+//                       <span>
+//                         <i className="ti ti-point-filled fs-24 text-success" />
+//                       </span>
+//                       <div className="ms-2">
+//                         <p className="mb-1 text-truncate">
+//                           Appointment with
+//                           <Link to="#" className="fw-semibold">
+//                             Primary Care Physician
+//                           </Link>
+//                         </p>
+//                         <p className="fs-13 mb-0">24 Mar 2025, 10:55 AM</p>
+//                       </div>
+//                     </div>
+//                     <div className="d-flex align-items-center mb-3">
+//                       <span>
+//                         <i className="ti ti-point-filled fs-24 text-danger" />
+//                       </span>
+//                       <div className="ms-2">
+//                         <p className="mb-1 text-truncate">
+//                           <Link to="#" className="fw-semibold">
+//                             Blood Pressure Check
+//                           </Link>
+//                           (Home Monitoring)
+//                         </p>
+//                         <p className="fs-13 mb-0">24 Apr 2025, 11:00 AM</p>
+//                       </div>
+//                     </div>
+//                     <div className="d-flex align-items-center mb-3">
+//                       <span>
+//                         <i className="ti ti-point-filled fs-24 text-warning" />
+//                       </span>
+//                       <div className="ms-2">
+//                         <p className="mb-1">
+//                           <Link to="#" className="fw-semibold">
+//                             Physical Therapy Session
+//                           </Link>
+//                           Knee strengthening exercises
+//                         </p>
+//                         <p className="fs-13 mb-0">24 Apr 2025, 11:00 AM</p>
+//                       </div>
+//                     </div>
+//                     <div className="d-flex align-items-center mb-0">
+//                       <span>
+//                         <i className="ti ti-point-filled fs-24 text-info" />
+//                       </span>
+//                       <div className="ms-2">
+//                         <p className="mb-1">
+//                           <Link to="#" className="fw-semibold">
+//                             Discuss dietary changes
+//                           </Link>
+//                           to manage blood sugar levels and weight
+//                         </p>
+//                         <p className="fs-13 mb-0">24 Apr 2025, 11:00 AM</p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//             {/* col end */}
+//           </div>
+//           {/* row end */}
+//           {/* card start */}
+//           <div className="card shadow-sm">
+//             <div className="card-header">
+//               <h5 className="fw-bold mb-0">Vitals</h5>
+//             </div>
+//             <div className="card-body">
+//               {/* row start */}
+//               <div className="row row-gap-3 row-cols-1 row-cols-xl-6 row-cols-md-3 row-cols-sm-2">
+//                 {/* col start */}
+//                 <div className="col d-flex">
+//                   <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
+//                     <div className="d-flex align-items-center">
+//                       <span className="avatar bg-primary rounded-circle flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="./assets/img/icons/weight.svg"
+//                           alt="img"
+//                           className="w-auto h-auto"
+//                         />
+//                       </span>
+//                       <div className="ms-1">
+//                         <p className="mb-1">Weight</p>
+//                         <p className="text-truncate">
+//                           <span className="fs-18 fw-bold text-dark">100</span>
+//                           Kg
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//                 {/* col end */}
+//                 {/* col start */}
+//                 <div className="col d-flex">
+//                   <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
+//                     <div className="d-flex align-items-center">
+//                       <span className="avatar bg-primary rounded-circle flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="./assets/img/icons/rotate-left.svg"
+//                           alt="img"
+//                           className="w-auto h-auto"
+//                         />
+//                       </span>
+//                       <div className="ms-1">
+//                         <p className="mb-1">Height</p>
+//                         <p className="text-truncate">
+//                           <span className="fs-18 fw-bold text-dark">154</span>
+//                           Cm
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//                 {/* col end */}
+//                 {/* col start */}
+//                 <div className="col d-flex">
+//                   <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
+//                     <div className="d-flex align-items-center">
+//                       <span className="avatar bg-primary rounded-circle flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="./assets/img/icons/user-cirlce-add.svg"
+//                           alt="img"
+//                           className="w-auto h-auto"
+//                         />
+//                       </span>
+//                       <div className="ms-1">
+//                         <p className="mb-1">BMI</p>
+//                         <p className="text-truncate">
+//                           <span className="fs-18 fw-bold text-dark">19.2</span>
+//                           kg/cm
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//                 {/* col end */}
+//                 {/* col start */}
+//                 <div className="col d-flex">
+//                   <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
+//                     <div className="d-flex align-items-center">
+//                       <span className="avatar bg-primary rounded-circle flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="./assets/img/icons/driver-2.svg"
+//                           alt="img"
+//                           className="w-auto h-auto"
+//                         />
+//                       </span>
+//                       <div className="ms-1">
+//                         <p className="mb-1">Pulse</p>
+//                         <p className="text-truncate">
+//                           <span className="fs-18 fw-bold text-dark">97%</span>
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//                 {/* col end */}
+//                 {/* col start */}
+//                 <div className="col d-flex">
+//                   <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
+//                     <div className="d-flex align-items-center">
+//                       <span className="avatar bg-primary rounded-circle flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="./assets/img/icons/wind.svg"
+//                           alt="img"
+//                           className="w-auto h-auto"
+//                         />
+//                       </span>
+//                       <div className="ms-1">
+//                         <p className="mb-1">SPO2</p>
+//                         <p className="text-truncate">
+//                           <span className="fs-18 fw-bold text-dark">98%</span>
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//                 {/* col end */}
+//                 {/* col start */}
+//                 <div className="col d-flex">
+//                   <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
+//                     <div className="d-flex align-items-center">
+//                       <span className="avatar bg-primary rounded-circle flex-shrink-0">
+//                         <ImageWithBasePath
+//                           src="./assets/img/icons/sun.svg"
+//                           alt="img"
+//                           className="w-auto h-auto"
+//                         />
+//                       </span>
+//                       <div className="ms-1">
+//                         <p className="mb-1 text-truncate">Temprature</p>
+//                         <p className="text-truncate">
+//                           <span className="fs-18 fw-bold text-dark">101</span> C
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//                 {/* col end */}
+//               </div>
+//               {/* row end */}
+//             </div>
+//           </div>
+//           {/* card end */}
+//           {/* row start */}
+//           <div className="row">
+//             {/* col start */}
+//             <div className="col-lg-6 d-flex">
+//               <div className="card shadow-sm flex-fill w-100">
+//                 <div className="card-header d-flex align-items-center justify-content-between">
+//                   <h5 className="fw-bold mb-0">Consultation By Department</h5>
+//                   <div className="dropdown">
+//                     <Link
+//                       to="#"
+//                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
+//                       data-bs-toggle="dropdown"
+//                     >
+//                       Monthly <i className="ti ti-chevron-down ms-1" />
+//                     </Link>
+//                     <ul className="dropdown-menu">
+//                       <li>
+//                         <Link className="dropdown-item" to="#">
+//                           Monthly
+//                         </Link>
+//                       </li>
+//                       <li>
+//                         <Link className="dropdown-item" to="#">
+//                           Weekly
+//                         </Link>
+//                       </li>
+//                       <li>
+//                         <Link className="dropdown-item" to="#">
+//                           Yearly
+//                         </Link>
+//                       </li>
+//                     </ul>
+//                   </div>
+//                 </div>
+//                 <div className="card-body pb-0">
+//                   <div id="s-col-10" className="chart-set">
+//                     <SCol10Chart />
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//             {/* col end */}
+//             {/* col start */}
+//             <div className="col-lg-6 d-flex">
+//               <div className="card shadow-sm flex-fill w-100">
+//                 <div className="card-header d-flex align-items-center justify-content-between">
+//                   <h5 className="fw-bold mb-0">Recent Transactions</h5>
+//                   <div className="dropdown">
+//                     <Link
+//                       to="#"
+//                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
+//                       data-bs-toggle="dropdown"
+//                     >
+//                       Weekly <i className="ti ti-chevron-down ms-1" />
+//                     </Link>
+//                     <ul className="dropdown-menu">
+//                       <li>
+//                         <Link className="dropdown-item" to="#">
+//                           Monthly
+//                         </Link>
+//                       </li>
+//                       <li>
+//                         <Link className="dropdown-item" to="#">
+//                           Weekly
+//                         </Link>
+//                       </li>
+//                       <li>
+//                         <Link className="dropdown-item" to="#">
+//                           Yearly
+//                         </Link>
+//                       </li>
+//                     </ul>
+//                   </div>
+//                 </div>
+//                 <div className="card-body">
+//                   {/* Table start */}
+//                   <div className="table-responsive table-nowrap">
+//                     <table className="table">
+//                       <tbody>
+//                         <tr className="border-white">
+//                           <td className="ps-0">
+//                             <div className="d-flex align-items-center">
+//                               <Link to="#" className="avatar me-2">
+//                                 <ImageWithBasePath
+//                                   src="assets/img/doctors/doctor-06.jpg"
+//                                   alt="img"
+//                                   className="rounded-circle"
+//                                 />
+//                               </Link>
+//                               <div>
+//                                 <h6 className="fs-14 mb-1">
+//                                   <Link to="#" className="fw-semibold">
+//                                     Dr. John Smith
+//                                   </Link>
+//                                 </h6>
+//                                 <p className="mb-0 fs-13">Neurosurgeon</p>
+//                               </div>
+//                             </div>
+//                           </td>
+//                           <td>
+//                             <h6 className="fs-14 fw-semibold">
+//                               Consultation Fees
+//                             </h6>
+//                             <p className="fs-13">$450</p>
+//                           </td>
+//                           <td className="pe-0 text-end">
+//                             <span className="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">
+//                               Success
+//                             </span>
+//                           </td>
+//                         </tr>
+//                         <tr className="border-white">
+//                           <td className="ps-0">
+//                             <div className="d-flex align-items-center">
+//                               <Link to="#" className="avatar me-2">
+//                                 <ImageWithBasePath
+//                                   src="assets/img/doctors/doctor-07.jpg"
+//                                   alt="img"
+//                                   className="rounded-circle"
+//                                 />
+//                               </Link>
+//                               <div>
+//                                 <h6 className="fs-14 mb-1">
+//                                   <Link to="#" className="fw-semibold">
+//                                     Dr. Lisa White
+//                                   </Link>
+//                                 </h6>
+//                                 <p className="mb-0 fs-13">Oncologist</p>
+//                               </div>
+//                             </div>
+//                           </td>
+//                           <td>
+//                             <h6 className="fs-14 fw-semibold">
+//                               Consultation Fees
+//                             </h6>
+//                             <p className="fs-13">$350</p>
+//                           </td>
+//                           <td className="pe-0 text-end">
+//                             <span className="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">
+//                               Success
+//                             </span>
+//                           </td>
+//                         </tr>
+//                         <tr className="border-white">
+//                           <td className="ps-0">
+//                             <div className="d-flex align-items-center">
+//                               <Link to="#" className="avatar me-2">
+//                                 <ImageWithBasePath
+//                                   src="assets/img/doctors/doctor-08.jpg"
+//                                   alt="img"
+//                                   className="rounded-circle"
+//                                 />
+//                               </Link>
+//                               <div>
+//                                 <h6 className="fs-14 mb-1">
+//                                   <Link to="#" className="fw-semibold">
+//                                     Dr. Patricia Brown
+//                                   </Link>
+//                                 </h6>
+//                                 <p className="mb-0 fs-13">Pulmonologist</p>
+//                               </div>
+//                             </div>
+//                           </td>
+//                           <td>
+//                             <h6 className="fs-14 fw-semibold">
+//                               Consultation Fees
+//                             </h6>
+//                             <p className="fs-13">$400</p>
+//                           </td>
+//                           <td className="pe-0 text-end">
+//                             <span className="badge fs-13 py-1 badge-soft-danger border border-danger rounded text-danger fw-medium">
+//                               Failed
+//                             </span>
+//                           </td>
+//                         </tr>
+//                         <tr className="border-white">
+//                           <td className="ps-0">
+//                             <div className="d-flex align-items-center">
+//                               <Link to="#" className="avatar me-2">
+//                                 <ImageWithBasePath
+//                                   src="assets/img/doctors/doctor-09.jpg"
+//                                   alt="img"
+//                                   className="rounded-circle"
+//                                 />
+//                               </Link>
+//                               <div>
+//                                 <h6 className="fs-14 mb-1">
+//                                   <Link to="#" className="fw-semibold">
+//                                     Dr. Rachel Green
+//                                   </Link>
+//                                 </h6>
+//                                 <p className="mb-0 fs-13">Urologist</p>
+//                               </div>
+//                             </div>
+//                           </td>
+//                           <td>
+//                             <h6 className="fs-14 fw-semibold">
+//                               Consultation Fees
+//                             </h6>
+//                             <p className="fs-13">$550</p>
+//                           </td>
+//                           <td className="pe-0 text-end">
+//                             <span className="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">
+//                               Success
+//                             </span>
+//                           </td>
+//                         </tr>
+//                         <tr className="border-white">
+//                           <td className="ps-0">
+//                             <div className="d-flex align-items-center">
+//                               <Link to="#" className="avatar me-2">
+//                                 <ImageWithBasePath
+//                                   src="assets/img/doctors/doctor-10.jpg"
+//                                   alt="img"
+//                                   className="rounded-circle"
+//                                 />
+//                               </Link>
+//                               <div>
+//                                 <h6 className="fs-14 mb-1">
+//                                   <Link to="#" className="fw-semibold">
+//                                     Dr. Michael Smith
+//                                   </Link>
+//                                 </h6>
+//                                 <p className="mb-0 fs-13">Cardiologist</p>
+//                               </div>
+//                             </div>
+//                           </td>
+//                           <td>
+//                             <h6 className="fs-14 fw-semibold">
+//                               Consultation Fees
+//                             </h6>
+//                             <p className="fs-13">$600</p>
+//                           </td>
+//                           <td className="pe-0 text-end">
+//                             <span className="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">
+//                               Success
+//                             </span>
+//                           </td>
+//                         </tr>
+//                       </tbody>
+//                     </table>
+//                   </div>
+//                   {/* Table end */}
+//                 </div>
+//               </div>
+//             </div>
+//             {/* col end */}
+//           </div>
+//           {/* row end */}
+//           {/* card start */}
+//           <div className="card shadow-sm flex-fill w-100">
+//             <div className="card-header d-flex align-items-center justify-content-between">
+//               <h5 className="fw-bold mb-0">Recent Appointments</h5>
+//               <div className="dropdown">
+//                 <Link
+//                   to="#"
+//                   className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
+//                   data-bs-toggle="dropdown"
+//                 >
+//                   Weekly <i className="ti ti-chevron-down ms-1" />
+//                 </Link>
+//                 <ul className="dropdown-menu">
+//                   <li>
+//                     <Link className="dropdown-item" to="#">
+//                       Monthly
+//                     </Link>
+//                   </li>
+//                   <li>
+//                     <Link className="dropdown-item" to="#">
+//                       Weekly
+//                     </Link>
+//                   </li>
+//                   <li>
+//                     <Link className="dropdown-item" to="#">
+//                       Yearly
+//                     </Link>
+//                   </li>
+//                 </ul>
+//               </div>
+//             </div>
+//             <div className="card-body">
+//               {/* Table start */}
+//               <div className="table-responsive table-nowrap">
+//                 <table className="table border">
+//                   <thead className="thead-light">
+//                     <tr>
+//                       <th>Name &amp; Designation</th>
+//                       <th>Date &amp; Time</th>
+//                       <th>Consultation Fees</th>
+//                       <th>Mode</th>
+//                       <th>Status</th>
+//                       <th />
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     <tr>
+//                       <td>
+//                         <div className="d-flex align-items-center">
+//                           <Link to="#" className="avatar me-2">
+//                             <ImageWithBasePath
+//                               src="assets/img/doctors/doctor-01.jpg"
+//                               alt="img"
+//                               className="rounded-circle"
+//                             />
+//                           </Link>
+//                           <div>
+//                             <h6 className="fs-14 mb-1">
+//                               <Link to="#" className="fw-semibold">
+//                                 Dr. Mick Thompson
+//                               </Link>
+//                             </h6>
+//                             <p className="mb-0 fs-13">Cardiologist</p>
+//                           </div>
+//                         </div>
+//                       </td>
+//                       <td>27 May 2025 - 09:30 AM</td>
+//                       <td className="fw-semibold text-dark">$400</td>
+//                       <td>Online</td>
+//                       <td>
+//                         <span className="badge bg-success fw-medium">
+//                           Checked Out
+//                         </span>
+//                       </td>
+//                       <td>
+//                         <Link
+//                           to="#"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
+//                         >
+//                           <i className="ti ti-calendar-plus" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           data-bs-toggle="dropdown"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
+//                         >
+//                           <i className="ti ti-dots-vertical" />
+//                         </Link>
+//                         <ul className="dropdown-menu p-2">
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="offcanvas"
+//                               data-bs-target="#edit_appointment"
+//                             >
+//                               <i className="ti ti-edit me-2" />
+//                               Edit
+//                             </Link>
+//                           </li>
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="modal"
+//                               data-bs-target="#delete_modal"
+//                             >
+//                               <i className="ti ti-trash me-2" />
+//                               Delete
+//                             </Link>
+//                           </li>
+//                         </ul>
+//                       </td>
+//                     </tr>
+//                     <tr>
+//                       <td>
+//                         <div className="d-flex align-items-center">
+//                           <Link to="#" className="avatar me-2">
+//                             <ImageWithBasePath
+//                               src="assets/img/doctors/doctor-09.jpg"
+//                               alt="img"
+//                               className="rounded-circle"
+//                             />
+//                           </Link>
+//                           <div>
+//                             <h6 className="fs-14 mb-1">
+//                               <Link to="#" className="fw-semibold">
+//                                 Dr. Sarah Johnson
+//                               </Link>
+//                             </h6>
+//                             <p className="mb-0 fs-13">Orthopedic Surgeon</p>
+//                           </div>
+//                         </div>
+//                       </td>
+//                       <td>26 May 2025 - 10:15 AM</td>
+//                       <td className="fw-semibold text-dark">$370</td>
+//                       <td>Online</td>
+//                       <td>
+//                         <span className="badge bg-warning fw-medium">
+//                           Checked in
+//                         </span>
+//                       </td>
+//                       <td>
+//                         <Link
+//                           to="#"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
+//                         >
+//                           <i className="ti ti-calendar-plus" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           data-bs-toggle="dropdown"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
+//                         >
+//                           <i className="ti ti-dots-vertical" />
+//                         </Link>
+//                         <ul className="dropdown-menu p-2">
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="offcanvas"
+//                               data-bs-target="#edit_appointment"
+//                             >
+//                               <i className="ti ti-edit me-2" />
+//                               Edit
+//                             </Link>
+//                           </li>
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="modal"
+//                               data-bs-target="#delete_modal"
+//                             >
+//                               <i className="ti ti-trash me-2" />
+//                               Delete
+//                             </Link>
+//                           </li>
+//                         </ul>
+//                       </td>
+//                     </tr>
+//                     <tr>
+//                       <td>
+//                         <div className="d-flex align-items-center">
+//                           <Link to="#" className="avatar me-2">
+//                             <ImageWithBasePath
+//                               src="assets/img/doctors/doctor-03.jpg"
+//                               alt="img"
+//                               className="rounded-circle"
+//                             />
+//                           </Link>
+//                           <div>
+//                             <h6 className="fs-14 mb-1">
+//                               <Link to="#" className="fw-semibold">
+//                                 Dr. Emily Carter
+//                               </Link>
+//                             </h6>
+//                             <p className="mb-0 fs-13">Pediatrician</p>
+//                           </div>
+//                         </div>
+//                       </td>
+//                       <td>25 May 2025 - 02:40 PM</td>
+//                       <td className="fw-semibold text-dark">$450</td>
+//                       <td>In-Person</td>
+//                       <td>
+//                         <span className="badge bg-danger fw-medium">
+//                           Cancelled
+//                         </span>
+//                       </td>
+//                       <td>
+//                         <Link
+//                           to="#"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
+//                         >
+//                           <i className="ti ti-calendar-plus" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           data-bs-toggle="dropdown"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
+//                         >
+//                           <i className="ti ti-dots-vertical" />
+//                         </Link>
+//                         <ul className="dropdown-menu p-2">
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="offcanvas"
+//                               data-bs-target="#edit_appointment"
+//                             >
+//                               <i className="ti ti-edit me-2" />
+//                               Edit
+//                             </Link>
+//                           </li>
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="modal"
+//                               data-bs-target="#delete_modal"
+//                             >
+//                               <i className="ti ti-trash me-2" />
+//                               Delete
+//                             </Link>
+//                           </li>
+//                         </ul>
+//                       </td>
+//                     </tr>
+//                     <tr>
+//                       <td>
+//                         <div className="d-flex align-items-center">
+//                           <Link to="#" className="avatar me-2">
+//                             <ImageWithBasePath
+//                               src="assets/img/doctors/doctor-04.jpg"
+//                               alt="img"
+//                               className="rounded-circle"
+//                             />
+//                           </Link>
+//                           <div>
+//                             <h6 className="fs-14 mb-1">
+//                               <Link to="#" className="fw-semibold">
+//                                 Dr. David Lee
+//                               </Link>
+//                             </h6>
+//                             <p className="mb-0 fs-13">Gynecologist</p>
+//                           </div>
+//                         </div>
+//                       </td>
+//                       <td>24 May 2025 - 11:30 AM</td>
+//                       <td className="fw-semibold text-dark">$310</td>
+//                       <td>In-Person</td>
+//                       <td>
+//                         <span className="badge bg-info fw-medium">
+//                           Schedule
+//                         </span>
+//                       </td>
+//                       <td>
+//                         <Link
+//                           to="#"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
+//                         >
+//                           <i className="ti ti-calendar-plus" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           data-bs-toggle="dropdown"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
+//                         >
+//                           <i className="ti ti-dots-vertical" />
+//                         </Link>
+//                         <ul className="dropdown-menu p-2">
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="offcanvas"
+//                               data-bs-target="#edit_appointment"
+//                             >
+//                               <i className="ti ti-edit me-2" />
+//                               Edit
+//                             </Link>
+//                           </li>
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="modal"
+//                               data-bs-target="#delete_modal"
+//                             >
+//                               <i className="ti ti-trash me-2" />
+//                               Delete
+//                             </Link>
+//                           </li>
+//                         </ul>
+//                       </td>
+//                     </tr>
+//                     <tr>
+//                       <td>
+//                         <div className="d-flex align-items-center">
+//                           <Link to="#" className="avatar me-2">
+//                             <ImageWithBasePath
+//                               src="assets/img/doctors/doctor-05.jpg"
+//                               alt="img"
+//                               className="rounded-circle"
+//                             />
+//                           </Link>
+//                           <div>
+//                             <h6 className="fs-14 mb-1">
+//                               <Link to="#" className="fw-semibold">
+//                                 Dr. Anna Kim
+//                               </Link>
+//                             </h6>
+//                             <p className="mb-0 fs-13">Psychiatrist</p>
+//                           </div>
+//                         </div>
+//                       </td>
+//                       <td>23 May 2025 - 04:10 PM</td>
+//                       <td className="fw-semibold text-dark">$400</td>
+//                       <td>Online</td>
+//                       <td>
+//                         <span className="badge bg-info fw-medium">
+//                           Schedule
+//                         </span>
+//                       </td>
+//                       <td>
+//                         <Link
+//                           to="#"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
+//                         >
+//                           <i className="ti ti-calendar-plus" />
+//                         </Link>
+//                         <Link
+//                           to="#"
+//                           data-bs-toggle="dropdown"
+//                           className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
+//                         >
+//                           <i className="ti ti-dots-vertical" />
+//                         </Link>
+//                         <ul className="dropdown-menu p-2">
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="offcanvas"
+//                               data-bs-target="#edit_appointment"
+//                             >
+//                               <i className="ti ti-edit me-2" />
+//                               Edit
+//                             </Link>
+//                           </li>
+//                           <li>
+//                             <Link
+//                               to="#"
+//                               className="dropdown-item d-flex align-items-center"
+//                               data-bs-toggle="modal"
+//                               data-bs-target="#delete_modal"
+//                             >
+//                               <i className="ti ti-trash me-2" />
+//                               Delete
+//                             </Link>
+//                           </li>
+//                         </ul>
+//                       </td>
+//                     </tr>
+//                   </tbody>
+//                 </table>
+//               </div>
+//               {/* Table end */}
+//             </div>
+//           </div>
+//           {/* card end */}
+//         </div>
+//         {/* End Content */}
+//         {/* Footer Start */}
+//         <div className="footer text-center bg-white p-2 border-top">
+//           <p className="text-dark mb-0">
+//             2025 ©
+//             <Link to="#" className="link-primary">
+//               Preclinic
+//             </Link>
+//             , All Rights Reserved
+//           </p>
+//         </div>
+//         {/* Footer End */}
+//       </div>
+//       {/* ========================
+// 			End Page Content
+// 		========================= */}
+//       <Modals />
+//     </>
+//   );
+// };
+
+// export default PatientDashboard;
+
+
 import { Link } from "react-router";
-import ImageWithBasePath from "../../../../../core/imageWithBasePath";
-import SCol8Chart from "./chart/scol8Chart";
-import SCol9Chart from "./chart/scol9Chart";
-import SCol10Chart from "./chart/scol10Chart";
 import Modals from "./modals/modals";
+import SCol10Chart from "./chart/scol10Chart";
+import { useEffect, useState } from "react";
+import dayjs from "dayjs";
+import {
+  getPatientStats,
+  getMyDoctors,
+  getMyPrescriptions,
+  getRecentActivity,
+  getPatientRecentAppointments,
+  getRecentTransactions,
+  type PatientStats,
+  type MyDoctor,
+  type MyPrescription,
+  type RecentActivity,
+  type PatientAppointment,
+  type Transaction,
+} from "../../../../../api/patientDashboardService";
 
 const PatientDashboard = () => {
+  const [stats, setStats] = useState<PatientStats>({
+    totalAppointments: 0,
+    onlineConsultations: 0,
+    upcomingCount: 0,
+    cancelledAppointments: 0,
+    totalChange: 0,
+    onlineChange: 0,
+  });
+  const [myDoctors, setMyDoctors] = useState<MyDoctor[]>([]);
+  const [prescriptions, setPrescriptions] = useState<MyPrescription[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [recentAppointments, setRecentAppointments] = useState<PatientAppointment[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [recentFilter, setRecentFilter] = useState<'today' | 'week' | 'month'>('week');
+  const [txFilter, setTxFilter] = useState<'weekly' | 'monthly' | 'yearly'>('weekly');
+  const [selectedAppointment, setSelectedAppointment] = useState<PatientAppointment | null>(null);
+  const [_loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  useEffect(() => {
+    fetchRecentAppointments();
+  }, [recentFilter]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [txFilter]);
+
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+      const [
+        statsRes,
+        doctorsRes,
+        prescriptionsRes,
+        activityRes,
+        recentRes,
+        txRes,
+      ] = await Promise.all([
+        getPatientStats(),
+        getMyDoctors(),
+        getMyPrescriptions(),
+        getRecentActivity(),
+        getPatientRecentAppointments(recentFilter),
+        getRecentTransactions(txFilter),
+      ]);
+
+      if (statsRes.success) setStats(statsRes.data);
+      if (doctorsRes.success) setMyDoctors(doctorsRes.data);
+      if (prescriptionsRes.success) setPrescriptions(prescriptionsRes.data);
+      if (activityRes.success) setRecentActivity(activityRes.data);
+      if (recentRes.success) setRecentAppointments(recentRes.data);
+      if (txRes.success) setTransactions(txRes.data);
+    } catch (error) {
+      console.error('Error fetching patient dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRecentAppointments = async () => {
+    try {
+      const res = await getPatientRecentAppointments(recentFilter);
+      if (res.success) setRecentAppointments(res.data);
+    } catch (error) {
+      console.error('Error fetching recent appointments:', error);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    try {
+      const res = await getRecentTransactions(txFilter);
+      if (res.success) setTransactions(res.data);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  const getActivityColor = (type: string) => {
+    if (type === 'completed') return 'text-success';
+    if (type === 'cancelled') return 'text-danger';
+    return 'text-warning';
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Checked Out': return 'bg-success';
+      case 'Checked In': return 'bg-warning';
+      case 'Cancelled': return 'bg-danger';
+      case 'Confirmed': return 'bg-primary';
+      default: return 'bg-info';
+    }
+  };
+
   return (
     <>
-      {/* ========================
-			Start Page Content
-		========================= */}
       <div className="page-wrapper">
-        {/* Start Content */}
         <div className="content pb-0">
           {/* Page Header */}
           <div className="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
@@ -31,10 +1454,9 @@ const PatientDashboard = () => {
               </Link>
             </div>
           </div>
-          {/* End Page Header */}
-          {/* row start */}
+
+          {/* Stats Row */}
           <div className="row">
-            {/* col start */}
             <div className="col-xl-3 col-md-6 d-flex">
               <div className="card flex-fill w-100 shadow-sm">
                 <div className="card-body">
@@ -44,654 +1466,264 @@ const PatientDashboard = () => {
                     </span>
                     <div className="ms-2">
                       <p className="mb-1 text-truncate">Total Appointments</p>
-                      <h3 className="fw-bold mb-0">24</h3>
+                      <h3 className="fw-bold mb-0">{stats.totalAppointments}</h3>
                     </div>
                   </div>
                   <div className="d-flex align-items-center">
-                    <span className="badge fw-medium bg-success flex-shrink-0 me-2">
-                      +95%
-                    </span>
-                    <p className="fs-13 mb-0">in last 7 Days </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* col end */}
-            {/* col start */}
-            <div className="col-xl-3 col-md-6 d-flex">
-              <div className="card flex-fill w-100 shadow-sm">
-                <div className="card-body">
-                  <div className="d-flex align-items-center mb-4">
-                    <span className="avatar bg-danger rounded-circle fs-20 d-inline-flex flex-shrink-0">
-                      <i className="ti ti-users" />
-                    </span>
-                    <div className="ms-2">
-                      <p className="mb-1 text-truncate">Online Consultations</p>
-                      <h3 className="fw-bold mb-0">36</h3>
-                    </div>
-                  </div>
-                  <div className="d-flex align-items-center">
-                    <span className="badge fw-medium bg-danger flex-shrink-0 me-2">
-                      -15%
+                    <span className={`badge fw-medium ${stats.totalChange >= 0 ? 'bg-success' : 'bg-danger'} flex-shrink-0 me-2`}>
+                      {stats.totalChange >= 0 ? '+' : ''}{stats.totalChange}%
                     </span>
                     <p className="fs-13 mb-0">in last 7 Days</p>
                   </div>
                 </div>
               </div>
             </div>
-            {/* col end */}
-            {/* col start */}
+
             <div className="col-xl-3 col-md-6 d-flex">
               <div className="card flex-fill w-100 shadow-sm">
                 <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between mb-3">
-                    <div>
-                      <p className="mb-1 text-truncate">Blood Pressure</p>
-                      <span className="badge fw-medium bg-success flex-shrink-0 me-2">
-                        +95%
-                      </span>
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <h3 className="fw-bold mb-0 me-1">89</h3>
-                      <p className="mb-0">g/dl</p>
+                  <div className="d-flex align-items-center mb-4">
+                    <span className="avatar bg-danger rounded-circle fs-20 d-inline-flex flex-shrink-0">
+                      <i className="ti ti-video" />
+                    </span>
+                    <div className="ms-2">
+                      <p className="mb-1 text-truncate">Online Consultations</p>
+                      <h3 className="fw-bold mb-0">{stats.onlineConsultations}</h3>
                     </div>
                   </div>
-                  <div id="s-col-8" className="chart-set">
-                    <SCol8Chart />
+                  <div className="d-flex align-items-center">
+                    <span className={`badge fw-medium ${stats.onlineChange >= 0 ? 'bg-success' : 'bg-danger'} flex-shrink-0 me-2`}>
+                      {stats.onlineChange >= 0 ? '+' : ''}{stats.onlineChange}%
+                    </span>
+                    <p className="fs-13 mb-0">in last 7 Days</p>
                   </div>
                 </div>
               </div>
             </div>
-            {/* col end */}
-            {/* col start */}
+
             <div className="col-xl-3 col-md-6 d-flex">
               <div className="card flex-fill w-100 shadow-sm">
                 <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between mb-3">
-                    <div>
-                      <p className="mb-1 text-truncate">Heart Rate</p>
-                      <span className="badge fw-medium bg-success flex-shrink-0 me-2">
-                        +95%
-                      </span>
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <h3 className="fw-bold mb-0 me-1">87</h3>
-                      <p className="mb-0">bpm</p>
+                  <div className="d-flex align-items-center mb-4">
+                    <span className="avatar bg-success rounded-circle fs-20 d-inline-flex flex-shrink-0">
+                      <i className="ti ti-calendar-check" />
+                    </span>
+                    <div className="ms-2">
+                      <p className="mb-1 text-truncate">Upcoming</p>
+                      <h3 className="fw-bold mb-0">{stats.upcomingCount}</h3>
                     </div>
                   </div>
-                  <div id="s-col-9" className="chart-set">
-                    <SCol9Chart />
+                  <div className="d-flex align-items-center">
+                    <span className="badge fw-medium bg-success flex-shrink-0 me-2">
+                      Active
+                    </span>
+                    <p className="fs-13 mb-0">Scheduled appointments</p>
                   </div>
                 </div>
               </div>
             </div>
-            {/* col end */}
+
+            <div className="col-xl-3 col-md-6 d-flex">
+              <div className="card flex-fill w-100 shadow-sm">
+                <div className="card-body">
+                  <div className="d-flex align-items-center mb-4">
+                    <span className="avatar bg-warning rounded-circle fs-20 d-inline-flex flex-shrink-0">
+                      <i className="ti ti-calendar-x" />
+                    </span>
+                    <div className="ms-2">
+                      <p className="mb-1 text-truncate">Cancelled</p>
+                      <h3 className="fw-bold mb-0">{stats.cancelledAppointments}</h3>
+                    </div>
+                  </div>
+                  <div className="d-flex align-items-center">
+                    <span className="badge fw-medium bg-warning flex-shrink-0 me-2">
+                      Total
+                    </span>
+                    <p className="fs-13 mb-0">Cancelled appointments</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          {/* row start */}
-          {/* row start */}
+
+          {/* My Doctors + Prescriptions + Activity */}
           <div className="row">
-            {/* col start */}
+            {/* My Doctors */}
             <div className="col-xl-4 col-lg-6 d-flex">
               <div className="card shadow-sm flex-fill w-100">
                 <div className="card-header d-flex align-items-center justify-content-between">
                   <h5 className="fw-bold mb-0">My Doctors</h5>
                 </div>
                 <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/doctors/doctor-01.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-semibold">
-                            Dr. Mick Thompson
+                  {myDoctors.length > 0 ? (
+                    myDoctors.map((doctor, index) => (
+                      <div
+                        key={doctor._id}
+                        className={`d-flex align-items-center justify-content-between ${index < myDoctors.length - 1 ? 'mb-3' : 'mb-0'}`}
+                      >
+                        <div className="d-flex align-items-center">
+                          <Link to="#" className="avatar me-2 flex-shrink-0">
+                            {doctor.profileImage ? (
+                              <img
+                                src={doctor.profileImage.startsWith('http')
+                                  ? doctor.profileImage
+                                  : `${import.meta.env.VITE_BACKEND_URL}${doctor.profileImage}`}
+                                alt={doctor.fullName}
+                                className="rounded-circle"
+                                style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div
+                                className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                style={{ width: '40px', height: '40px', fontSize: '16px' }}
+                              >
+                                {doctor.fullName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
                           </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">Cardiologist</p>
+                          <div>
+                            <h6 className="fs-14 mb-1 text-truncate">
+                              <Link to="#" className="fw-semibold">{doctor.fullName}</Link>
+                            </h6>
+                            <p className="mb-0 fs-13 text-truncate">
+                              {doctor.designation || doctor.department || 'Doctor'}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
+                          {doctor.bookingCount} Bookings
+                        </span>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <i className="ti ti-stethoscope fs-1 text-muted mb-2 d-block"></i>
+                      <p className="text-muted mb-0">No doctors yet</p>
                     </div>
-                    <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
-                      20 Bookings
-                    </span>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/doctors/doctor-02.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-semibold">
-                            Dr. Sarah Johnson
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">
-                          Orthopedic Surgeon
-                        </p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
-                      15 Bookings
-                    </span>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/doctors/doctor-03.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-semibold">
-                            Dr. Emily Carter
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">Pediatrician</p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
-                      12 Bookings
-                    </span>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/doctors/doctor-04.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-semibold">
-                            Dr. David Lee
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">Gynecologist</p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
-                      08 Bookings
-                    </span>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-0">
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="avatar me-2 flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/doctors/doctor-05.jpg"
-                          alt="img"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="fs-14 mb-1 text-truncate">
-                          <Link to="#" className="fw-semibold">
-                            Dr. Anna Kim
-                          </Link>
-                        </h6>
-                        <p className="mb-0 fs-13 text-truncate">Psychiatrist</p>
-                      </div>
-                    </div>
-                    <span className="badge fw-medium badge-soft-danger border border-danger flex-shrink-0">
-                      06 Bookings
-                    </span>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
-            {/* col end */}
-            {/* col start */}
+
+            {/* Prescriptions */}
             <div className="col-xl-4 col-lg-6 d-flex">
               <div className="card shadow-sm flex-fill w-100">
                 <div className="card-header d-flex align-items-center justify-content-between">
                   <h5 className="fw-bold mb-0">Prescriptions</h5>
                 </div>
                 <div className="card-body">
-                  <div className="overflow-auto">
-                    <div className="d-flex align-items-center justify-content-between mb-3">
-                      <div className="d-flex align-items-center flex-shrink-0">
-                        <Link
-                          to="#"
-                          className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
-                        >
-                          <i className="ti ti-file-description fs-20" />
-                        </Link>
-                        <div>
-                          <h6 className="fs-14 mb-1 text-truncate">
-                            <Link to="#" className="fw-semibold">
-                              Cardiology Prescription
-                            </Link>
-                          </h6>
-                          <p className="mb-0 fs-13 text-truncate">
-                            20 Apr 2025
-                          </p>
+                  {prescriptions.length > 0 ? (
+                    prescriptions.map((rx, index) => (
+                      <div
+                        key={rx._id}
+                        className={`d-flex align-items-center justify-content-between ${index < prescriptions.length - 1 ? 'mb-3' : 'mb-0'}`}
+                      >
+                        <div className="d-flex align-items-center flex-shrink-0">
+                          <Link
+                            to="#"
+                            className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
+                          >
+                            <i className="ti ti-file-description fs-20" />
+                          </Link>
+                          <div>
+                            <h6 className="fs-14 mb-1 text-truncate">
+                              <Link to="#" className="fw-semibold">
+                                {rx.doctor?.department
+                                  ? `${rx.doctor.department} Prescription`
+                                  : 'Prescription'}
+                              </Link>
+                            </h6>
+                            <p className="mb-0 fs-13 text-truncate">
+                              {dayjs(rx.createdAt).format('DD MMM YYYY')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="d-flex align-items-center">
+                          <Link
+                            to="#"
+                            className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
+                          >
+                            <i className="ti ti-eye" />
+                          </Link>
+                          <Link
+                            to="#"
+                            className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
+                          >
+                            <i className="ti ti-download" />
+                          </Link>
                         </div>
                       </div>
-                      <div className="d-flex align-items-center">
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
-                        >
-                          <i className="ti ti-eye" />
-                        </Link>
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
-                        >
-                          <i className="ti ti-download" />
-                        </Link>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <i className="ti ti-file-description fs-1 text-muted mb-2 d-block"></i>
+                      <p className="text-muted mb-0">No prescriptions yet</p>
                     </div>
-                    <div className="d-flex align-items-center justify-content-between mb-3">
-                      <div className="d-flex align-items-center flex-shrink-0">
-                        <Link
-                          to="#"
-                          className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
-                        >
-                          <i className="ti ti-file-description fs-20" />
-                        </Link>
-                        <div>
-                          <h6 className="fs-14 mb-1 text-truncate">
-                            <Link to="#" className="fw-semibold">
-                              Dentist Prescription
-                            </Link>
-                          </h6>
-                          <p className="mb-0 fs-13 text-truncate">
-                            25 Mar 2025
-                          </p>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-center">
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
-                        >
-                          <i className="ti ti-eye" />
-                        </Link>
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
-                        >
-                          <i className="ti ti-download" />
-                        </Link>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center justify-content-between mb-3">
-                      <div className="d-flex align-items-center flex-shrink-0">
-                        <Link
-                          to="#"
-                          className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
-                        >
-                          <i className="ti ti-file-description fs-20" />
-                        </Link>
-                        <div>
-                          <h6 className="fs-14 mb-1 text-truncate">
-                            <Link to="#" className="fw-semibold">
-                              Dentist Prescription
-                            </Link>
-                          </h6>
-                          <p className="mb-0 fs-13 text-truncate">
-                            16 Mar 2025
-                          </p>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-center">
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
-                        >
-                          <i className="ti ti-eye" />
-                        </Link>
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
-                        >
-                          <i className="ti ti-download" />
-                        </Link>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center justify-content-between mb-3">
-                      <div className="d-flex align-items-center flex-shrink-0">
-                        <Link
-                          to="#"
-                          className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
-                        >
-                          <i className="ti ti-file-description fs-20" />
-                        </Link>
-                        <div>
-                          <h6 className="fs-14 mb-1 text-truncate">
-                            <Link to="#" className="fw-semibold">
-                              Dentist Prescription
-                            </Link>
-                          </h6>
-                          <p className="mb-0 fs-13 text-truncate">
-                            12 Feb 2025
-                          </p>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-center">
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
-                        >
-                          <i className="ti ti-eye" />
-                        </Link>
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
-                        >
-                          <i className="ti ti-download" />
-                        </Link>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center justify-content-between mb-0">
-                      <div className="d-flex align-items-center flex-shrink-0">
-                        <Link
-                          to="#"
-                          className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
-                        >
-                          <i className="ti ti-file-description fs-20" />
-                        </Link>
-                        <div>
-                          <h6 className="fs-14 mb-1 text-truncate">
-                            <Link to="#" className="fw-semibold">
-                              Cardiology Prescription
-                            </Link>
-                          </h6>
-                          <p className="mb-0 fs-13 text-truncate">
-                            04 Jan 2025
-                          </p>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-center">
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
-                        >
-                          <i className="ti ti-eye" />
-                        </Link>
-                        <Link
-                          to="#"
-                          className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
-                        >
-                          <i className="ti ti-download" />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
-            {/* col end */}
-            {/* col start */}
+
+            {/* Recent Activity */}
             <div className="col-xl-4 d-flex">
               <div className="card shadow-sm flex-fill w-100">
                 <div className="card-header d-flex align-items-center justify-content-between">
                   <h5 className="fw-bold mb-0">Recent Activity</h5>
                 </div>
                 <div className="card-body">
-                  <div className="recent-activity">
-                    <div className="d-flex align-items-center mb-3">
-                      <span>
-                        <i className="ti ti-point-filled fs-24 text-success" />
-                      </span>
-                      <div className="ms-2">
-                        <p className="mb-1 text-truncate">
-                          Appointment with
-                          <Link to="#" className="fw-semibold">
-                            Primary Care Physician
-                          </Link>
-                        </p>
-                        <p className="fs-13 mb-0">24 Mar 2025, 10:55 AM</p>
-                      </div>
+                  {recentActivity.length > 0 ? (
+                    <div className="recent-activity">
+                      {recentActivity.map((activity, index) => (
+                        <div
+                          key={activity._id}
+                          className={`d-flex align-items-start ${index < recentActivity.length - 1 ? 'mb-3' : 'mb-0'}`}
+                        >
+                          <span>
+                            <i className={`ti ti-point-filled fs-24 ${getActivityColor(activity.type)}`} />
+                          </span>
+                          <div className="ms-2">
+                            <p className="mb-1 text-truncate">
+                              {activity.title}{' '}
+                              {activity.doctorName !== 'N/A' && (
+                                <Link to="#" className="fw-semibold">{activity.doctorName}</Link>
+                              )}
+                            </p>
+                            {activity.description && (
+                              <p className="mb-1 fs-13 text-muted text-truncate">{activity.description}</p>
+                            )}
+                            <p className="fs-13 mb-0 text-muted">
+                              {dayjs(activity.date).format('DD MMM YYYY, hh:mm A')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="d-flex align-items-center mb-3">
-                      <span>
-                        <i className="ti ti-point-filled fs-24 text-danger" />
-                      </span>
-                      <div className="ms-2">
-                        <p className="mb-1 text-truncate">
-                          <Link to="#" className="fw-semibold">
-                            Blood Pressure Check
-                          </Link>
-                          (Home Monitoring)
-                        </p>
-                        <p className="fs-13 mb-0">24 Apr 2025, 11:00 AM</p>
-                      </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <i className="ti ti-activity fs-1 text-muted mb-2 d-block"></i>
+                      <p className="text-muted mb-0">No recent activity</p>
                     </div>
-                    <div className="d-flex align-items-center mb-3">
-                      <span>
-                        <i className="ti ti-point-filled fs-24 text-warning" />
-                      </span>
-                      <div className="ms-2">
-                        <p className="mb-1">
-                          <Link to="#" className="fw-semibold">
-                            Physical Therapy Session
-                          </Link>
-                          Knee strengthening exercises
-                        </p>
-                        <p className="fs-13 mb-0">24 Apr 2025, 11:00 AM</p>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center mb-0">
-                      <span>
-                        <i className="ti ti-point-filled fs-24 text-info" />
-                      </span>
-                      <div className="ms-2">
-                        <p className="mb-1">
-                          <Link to="#" className="fw-semibold">
-                            Discuss dietary changes
-                          </Link>
-                          to manage blood sugar levels and weight
-                        </p>
-                        <p className="fs-13 mb-0">24 Apr 2025, 11:00 AM</p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
-            {/* col end */}
           </div>
-          {/* row end */}
-          {/* card start */}
-          <div className="card shadow-sm">
-            <div className="card-header">
-              <h5 className="fw-bold mb-0">Vitals</h5>
-            </div>
-            <div className="card-body">
-              {/* row start */}
-              <div className="row row-gap-3 row-cols-1 row-cols-xl-6 row-cols-md-3 row-cols-sm-2">
-                {/* col start */}
-                <div className="col d-flex">
-                  <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar bg-primary rounded-circle flex-shrink-0">
-                        <ImageWithBasePath
-                          src="./assets/img/icons/weight.svg"
-                          alt="img"
-                          className="w-auto h-auto"
-                        />
-                      </span>
-                      <div className="ms-1">
-                        <p className="mb-1">Weight</p>
-                        <p className="text-truncate">
-                          <span className="fs-18 fw-bold text-dark">100</span>
-                          Kg
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* col end */}
-                {/* col start */}
-                <div className="col d-flex">
-                  <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar bg-primary rounded-circle flex-shrink-0">
-                        <ImageWithBasePath
-                          src="./assets/img/icons/rotate-left.svg"
-                          alt="img"
-                          className="w-auto h-auto"
-                        />
-                      </span>
-                      <div className="ms-1">
-                        <p className="mb-1">Height</p>
-                        <p className="text-truncate">
-                          <span className="fs-18 fw-bold text-dark">154</span>
-                          Cm
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* col end */}
-                {/* col start */}
-                <div className="col d-flex">
-                  <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar bg-primary rounded-circle flex-shrink-0">
-                        <ImageWithBasePath
-                          src="./assets/img/icons/user-cirlce-add.svg"
-                          alt="img"
-                          className="w-auto h-auto"
-                        />
-                      </span>
-                      <div className="ms-1">
-                        <p className="mb-1">BMI</p>
-                        <p className="text-truncate">
-                          <span className="fs-18 fw-bold text-dark">19.2</span>
-                          kg/cm
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* col end */}
-                {/* col start */}
-                <div className="col d-flex">
-                  <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar bg-primary rounded-circle flex-shrink-0">
-                        <ImageWithBasePath
-                          src="./assets/img/icons/driver-2.svg"
-                          alt="img"
-                          className="w-auto h-auto"
-                        />
-                      </span>
-                      <div className="ms-1">
-                        <p className="mb-1">Pulse</p>
-                        <p className="text-truncate">
-                          <span className="fs-18 fw-bold text-dark">97%</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* col end */}
-                {/* col start */}
-                <div className="col d-flex">
-                  <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar bg-primary rounded-circle flex-shrink-0">
-                        <ImageWithBasePath
-                          src="./assets/img/icons/wind.svg"
-                          alt="img"
-                          className="w-auto h-auto"
-                        />
-                      </span>
-                      <div className="ms-1">
-                        <p className="mb-1">SPO2</p>
-                        <p className="text-truncate">
-                          <span className="fs-18 fw-bold text-dark">98%</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* col end */}
-                {/* col start */}
-                <div className="col d-flex">
-                  <div className="p-3 border shadow-sm flex-fill w-100 rounded-2">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar bg-primary rounded-circle flex-shrink-0">
-                        <ImageWithBasePath
-                          src="./assets/img/icons/sun.svg"
-                          alt="img"
-                          className="w-auto h-auto"
-                        />
-                      </span>
-                      <div className="ms-1">
-                        <p className="mb-1 text-truncate">Temprature</p>
-                        <p className="text-truncate">
-                          <span className="fs-18 fw-bold text-dark">101</span> C
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* col end */}
-              </div>
-              {/* row end */}
-            </div>
-          </div>
-          {/* card end */}
-          {/* row start */}
+
+          {/* Consultation By Department + Transactions */}
           <div className="row">
-            {/* col start */}
             <div className="col-lg-6 d-flex">
               <div className="card shadow-sm flex-fill w-100">
                 <div className="card-header d-flex align-items-center justify-content-between">
                   <h5 className="fw-bold mb-0">Consultation By Department</h5>
-                  <div className="dropdown">
-                    <Link
-                      to="#"
-                      className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      Monthly <i className="ti ti-chevron-down ms-1" />
-                    </Link>
-                    <ul className="dropdown-menu">
-                      <li>
-                        <Link className="dropdown-item" to="#">
-                          Monthly
-                        </Link>
-                      </li>
-                      <li>
-                        <Link className="dropdown-item" to="#">
-                          Weekly
-                        </Link>
-                      </li>
-                      <li>
-                        <Link className="dropdown-item" to="#">
-                          Yearly
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
                 </div>
                 <div className="card-body pb-0">
-                  <div id="s-col-10" className="chart-set">
-                    <SCol10Chart />
-                  </div>
+                  <SCol10Chart />
                 </div>
               </div>
             </div>
-            {/* col end */}
-            {/* col start */}
+
+            {/* Recent Transactions */}
             <div className="col-lg-6 d-flex">
               <div className="card shadow-sm flex-fill w-100">
                 <div className="card-header d-flex align-items-center justify-content-between">
@@ -702,203 +1734,94 @@ const PatientDashboard = () => {
                       className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Weekly <i className="ti ti-chevron-down ms-1" />
+                      {txFilter === 'weekly' ? 'Weekly' : txFilter === 'monthly' ? 'Monthly' : 'Yearly'}
+                      <i className="ti ti-chevron-down ms-1" />
                     </Link>
                     <ul className="dropdown-menu">
-                      <li>
-                        <Link className="dropdown-item" to="#">
-                          Monthly
-                        </Link>
-                      </li>
-                      <li>
-                        <Link className="dropdown-item" to="#">
-                          Weekly
-                        </Link>
-                      </li>
-                      <li>
-                        <Link className="dropdown-item" to="#">
-                          Yearly
-                        </Link>
-                      </li>
+                      {(['weekly', 'monthly', 'yearly'] as const).map(f => (
+                        <li key={f}>
+                          <Link className="dropdown-item" to="#" onClick={() => setTxFilter(f)}>
+                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                          </Link>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 </div>
                 <div className="card-body">
-                  {/* Table start */}
                   <div className="table-responsive table-nowrap">
                     <table className="table">
                       <tbody>
-                        <tr className="border-white">
-                          <td className="ps-0">
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/doctors/doctor-06.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-semibold">
-                                    Dr. John Smith
+                        {transactions.length > 0 ? (
+                          transactions.map(tx => (
+                            <tr key={tx._id} className="border-white">
+                              <td className="ps-0">
+                                <div className="d-flex align-items-center">
+                                  <Link to="#" className="avatar me-2">
+                                    {tx.doctor?.profileImage ? (
+                                      <img
+                                        src={tx.doctor.profileImage.startsWith('http')
+                                          ? tx.doctor.profileImage
+                                          : `${import.meta.env.VITE_BACKEND_URL}${tx.doctor.profileImage}`}
+                                        alt={tx.doctor.fullName}
+                                        className="rounded-circle"
+                                        style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                      />
+                                    ) : (
+                                      <div
+                                        className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                        style={{ width: '40px', height: '40px' }}
+                                      >
+                                        {tx.doctor?.fullName?.charAt(0).toUpperCase() || 'D'}
+                                      </div>
+                                    )}
                                   </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">Neurosurgeon</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <h6 className="fs-14 fw-semibold">
-                              Consultation Fees
-                            </h6>
-                            <p className="fs-13">$450</p>
-                          </td>
-                          <td className="pe-0 text-end">
-                            <span className="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">
-                              Success
-                            </span>
-                          </td>
-                        </tr>
-                        <tr className="border-white">
-                          <td className="ps-0">
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/doctors/doctor-07.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-semibold">
-                                    Dr. Lisa White
-                                  </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">Oncologist</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <h6 className="fs-14 fw-semibold">
-                              Consultation Fees
-                            </h6>
-                            <p className="fs-13">$350</p>
-                          </td>
-                          <td className="pe-0 text-end">
-                            <span className="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">
-                              Success
-                            </span>
-                          </td>
-                        </tr>
-                        <tr className="border-white">
-                          <td className="ps-0">
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/doctors/doctor-08.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-semibold">
-                                    Dr. Patricia Brown
-                                  </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">Pulmonologist</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <h6 className="fs-14 fw-semibold">
-                              Consultation Fees
-                            </h6>
-                            <p className="fs-13">$400</p>
-                          </td>
-                          <td className="pe-0 text-end">
-                            <span className="badge fs-13 py-1 badge-soft-danger border border-danger rounded text-danger fw-medium">
-                              Failed
-                            </span>
-                          </td>
-                        </tr>
-                        <tr className="border-white">
-                          <td className="ps-0">
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/doctors/doctor-09.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-semibold">
-                                    Dr. Rachel Green
-                                  </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">Urologist</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <h6 className="fs-14 fw-semibold">
-                              Consultation Fees
-                            </h6>
-                            <p className="fs-13">$550</p>
-                          </td>
-                          <td className="pe-0 text-end">
-                            <span className="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">
-                              Success
-                            </span>
-                          </td>
-                        </tr>
-                        <tr className="border-white">
-                          <td className="ps-0">
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar me-2">
-                                <ImageWithBasePath
-                                  src="assets/img/doctors/doctor-10.jpg"
-                                  alt="img"
-                                  className="rounded-circle"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1">
-                                  <Link to="#" className="fw-semibold">
-                                    Dr. Michael Smith
-                                  </Link>
-                                </h6>
-                                <p className="mb-0 fs-13">Cardiologist</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <h6 className="fs-14 fw-semibold">
-                              Consultation Fees
-                            </h6>
-                            <p className="fs-13">$600</p>
-                          </td>
-                          <td className="pe-0 text-end">
-                            <span className="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">
-                              Success
-                            </span>
-                          </td>
-                        </tr>
+                                  <div>
+                                    <h6 className="fs-14 mb-1">
+                                      <Link to="#" className="fw-semibold">
+                                        {tx.doctor?.fullName || 'Doctor'}
+                                      </Link>
+                                    </h6>
+                                    <p className="mb-0 fs-13">
+                                      {tx.doctor?.designation || tx.doctor?.department || 'N/A'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <h6 className="fs-14 fw-semibold">Consultation Fees</h6>
+                                <p className="fs-13">${tx.amount}</p>
+                              </td>
+                              <td className="pe-0 text-end">
+                                <span className={`badge fs-13 py-1 fw-medium rounded ${tx.status === 'Success'
+                                  ? 'badge-soft-success border border-success text-success'
+                                  : tx.status === 'Failed'
+                                    ? 'badge-soft-danger border border-danger text-danger'
+                                    : 'badge-soft-warning border border-warning text-warning'
+                                  }`}>
+                                  {tx.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={3} className="text-center py-4">
+                              <i className="ti ti-receipt-off fs-1 text-muted mb-2 d-block"></i>
+                              <p className="text-muted mb-0">No transactions found</p>
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
-                  {/* Table end */}
                 </div>
               </div>
             </div>
-            {/* col end */}
           </div>
-          {/* row end */}
-          {/* card start */}
+
+          {/* Recent Appointments Table */}
           <div className="card shadow-sm flex-fill w-100">
             <div className="card-header d-flex align-items-center justify-content-between">
               <h5 className="fw-bold mb-0">Recent Appointments</h5>
@@ -908,29 +1831,25 @@ const PatientDashboard = () => {
                   className="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  Weekly <i className="ti ti-chevron-down ms-1" />
+                  {recentFilter === 'today' ? 'Today' : recentFilter === 'week' ? 'Weekly' : 'Monthly'}
+                  <i className="ti ti-chevron-down ms-1" />
                 </Link>
                 <ul className="dropdown-menu">
-                  <li>
-                    <Link className="dropdown-item" to="#">
-                      Monthly
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="#">
-                      Weekly
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="#">
-                      Yearly
-                    </Link>
-                  </li>
+                  {([
+                    { value: 'today', label: 'Today' },
+                    { value: 'week', label: 'Weekly' },
+                    { value: 'month', label: 'Monthly' },
+                  ] as const).map(f => (
+                    <li key={f.value}>
+                      <Link className="dropdown-item" to="#" onClick={() => setRecentFilter(f.value)}>
+                        {f.label}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
             <div className="card-body">
-              {/* Table start */}
               <div className="table-responsive table-nowrap">
                 <table className="table border">
                   <thead className="thead-light">
@@ -944,371 +1863,129 @@ const PatientDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link to="#" className="avatar me-2">
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-01.jpg"
-                              alt="img"
-                              className="rounded-circle"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-1">
-                              <Link to="#" className="fw-semibold">
-                                Dr. Mick Thompson
+                    {recentAppointments.length > 0 ? (
+                      recentAppointments.map(apt => (
+                        <tr key={apt._id}>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <Link to="#" className="avatar me-2">
+                                {apt.doctor?.profileImage ? (
+                                  <img
+                                    src={apt.doctor.profileImage.startsWith('http')
+                                      ? apt.doctor.profileImage
+                                      : `${import.meta.env.VITE_BACKEND_URL}${apt.doctor.profileImage}`}
+                                    alt={apt.doctor.fullName}
+                                    className="rounded-circle"
+                                    style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                  />
+                                ) : (
+                                  <div
+                                    className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                    style={{ width: '40px', height: '40px' }}
+                                  >
+                                    {apt.doctor?.fullName?.charAt(0).toUpperCase() || 'D'}
+                                  </div>
+                                )}
                               </Link>
-                            </h6>
-                            <p className="mb-0 fs-13">Cardiologist</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td>27 May 2025 - 09:30 AM</td>
-                      <td className="fw-semibold text-dark">$400</td>
-                      <td>Online</td>
-                      <td>
-                        <span className="badge bg-success fw-medium">
-                          Checked Out
-                        </span>
-                      </td>
-                      <td>
-                        <Link
-                          to="#"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                        >
-                          <i className="ti ti-calendar-plus" />
-                        </Link>
-                        <Link
-                          to="#"
-                          data-bs-toggle="dropdown"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                        >
-                          <i className="ti ti-dots-vertical" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
+                              <div>
+                                <h6 className="fs-14 mb-1">
+                                  <Link to="#" className="fw-semibold">
+                                    {apt.doctor?.fullName || 'Doctor'}
+                                  </Link>
+                                </h6>
+                                <p className="mb-0 fs-13">
+                                  {apt.doctor?.designation || apt.doctor?.department || 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td>{dayjs(apt.appointmentDate).format('DD MMM YYYY')} - {apt.appointmentTime}</td>
+                          <td className="fw-semibold text-dark">${apt.consultationCharge || 0}</td>
+                          <td>{apt.appointmentType}</td>
+                          <td>
+                            <span className={`badge fw-medium ${getStatusBadge(apt.status)}`}>
+                              {apt.status}
+                            </span>
+                          </td>
+                          <td>
                             <Link
                               to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="offcanvas"
-                              data-bs-target="#edit_appointment"
+                              data-bs-toggle="dropdown"
+                              className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
                             >
-                              <i className="ti ti-edit me-2" />
-                              Edit
+                              <i className="ti ti-dots-vertical" />
                             </Link>
-                          </li>
-                          <li>
-                            <Link
-                              to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-2" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link to="#" className="avatar me-2">
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-09.jpg"
-                              alt="img"
-                              className="rounded-circle"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-1">
-                              <Link to="#" className="fw-semibold">
-                                Dr. Sarah Johnson
-                              </Link>
-                            </h6>
-                            <p className="mb-0 fs-13">Orthopedic Surgeon</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td>26 May 2025 - 10:15 AM</td>
-                      <td className="fw-semibold text-dark">$370</td>
-                      <td>Online</td>
-                      <td>
-                        <span className="badge bg-warning fw-medium">
-                          Checked in
-                        </span>
-                      </td>
-                      <td>
-                        <Link
-                          to="#"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                        >
-                          <i className="ti ti-calendar-plus" />
-                        </Link>
-                        <Link
-                          to="#"
-                          data-bs-toggle="dropdown"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                        >
-                          <i className="ti ti-dots-vertical" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="offcanvas"
-                              data-bs-target="#edit_appointment"
-                            >
-                              <i className="ti ti-edit me-2" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-2" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link to="#" className="avatar me-2">
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-03.jpg"
-                              alt="img"
-                              className="rounded-circle"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-1">
-                              <Link to="#" className="fw-semibold">
-                                Dr. Emily Carter
-                              </Link>
-                            </h6>
-                            <p className="mb-0 fs-13">Pediatrician</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td>25 May 2025 - 02:40 PM</td>
-                      <td className="fw-semibold text-dark">$450</td>
-                      <td>In-Person</td>
-                      <td>
-                        <span className="badge bg-danger fw-medium">
-                          Cancelled
-                        </span>
-                      </td>
-                      <td>
-                        <Link
-                          to="#"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                        >
-                          <i className="ti ti-calendar-plus" />
-                        </Link>
-                        <Link
-                          to="#"
-                          data-bs-toggle="dropdown"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                        >
-                          <i className="ti ti-dots-vertical" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="offcanvas"
-                              data-bs-target="#edit_appointment"
-                            >
-                              <i className="ti ti-edit me-2" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-2" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link to="#" className="avatar me-2">
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-04.jpg"
-                              alt="img"
-                              className="rounded-circle"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-1">
-                              <Link to="#" className="fw-semibold">
-                                Dr. David Lee
-                              </Link>
-                            </h6>
-                            <p className="mb-0 fs-13">Gynecologist</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td>24 May 2025 - 11:30 AM</td>
-                      <td className="fw-semibold text-dark">$310</td>
-                      <td>In-Person</td>
-                      <td>
-                        <span className="badge bg-info fw-medium">
-                          Schedule
-                        </span>
-                      </td>
-                      <td>
-                        <Link
-                          to="#"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                        >
-                          <i className="ti ti-calendar-plus" />
-                        </Link>
-                        <Link
-                          to="#"
-                          data-bs-toggle="dropdown"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                        >
-                          <i className="ti ti-dots-vertical" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="offcanvas"
-                              data-bs-target="#edit_appointment"
-                            >
-                              <i className="ti ti-edit me-2" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-2" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link to="#" className="avatar me-2">
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-05.jpg"
-                              alt="img"
-                              className="rounded-circle"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-1">
-                              <Link to="#" className="fw-semibold">
-                                Dr. Anna Kim
-                              </Link>
-                            </h6>
-                            <p className="mb-0 fs-13">Psychiatrist</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td>23 May 2025 - 04:10 PM</td>
-                      <td className="fw-semibold text-dark">$400</td>
-                      <td>Online</td>
-                      <td>
-                        <span className="badge bg-info fw-medium">
-                          Schedule
-                        </span>
-                      </td>
-                      <td>
-                        <Link
-                          to="#"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1"
-                        >
-                          <i className="ti ti-calendar-plus" />
-                        </Link>
-                        <Link
-                          to="#"
-                          data-bs-toggle="dropdown"
-                          className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                        >
-                          <i className="ti ti-dots-vertical" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="offcanvas"
-                              data-bs-target="#edit_appointment"
-                            >
-                              <i className="ti ti-edit me-2" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              to="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-2" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
+                            <ul className="dropdown-menu p-2">
+                              <li>
+                                <Link
+                                  to="#"
+                                  className="dropdown-item d-flex align-items-center"
+                                  data-bs-toggle="offcanvas"
+                                  data-bs-target="#view_details"
+                                  onClick={() => setSelectedAppointment(apt)}
+                                >
+                                  <i className="ti ti-eye me-2" />
+                                  View
+                                </Link>
+                              </li>
+                              <li>
+                                <Link
+                                  to="#"
+                                  className="dropdown-item d-flex align-items-center"
+                                  data-bs-toggle="offcanvas"
+                                  data-bs-target="#edit_appointment"
+                                  onClick={() => setSelectedAppointment(apt)}
+                                >
+                                  <i className="ti ti-edit me-2" />
+                                  Edit
+                                </Link>
+                              </li>
+                              <li>
+                                <Link
+                                  to="#"
+                                  className="dropdown-item d-flex align-items-center text-danger"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#delete_modal"
+                                  onClick={() => setSelectedAppointment(apt)}
+                                >
+                                  <i className="ti ti-trash me-2" />
+                                  Delete
+                                </Link>
+                              </li>
+                            </ul>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="text-center py-4">
+                          <i className="ti ti-calendar-x fs-1 text-muted mb-2 d-block"></i>
+                          <p className="text-muted mb-0">No appointments found</p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
-              {/* Table end */}
             </div>
           </div>
-          {/* card end */}
         </div>
-        {/* End Content */}
-        {/* Footer Start */}
+
+        {/* Footer */}
         <div className="footer text-center bg-white p-2 border-top">
           <p className="text-dark mb-0">
             2025 ©
-            <Link to="#" className="link-primary">
-              Preclinic
-            </Link>
+            <Link to="#" className="link-primary"> Preclinic</Link>
             , All Rights Reserved
           </p>
         </div>
-        {/* Footer End */}
       </div>
-      {/* ========================
-			End Page Content
-		========================= */}
-      <Modals />
+
+      <Modals
+        selectedAppointment={selectedAppointment}
+        onAppointmentUpdated={fetchAllData}
+      />
     </>
   );
 };
