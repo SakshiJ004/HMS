@@ -14,7 +14,7 @@ const {
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // All routes are protected + only patient role
-router.get('/stats', protect, authorize('patient'), getPatientStats);
+router.get('/stats', protect, getPatientStats);
 router.get('/my-doctors', protect, authorize('patient'), getMyDoctors);
 router.get('/prescriptions', protect, authorize('patient'), getMyPrescriptions);
 router.get('/recent-activity', protect, authorize('patient'), getRecentActivity);

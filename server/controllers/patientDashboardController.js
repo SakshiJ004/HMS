@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
  */
 const getPatientStats = async (req, res) => {
     try {
-        const patientId = new mongoose.Types.ObjectId(req.user._id);
+        const patientId = req.user._id;
         const now = new Date();
         const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -83,7 +83,7 @@ const getPatientStats = async (req, res) => {
  */
 const getMyDoctors = async (req, res) => {
     try {
-        const patientId = new mongoose.Types.ObjectId(req.user._id);
+        const patientId = req.user._id;
 
         const myDoctors = await Appointment.aggregate([
             { $match: { patient: patientId } },
@@ -131,7 +131,7 @@ const getMyDoctors = async (req, res) => {
  */
 const getMyPrescriptions = async (req, res) => {
     try {
-        const patientId = new mongoose.Types.ObjectId(req.user._id);
+        const patientId = req.user._id;
 
         let prescriptions = [];
 
@@ -158,7 +158,7 @@ const getMyPrescriptions = async (req, res) => {
  */
 const getRecentActivity = async (req, res) => {
     try {
-        const patientId = new mongoose.Types.ObjectId(req.user._id);
+        const patientId = req.user._id;
 
         const recentActivities = await Appointment.find({ patient: patientId })
             .populate('doctor', 'fullName department designation')
@@ -190,7 +190,7 @@ const getRecentActivity = async (req, res) => {
  */
 const getPatientRecentAppointments = async (req, res) => {
     try {
-        const patientId = new mongoose.Types.ObjectId(req.user._id);
+        const patientId = req.user._id;
         const { filter = 'week' } = req.query;
 
         const now = new Date();
@@ -234,7 +234,7 @@ const getPatientRecentAppointments = async (req, res) => {
  */
 const getPatientUpcomingAppointments = async (req, res) => {
     try {
-        const patientId = new mongoose.Types.ObjectId(req.user._id);
+        const patientId = req.user._id;
         const now = new Date();
         now.setHours(0, 0, 0, 0);
 
@@ -259,7 +259,7 @@ const getPatientUpcomingAppointments = async (req, res) => {
  */
 const getConsultationByDepartment = async (req, res) => {
     try {
-        const patientId = new mongoose.Types.ObjectId(req.user._id);
+        const patientId = req.user._id;
         const { period = 'monthly' } = req.query;
 
         const now = new Date();
@@ -311,7 +311,7 @@ const getConsultationByDepartment = async (req, res) => {
  */
 const getRecentTransactions = async (req, res) => {
     try {
-        const patientId = new mongoose.Types.ObjectId(req.user._id);
+        const patientId = req.user._id;
         const { filter = 'weekly' } = req.query;
 
         const now = new Date();
@@ -355,7 +355,7 @@ const getRecentTransactions = async (req, res) => {
  */
 const getAllPatientAppointments = async (req, res) => {
     try {
-        const patientId = new mongoose.Types.ObjectId(req.user._id);
+        const patientId = req.user._id;
 
         const appointments = await Appointment.find({ patient: patientId })
             .populate('doctor', 'fullName department designation consultationCharge profileImage')
