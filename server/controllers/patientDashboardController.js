@@ -12,8 +12,23 @@ const getPatientStats = async (req, res) => {
         const now = new Date();
         const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        // Total appointments
-        const totalAppointments = await Appointment.countDocuments({ patient: patientId });
+        // DEBUG: पहिले raw count बघ
+        const rawCount = await Appointment.countDocuments({});
+        const patientCount = await Appointment.countDocuments({ patient: patientId });
+
+        console.log('=== PATIENT DASHBOARD DEBUG ===');
+        console.log('Patient ID:', patientId);
+        console.log('Patient ID string:', req.user._id);
+        console.log('Total appointments in DB:', rawCount);
+        console.log('Appointments for this patient:', patientCount);
+
+        // Sample appointment to check field names
+        const sampleApt = await Appointment.findOne({}).lean();
+        console.log('Sample appointment fields:', sampleApt ? Object.keys(sampleApt) : 'none');
+        console.log('Sample patient field value:', sampleApt?.patient);
+        console.log('================================');
+
+        const totalAppointments = patientCount;
         const lastWeekTotal = await Appointment.countDocuments({
             patient: patientId,
             createdAt: { $gte: lastWeek },
@@ -22,7 +37,6 @@ const getPatientStats = async (req, res) => {
             ? Math.round((lastWeekTotal / totalAppointments) * 100)
             : 0;
 
-        // Online consultations
         const onlineConsultations = await Appointment.countDocuments({
             patient: patientId,
             appointmentType: 'Online Consultation',
@@ -36,14 +50,12 @@ const getPatientStats = async (req, res) => {
             ? Math.round((lastWeekOnline / onlineConsultations) * 100)
             : 0;
 
-        // Upcoming appointments
         const upcomingCount = await Appointment.countDocuments({
             patient: patientId,
             appointmentDate: { $gte: now },
             status: { $in: ['Scheduled', 'Confirmed', 'Pending'] },
         });
 
-        // Cancelled appointments
         const cancelledAppointments = await Appointment.countDocuments({
             patient: patientId,
             status: 'Cancelled',
