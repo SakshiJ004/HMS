@@ -289,15 +289,10 @@ const createAppointment = async (req, res) => {
  */
 const getAppointments = async (req, res) => {
     try {
-        let filter = {};
-        if (req.user.role === 'patient') {
-            filter.patient = req.user._id;
-        }
-
-        const appointments = await Appointment.find(filter)
+        const appointments = await Appointment.find()
             .populate({
                 path: 'doctor',
-                select: 'fullName name specialization profileImage profilePicture department designation consultationCharge status'
+                select: 'fullName name specialization profileImage profilePicture department status'
             })
             .populate({
                 path: 'patient',
@@ -306,17 +301,17 @@ const getAppointments = async (req, res) => {
             .sort({ appointmentDate: -1, appointmentTime: -1 })
             .lean();
 
+        // Transform data to ensure consistent field names
         const transformedAppointments = appointments.map(apt => ({
             ...apt,
             doctor: apt.doctor ? {
                 _id: apt.doctor._id,
                 name: apt.doctor.fullName || apt.doctor.name,
                 fullName: apt.doctor.fullName || apt.doctor.name,
-                specialization: apt.doctor.specialization || apt.doctor.designation,
+                specialization: apt.doctor.specialization,
                 profilePicture: apt.doctor.profileImage || apt.doctor.profilePicture,
                 profileImage: apt.doctor.profileImage || apt.doctor.profilePicture,
                 department: apt.doctor.department,
-                consultationCharge: apt.doctor.consultationCharge || 0,
                 status: apt.doctor.status
             } : null,
             patient: apt.patient ? {
@@ -332,7 +327,6 @@ const getAppointments = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            count: transformedAppointments.length,
             data: transformedAppointments,
         });
     } catch (error) {

@@ -169,25 +169,3 @@ export const getAllPatientAppointments = async () => {
     );
     return res.data;
 };
-
-// Patient appointments - all with filters
-export const getPatientAppointmentsList = async (params?: {
-    search?: string;
-    status?: string;
-    startDate?: string;
-    endDate?: string;
-    sortBy?: string;
-}) => {
-    const queryParams = new URLSearchParams();
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.startDate) queryParams.append('startDate', params.startDate);
-    if (params?.endDate) queryParams.append('endDate', params.endDate);
-    if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
-
-    const res = await axios.get(
-        `${API_URL}/api/appointments?${queryParams.toString()}`,
-        getAuthConfig()
-    );
-    return res.data;
-};
