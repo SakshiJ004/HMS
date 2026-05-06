@@ -272,11 +272,10 @@ const getConsultationByDepartment = async (req, res) => {
             startDate = new Date(now.getFullYear(), 0, 1);
         }
 
-        // department field directly Appointment model मध्ये आहे — lookup नको
         const data = await Appointment.aggregate([
             {
                 $match: {
-                    patient: new mongoose.Types.ObjectId(patientId),
+                    patient: new mongoose.Types.ObjectId(String(patientId)),
                     appointmentDate: { $gte: startDate },
                 }
             },
