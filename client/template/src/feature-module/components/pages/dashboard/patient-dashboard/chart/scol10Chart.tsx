@@ -1,20 +1,30 @@
-// SCol10Chart.tsx
 import React from "react";
 import Chart from "react-apexcharts";
-import type { DepartmentStat } from "../../../../../../api/dashboardService";
 
-type Props = {
-  data: DepartmentStat[];
+// ← Backend { _id, count } पाठवतो — हाच type वापर
+type DeptData = {
+  _id: string;
+  count: number;
 };
 
-const SCol10Chart: React.FC<Props> = () => {
+type Props = {
+  data?: DeptData[];
+};
+
+const SCol10Chart: React.FC<Props> = ({ data = [] }) => {
+  const categories = data.length > 0
+    ? data.map(d => d._id || 'Unknown')
+    : ['No Data'];
+
+  const counts = data.length > 0
+    ? data.map(d => d.count || 0)
+    : [0];
+
   const chartOptions = {
     chart: {
       type: "bar" as const,
       height: 340,
-      stacked: false,
       toolbar: { show: false },
-      animations: { enabled: false },
     },
     plotOptions: {
       bar: {
@@ -24,61 +34,31 @@ const SCol10Chart: React.FC<Props> = () => {
     },
     dataLabels: { enabled: false },
     xaxis: {
-      categories: [
-        "Cardiology",
-        "Urology",
-        "Pediatrics",
-        "Gynecology",
-        "Psychiatrist",
-        "General",
-      ],
-      max: 100,
+      categories,
       position: "top",
       labels: {
-        show: true,
-        style: {
-          fontSize: "12px",
-          colors: "#6C7688",
-        },
+        style: { fontSize: "12px", colors: "#6C7688" },
       },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
     yaxis: {
       labels: {
-        show: true,
-        style: {
-          fontSize: "12px",
-          colors: "#0A1B39",
-        },
+        style: { fontSize: "12px", colors: "#0A1B39" },
       },
     },
     grid: {
-      padding: {
-        bottom: 0,
-      },
-      xaxis: {
-        lines: {
-          show: true,
-        },
-      },
+      xaxis: { lines: { show: true } },
     },
-    tooltip: {
-      shared: true,
-      intersect: false,
-    },
-    colors: ["#3538CD", "#0E9384"],
+    colors: ["#3538CD"],
     legend: { show: false },
+    tooltip: { enabled: true },
   };
 
   const chartSeries = [
     {
-      name: "Series A",
-      data: [58, 64, 72, 78, 70, 37],
-    },
-    {
-      name: "Series B",
-      data: [38, 80, 20, 20, 65, 20],
+      name: "Appointments",
+      data: counts,
     },
   ];
 

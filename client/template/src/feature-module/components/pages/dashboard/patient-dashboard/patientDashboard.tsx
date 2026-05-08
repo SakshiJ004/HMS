@@ -1335,6 +1335,7 @@ import {
   type PatientAppointment,
   type Transaction,
   getConsultationByDepartment,
+  getPatientUpcomingAppointments,
 } from "../../../../../api/patientDashboardService";
 import type { DepartmentStat } from "../../../../../api/dashboardService";
 
@@ -1357,6 +1358,7 @@ const PatientDashboard = () => {
   const [deptData, setDeptData] = useState<DepartmentStat[]>([]);
   const [deptPeriod, _setDeptPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
   const [selectedAppointment, setSelectedAppointment] = useState<PatientAppointment | null>(null);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<PatientAppointment[]>([]);
   const [_loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -1392,6 +1394,7 @@ const PatientDashboard = () => {
         recentRes,
         txRes,
         deptRes,
+        upcomingRes,
       ] = await Promise.all([
         getPatientStats(),
         getMyDoctors(),
@@ -1400,6 +1403,7 @@ const PatientDashboard = () => {
         getPatientRecentAppointments(recentFilter),
         getRecentTransactions(txFilter),
         getConsultationByDepartment(deptPeriod),
+        getPatientUpcomingAppointments(),
       ]);
 
       if (statsRes.success) setStats(statsRes.data);
@@ -1409,6 +1413,7 @@ const PatientDashboard = () => {
       if (recentRes.success) setRecentAppointments(recentRes.data);
       if (txRes.success) setTransactions(txRes.data);
       if (deptRes.success) setDeptData(deptRes.data);
+      if (upcomingRes.success) setUpcomingAppointments(upcomingRes.data);
     } catch (error) {
       console.error('Error fetching patient dashboard data:', error);
     } finally {
@@ -1518,25 +1523,51 @@ const PatientDashboard = () => {
               </div>
             </div>
 
-            <div className="col-xl-3 col-md-6 d-flex">
-              <div className="card flex-fill w-100 shadow-sm">
-                <div className="card-body">
-                  <div className="d-flex align-items-center mb-4">
-                    <span className="avatar bg-success rounded-circle fs-20 d-inline-flex flex-shrink-0">
-                      <i className="ti ti-calendar-check" />
-                    </span>
-                    <div className="ms-2">
-                      <p className="mb-1 text-truncate">Upcoming</p>
-                      <h3 className="fw-bold mb-0">{stats.upcomingCount}</h3>
+            {/* Upcoming Appointments */}
+            <div className="card shadow-sm mb-4">
+              <div className="card-header">
+                <h5 className="fw-bold mb-0">Upcoming Appointments</h5>
+              </div>
+              <div className="card-body">
+                {upcomingAppointments.length > 0 ? (
+                  upcomingAppointments.map((apt, idx) => (
+                    <div key={apt._id} className={`d-flex align-items-center justify-content-between ${idx < upcomingAppointments.length - 1 ? 'mb-3 pb-3 border-bottom' : ''}`}>
+                      <div className="d-flex align-items-center">
+                        {/* Doctor avatar */}
+                        {apt.doctor?.profileImage ? (
+                          <img
+                            src={apt.doctor.profileImage.startsWith('http')
+                              ? apt.doctor.profileImage
+                              : `${import.meta.env.VITE_BACKEND_URL}${apt.doctor.profileImage}`}
+                            alt={apt.doctor.fullName}
+                            className="rounded-circle me-3 flex-shrink-0"
+                            style={{ width: 40, height: 40, objectFit: 'cover' }}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3 flex-shrink-0 fw-bold"
+                            style={{ width: 40, height: 40 }}>
+                            {apt.doctor?.fullName?.charAt(0) || 'D'}
+                          </div>
+                        )}
+                        <div>
+                          <h6 className="fs-14 fw-semibold mb-1">{apt.doctor?.fullName || 'Doctor'}</h6>
+                          <p className="fs-13 mb-0 text-muted">{apt.doctor?.department || apt.appointmentType}</p>
+                        </div>
+                      </div>
+                      <div className="text-end">
+                        <p className="fs-13 fw-semibold mb-1">{dayjs(apt.appointmentDate).format('DD MMM YYYY')}</p>
+                        <p className="fs-13 mb-1 text-muted">{apt.appointmentTime}</p>
+                        <span className={`badge fw-medium ${getStatusBadge(apt.status)}`}>{apt.status}</span>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-3">
+                    <i className="ti ti-calendar-check fs-1 text-muted d-block mb-2"></i>
+                    <p className="text-muted mb-0">No upcoming appointments</p>
                   </div>
-                  <div className="d-flex align-items-center">
-                    <span className="badge fw-medium bg-success flex-shrink-0 me-2">
-                      Active
-                    </span>
-                    <p className="fs-13 mb-0">Scheduled appointments</p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -1624,63 +1655,72 @@ const PatientDashboard = () => {
             </div>
 
             {/* Prescriptions */}
-            <div className="col-xl-4 col-lg-6 d-flex">
-              <div className="card shadow-sm flex-fill w-100">
-                <div className="card-header d-flex align-items-center justify-content-between">
-                  <h5 className="fw-bold mb-0">Prescriptions</h5>
-                </div>
-                <div className="card-body">
-                  {prescriptions.length > 0 ? (
-                    prescriptions.map((rx, index) => (
-                      <div
-                        key={rx._id}
-                        className={`d-flex align-items-center justify-content-between ${index < prescriptions.length - 1 ? 'mb-3' : 'mb-0'}`}
-                      >
-                        <div className="d-flex align-items-center flex-shrink-0">
-                          <Link
-                            to="#"
-                            className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark"
-                          >
-                            <i className="ti ti-file-description fs-20" />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-1 text-truncate">
-                              <Link to="#" className="fw-semibold">
-                                {rx.doctor?.department
-                                  ? `${rx.doctor.department} Prescription`
-                                  : 'Prescription'}
-                              </Link>
-                            </h6>
-                            <p className="mb-0 fs-13 text-truncate">
-                              {dayjs(rx.createdAt).format('DD MMM YYYY')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            to="#"
-                            className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
-                          >
-                            <i className="ti ti-eye" />
-                          </Link>
-                          <Link
-                            to="#"
-                            className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
-                          >
-                            <i className="ti ti-download" />
-                          </Link>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-4">
-                      <i className="ti ti-file-description fs-1 text-muted mb-2 d-block"></i>
-                      <p className="text-muted mb-0">No prescriptions yet</p>
+            {/* Prescriptions card body — replace कर */}
+            {prescriptions.length > 0 ? (
+              prescriptions.map((rx, index) => (
+                <div
+                  key={rx._id}
+                  className={`d-flex align-items-center justify-content-between ${index < prescriptions.length - 1 ? 'mb-3' : 'mb-0'}`}
+                >
+                  <div className="d-flex align-items-center flex-shrink-0">
+                    <div className="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark d-flex align-items-center justify-content-center"
+                      style={{ width: 40, height: 40 }}>
+                      <i className="ti ti-file-description fs-20" />
                     </div>
-                  )}
+                    <div>
+                      <h6 className="fs-14 mb-1 text-truncate">
+                        <span className="fw-semibold">
+                          {rx.doctor?.department
+                            ? `${rx.doctor.department} Prescription`
+                            : 'Prescription'}
+                        </span>
+                      </h6>
+                      <p className="mb-0 fs-13 text-muted">
+                        {rx.doctor?.fullName || 'Doctor'} · {dayjs(rx.createdAt).format('DD MMM YYYY')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="d-flex align-items-center gap-1">
+                    {/* View — prescription details page वर navigate कर */}
+                    <Link
+                      to={`/patient/prescriptions/${rx._id}`}
+                      className="btn btn-sm btn-outline-secondary p-1"
+                      title="View"
+                    >
+                      <i className="ti ti-eye" />
+                    </Link>
+                    {/* Download — fileUrl असेल तर download */}
+                    {rx.fileUrl ? (
+                      <a
+                        href={
+                          rx.fileUrl.startsWith('http')
+                            ? rx.fileUrl
+                            : `${import.meta.env.VITE_BACKEND_URL}${rx.fileUrl}`
+                        }
+                        download
+                        className="btn btn-sm btn-outline-primary p-1"
+                        title="Download"
+                      >
+                        <i className="ti ti-download" />
+                      </a>
+                    ) : (
+                      <button
+                        className="btn btn-sm btn-outline-secondary p-1"
+                        title="No file available"
+                        disabled
+                      >
+                        <i className="ti ti-download" />
+                      </button>
+                    )}
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-center py-4">
+                <i className="ti ti-file-description fs-1 text-muted mb-2 d-block"></i>
+                <p className="text-muted mb-0">No prescriptions yet</p>
               </div>
-            </div>
+            )}
 
             {/* Recent Activity */}
             <div className="col-xl-4 d-flex">
@@ -1735,7 +1775,7 @@ const PatientDashboard = () => {
                   <h5 className="fw-bold mb-0">Consultation By Department</h5>
                 </div>
                 <div className="card-body pb-0">
-                  <SCol10Chart data={deptData as DepartmentStat[]} />
+                  <SCol10Chart data={deptData as any} />
                 </div>
               </div>
             </div>
@@ -1772,23 +1812,29 @@ const PatientDashboard = () => {
                         {transactions.length > 0 ? (
                           transactions.map(tx => (
                             <tr key={tx._id} className="border-white">
+
                               <td className="ps-0">
                                 <div className="d-flex align-items-center">
-                                  <Link to="#" className="avatar me-2">
+                                  <Link to="#" className="me-2 flex-shrink-0">
                                     {tx.doctor?.profileImage ? (
                                       <img
-                                        src={tx.doctor.profileImage.startsWith('http')
-                                          ? tx.doctor.profileImage
-                                          : `${import.meta.env.VITE_BACKEND_URL}${tx.doctor.profileImage}`}
+                                        src={
+                                          tx.doctor.profileImage.startsWith('http')
+                                            ? tx.doctor.profileImage
+                                            : `${import.meta.env.VITE_BACKEND_URL}${tx.doctor.profileImage}`
+                                        }
                                         alt={tx.doctor.fullName}
                                         className="rounded-circle"
                                         style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).src = '';
+                                          (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
                                       />
                                     ) : (
                                       <div
-                                        className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                                        style={{ width: '40px', height: '40px' }}
+                                        className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                                        style={{ width: '40px', height: '40px', fontSize: '16px' }}
                                       >
                                         {tx.doctor?.fullName?.charAt(0).toUpperCase() || 'D'}
                                       </div>
@@ -1894,13 +1940,13 @@ const PatientDashboard = () => {
                                     alt={apt.doctor.fullName}
                                     className="rounded-circle"
                                     style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
                                   />
                                 ) : (
-                                  <div
-                                    className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                                    style={{ width: '40px', height: '40px' }}
-                                  >
+                                  <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                    style={{ width: '40px', height: '40px' }}>
                                     {apt.doctor?.fullName?.charAt(0).toUpperCase() || 'D'}
                                   </div>
                                 )}
@@ -1997,7 +2043,7 @@ const PatientDashboard = () => {
             , All Rights Reserved
           </p>
         </div>
-      </div>
+      </div >
 
       <Modals
         selectedAppointment={selectedAppointment}

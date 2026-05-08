@@ -43,6 +43,7 @@ export interface MyPrescription {
         department?: string;
     };
     diagnosis?: string;
+    fileUrl?: string;
     createdAt: string;
 }
 
