@@ -565,7 +565,6 @@ const getPatientRecentAppointments = async (req, res) => {
             .limit(10)
             .lean();
 
-        // ✅ Batch fetch consultationCharge
         const doctorIds = [...new Set(
             appointments.map(a => a.doctor?._id?.toString()).filter(Boolean)
         )];
@@ -584,14 +583,13 @@ const getPatientRecentAppointments = async (req, res) => {
             consultationCharge: doctorChargeMap[apt.doctor?._id?.toString()] || 0,
         }));
 
-        res.status(200).json({ success: true, data: appointmentsWithFee });
-    } catch (error) {
+        res.status(200).json({ success: true, data: appointmentsWithFee }); // ✅ try च्या आत
+
+    } catch (error) { // ✅ try नंतर catch
         console.error('Get patient recent appointments error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
-
-res.status(200).json({ success: true, data: appointmentsWithFee });
 
 // ─── getPatientUpcomingAppointments ───────────────────────────────────────────
 const getPatientUpcomingAppointments = async (req, res) => {
