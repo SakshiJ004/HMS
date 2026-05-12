@@ -2083,6 +2083,38 @@ import {
 // ─── Local type for dept chart (backend returns _id, not department) ──────────
 type DeptChartData = { _id: string; count: number };
 
+
+const Avatar = ({ name, image, size = 40 }: { name?: string; image?: string; size?: number }) => {
+  const [imgError, setImgError] = useState(false);
+
+  const src = image
+    ? (image.startsWith('http') || image.startsWith('data:')
+      ? image
+      : `${import.meta.env.VITE_BACKEND_URL}${image}`)
+    : '';
+
+  if (src && !imgError) {
+    return (
+      <img
+        src={src}
+        alt={name || ''}
+        className="rounded-circle"
+        style={{ width: size, height: size, objectFit: 'cover' }}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+      style={{ width: size, height: size, fontSize: size * 0.38 }}
+    >
+      {name?.charAt(0)?.toUpperCase() || 'D'}
+    </div>
+  );
+};
+
 const PatientDashboard = () => {
   const [stats, setStats] = useState<PatientStats>({
     totalAppointments: 0,
@@ -2103,6 +2135,7 @@ const PatientDashboard = () => {
   const [deptPeriod, setDeptPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly');
   const [selectedAppointment, setSelectedAppointment] = useState<PatientAppointment | null>(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState<PatientAppointment[]>([]);
+  const [selectedPrescription, setSelectedPrescription] = useState<MyPrescription | null>(null);
   const [_loading, setLoading] = useState(true);
 
   useEffect(() => { fetchAllData(); }, []);
@@ -2179,35 +2212,6 @@ const PatientDashboard = () => {
       case 'Confirmed': return 'bg-primary';
       default: return 'bg-info';
     }
-  };
-
-  // ─── Profile Image Helper ────────────────────────────────────────────────────
-  const getImageSrc = (img?: string) => {
-    if (!img) return '';
-    return img.startsWith('http') ? img : `${import.meta.env.VITE_BACKEND_URL}${img}`;
-  };
-
-  // ─── Avatar component (reusable) ────────────────────────────────────────────
-  const Avatar = ({ name, image, size = 40 }: { name?: string; image?: string; size?: number }) => {
-    if (image) {
-      return (
-        <img
-          src={getImageSrc(image)}
-          alt={name || ''}
-          className="rounded-circle"
-          style={{ width: size, height: size, objectFit: 'cover' }}
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-        />
-      );
-    }
-    return (
-      <div
-        className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
-        style={{ width: size, height: size, fontSize: size * 0.4 }}
-      >
-        {name?.charAt(0).toUpperCase() || 'D'}
-      </div>
-    );
   };
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -2409,13 +2413,19 @@ const PatientDashboard = () => {
                           </div>
                           <div className="d-flex align-items-center gap-1">
                             {/* View — prescription detail page */}
-                            <Link
-                              to={`/patient/prescriptions/${rx._id}`}
+                            {/* View button — Link नाही, button वापर */}
+                            <button
                               className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-1 p-1"
-                              title="View"
+                              title="View Prescription"
+                              onClick={() => {
+                                // Prescription details modal show कर
+                                setSelectedPrescription(rx);
+                              }}
+                              data-bs-toggle="modal"
+                              data-bs-target="#prescription_modal"
                             >
                               <i className="ti ti-eye" />
-                            </Link>
+                            </button>
                             {/* Download — fileUrl नाही तर disabled */}
                             <button
                               className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
@@ -2621,11 +2631,14 @@ const PatientDashboard = () => {
                                 <p className="fs-13">${tx.amount}</p>
                               </td>
                               <td className="pe-0 text-end">
-                                <span className={`badge fs-13 py-1 fw-medium rounded ${tx.status === 'Success'
-                                  ? 'badge-soft-success border border-success text-success'
-                                  : tx.status === 'Failed'
-                                    ? 'badge-soft-danger border border-danger text-danger'
-                                    : 'badge-soft-warning border border-warning text-warning'
+                                <span className={`badge fs-13 py-1 fw-medium rounded 
+                                ${tx.status === 'Completed'
+                                    ? 'badge-soft-success border border-success text-success'
+                                    : tx.status === 'Cancelled'
+                                      ? 'badge-soft-danger border border-danger text-danger'
+                                      : tx.status === 'Confirmed'
+                                        ? 'badge-soft-primary border border-primary text-primary'
+                                        : 'badge-soft-warning border border-warning text-warning'
                                   }`}>
                                   {tx.status}
                                 </span>
@@ -2793,6 +2806,110 @@ const PatientDashboard = () => {
             <Link to="#" className="link-primary"> Preclinic</Link>
             , All Rights Reserved
           </p>
+        </div>
+      </div>
+
+
+      {/* Prescription View Modal */}
+      <div className="modal fade" id="prescription_modal">
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title fw-bold">
+                Prescription — {selectedPrescription?.prescriptionId || 'N/A'}
+              </h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" />
+            </div>
+            <div className="modal-body">
+              {selectedPrescription && (
+                <>
+                  {/* Header Info */}
+                  <div className="row mb-3">
+                    <div className="col-md-6">
+                      <p className="mb-1"><strong>Doctor:</strong> {selectedPrescription.doctor?.fullName || 'N/A'}</p>
+                      <p className="mb-1"><strong>Department:</strong> {selectedPrescription.doctor?.department || selectedPrescription.department || 'N/A'}</p>
+                    </div>
+                    <div className="col-md-6">
+                      <p className="mb-1"><strong>Prescribed On:</strong> {dayjs(selectedPrescription.prescribedOn || selectedPrescription.createdAt).format('DD MMM YYYY')}</p>
+                      <p className="mb-1">
+                        <strong>Status:</strong>{' '}
+                        <span className={`badge ${selectedPrescription.status === 'Active' ? 'bg-success' : 'bg-secondary'}`}>
+                          {selectedPrescription.status || 'Active'}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Medications */}
+                  {selectedPrescription.medications && selectedPrescription.medications.length > 0 && (
+                    <>
+                      <h6 className="fw-bold border-bottom pb-2 mb-3">Medications</h6>
+                      <div className="table-responsive mb-3">
+                        <table className="table table-bordered table-sm">
+                          <thead className="thead-light">
+                            <tr>
+                              <th>Medicine</th>
+                              <th>Dosage</th>
+                              <th>Frequency</th>
+                              <th>Duration</th>
+                              <th>Instructions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedPrescription.medications.map((med: any, i: number) => (
+                              <tr key={i}>
+                                <td className="fw-semibold">{med.medicineName || '-'}</td>
+                                <td>{med.dosage || '-'}</td>
+                                <td>{med.frequency || '-'}</td>
+                                <td>{med.duration || '-'}</td>
+                                <td>{med.instructions || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Advice */}
+                  {selectedPrescription.advice && selectedPrescription.advice.length > 0 && (
+                    <>
+                      <h6 className="fw-bold border-bottom pb-2 mb-3">Advice</h6>
+                      <ul className="mb-3">
+                        {selectedPrescription.advice.map((a: any, i: number) => (
+                          <li key={i}>{a.advice || a}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  {/* Follow Up */}
+                  {selectedPrescription.followUp?.nextConsultation && (
+                    <>
+                      <h6 className="fw-bold border-bottom pb-2 mb-3">Follow Up</h6>
+                      <p className="mb-1">
+                        <strong>Next Consultation:</strong>{' '}
+                        {dayjs(selectedPrescription.followUp.nextConsultation).format('DD MMM YYYY')}
+                      </p>
+                      {selectedPrescription.followUp.notes && (
+                        <p className="mb-1"><strong>Notes:</strong> {selectedPrescription.followUp.notes}</p>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-light" data-bs-dismiss="modal">Close</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => window.print()}
+              >
+                <i className="ti ti-printer me-1" /> Print
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

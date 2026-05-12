@@ -44,17 +44,20 @@ export interface MyPrescription {
         department?: string;
         profileImage?: string;
     };
-    appointmentId?: {
-        _id: string;
-        appointmentDate?: string;
-        appointmentType?: string;
-    };
     medications?: Array<{
         medicineName: string;
         dosage: string;
         frequency: string;
         duration: string;
+        instructions?: string;
+        emptyStomach?: boolean;
     }>;
+    advice?: Array<{ advice: string }>;
+    diagnosis?: Array<{ code: string; description: string }>;
+    followUp?: {
+        nextConsultation?: string;
+        notes?: string;
+    };
     department?: string;
     status?: string;
     prescribedOn: string;
@@ -107,7 +110,7 @@ export interface Transaction {
         profileImage?: string;
     };
     amount: number;
-    status: 'Success' | 'Failed' | 'Pending';
+    status: 'Success' | 'Failed' | 'Pending' | 'Completed' | 'Cancelled' | 'Confirmed' | 'Scheduled';
     date: string;
     appointmentType: string;
 }
