@@ -535,30 +535,61 @@ const getRecentActivity = async (req, res) => {
 };
 
 // ─── getPatientRecentAppointments ──────────────────────────────────────────────
-const appointments = await Appointment.find({
-    patient: patientId,
-    appointmentDate: { $gte: startDate, $lte: endDate },
-})
-    .populate('doctor', 'fullName department designation profileImage')
-    .sort({ appointmentDate: -1 })
-    .limit(10)
-    .lean();
+const getPatientRecentAppointments = async (req, res) => {
+    try {
+        const patientId = toObjectId(req.user._id);
+        const { filter = 'week' } = req.query;
 
-// ✅ Doctor discriminator मधून consultationCharge fetch कर
-const doctorIds = [...new Set(appointments.map(a => a.doctor?._id?.toString()).filter(Boolean))];
-const doctorDetails = await Doctor.find({ _id: { $in: doctorIds } })
-    .select('consultationCharge')
-    .lean();
+        const now = new Date();
+        let startDate = new Date();
+        let endDate = new Date();
 
-const doctorChargeMap = {};
-doctorDetails.forEach(d => {
-    doctorChargeMap[d._id.toString()] = d.consultationCharge || 0;
-});
+        if (filter === 'today') {
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+        } else if (filter === 'week') {
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+        } else if (filter === 'month') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
 
-const appointmentsWithFee = appointments.map(apt => ({
-    ...apt,
-    consultationCharge: doctorChargeMap[apt.doctor?._id?.toString()] || 0,
-}));
+        const appointments = await Appointment.find({
+            patient: patientId,
+            appointmentDate: { $gte: startDate, $lte: endDate },
+        })
+            .populate('doctor', 'fullName department designation profileImage')
+            .sort({ appointmentDate: -1 })
+            .limit(10)
+            .lean();
+
+        // ✅ Batch fetch consultationCharge
+        const doctorIds = [...new Set(
+            appointments.map(a => a.doctor?._id?.toString()).filter(Boolean)
+        )];
+
+        const doctorDetails = await Doctor.find({ _id: { $in: doctorIds } })
+            .select('consultationCharge')
+            .lean();
+
+        const doctorChargeMap = {};
+        doctorDetails.forEach(d => {
+            doctorChargeMap[d._id.toString()] = d.consultationCharge || 0;
+        });
+
+        const appointmentsWithFee = appointments.map(apt => ({
+            ...apt,
+            consultationCharge: doctorChargeMap[apt.doctor?._id?.toString()] || 0,
+        }));
+
+        res.status(200).json({ success: true, data: appointmentsWithFee });
+    } catch (error) {
+        console.error('Get patient recent appointments error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 res.status(200).json({ success: true, data: appointmentsWithFee });
 
@@ -645,24 +676,37 @@ const getRecentTransactions = async (req, res) => {
             patient: patientId,
             appointmentDate: { $gte: startDate },
         })
-            .populate('doctor', 'fullName department designation consultationCharge profileImage')
+            .populate('doctor', 'fullName department designation profileImage')
             .sort({ appointmentDate: -1 })
-            .limit(5);
+            .limit(5)
+            .lean();
 
-        // transactions map मध्ये:
-        const txData = await Promise.all(transactions.map(async apt => {
-            // Doctor discriminator मधून consultationCharge fetch
-            const doctorDoc = await Doctor.findById(apt.doctor?._id).select('consultationCharge').lean();
-            return {
-                _id: apt._id,
-                doctor: apt.doctor,
-                amount: doctorDoc?.consultationCharge || apt.doctor?.consultationCharge || 0,
-                status: apt.status === 'Checked Out' ? 'Completed' :
-                    apt.status === 'Cancelled' ? 'Cancelled' :
-                        apt.status === 'Confirmed' ? 'Confirmed' : 'Scheduled',
-                date: apt.appointmentDate,
-                appointmentType: apt.appointmentType,
-            };
+        // ✅ Doctor IDs collect करा
+        const doctorIds = [...new Set(
+            transactions.map(t => t.doctor?._id?.toString()).filter(Boolean)
+        )];
+
+        // ✅ एकाच query मध्ये सगळ्या doctors चे consultationCharge fetch करा
+        const doctorDetails = await Doctor.find({ _id: { $in: doctorIds } })
+            .select('consultationCharge')
+            .lean();
+
+        // ✅ Map बनवा
+        const doctorChargeMap = {};
+        doctorDetails.forEach(d => {
+            doctorChargeMap[d._id.toString()] = d.consultationCharge || 0;
+        });
+
+        // ✅ Simple map — async नाही
+        const txData = transactions.map(apt => ({
+            _id: apt._id,
+            doctor: apt.doctor,
+            amount: doctorChargeMap[apt.doctor?._id?.toString()] || 0,
+            status: apt.status === 'Checked Out' ? 'Completed' :
+                apt.status === 'Cancelled' ? 'Cancelled' :
+                    apt.status === 'Confirmed' ? 'Confirmed' : 'Scheduled',
+            date: apt.appointmentDate,
+            appointmentType: apt.appointmentType,
         }));
 
         res.status(200).json({ success: true, data: txData });
