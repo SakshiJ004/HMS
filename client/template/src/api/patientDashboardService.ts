@@ -37,14 +37,29 @@ export interface MyDoctor {
 
 export interface MyPrescription {
     _id: string;
+    prescriptionId: string;
     doctor?: {
         _id: string;
         fullName: string;
         department?: string;
+        profileImage?: string;
     };
-    diagnosis?: string;
-    fileUrl?: string;
+    appointmentId?: {
+        _id: string;
+        appointmentDate?: string;
+        appointmentType?: string;
+    };
+    medications?: Array<{
+        medicineName: string;
+        dosage: string;
+        frequency: string;
+        duration: string;
+    }>;
+    department?: string;
+    status?: string;
+    prescribedOn: string;
     createdAt: string;
+    fileUrl?: string;
 }
 
 export interface RecentActivity {

@@ -487,22 +487,18 @@ const getMyDoctors = async (req, res) => {
 // ─── getMyPrescriptions ────────────────────────────────────────────────────────
 const getMyPrescriptions = async (req, res) => {
     try {
-        const patientId = toObjectId(req.user._id);   // ← fix
-        let prescriptions = [];
+        const patientId = toObjectId(req.user._id);
 
-        try {
-            prescriptions = await Prescription.find({ patient: patientId })
-                .populate('doctor', 'fullName department designation profileImage')
-                .populate('appointment', 'appointmentDate appointmentType')
-                .sort({ createdAt: -1 })
-                .limit(5)
-                .lean();
-        } catch (err) {
-            console.log('Prescription model not available:', err.message);
-        }
+        const prescriptions = await Prescription.find({ patient: patientId })
+            .populate('doctor', 'fullName department designation profileImage')
+            .populate('appointmentId', 'appointmentDate appointmentType')
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .lean();
 
         res.status(200).json({ success: true, data: prescriptions });
     } catch (error) {
+        console.error('Get prescriptions error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

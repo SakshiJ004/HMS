@@ -2380,6 +2380,7 @@ const PatientDashboard = () => {
                 </div>
                 <div className="card-body">
                   <div className="overflow-auto">
+                    {/* Prescriptions card body — फक्त हा section replace कर */}
                     {prescriptions.length > 0 ? (
                       prescriptions.map((rx, index) => (
                         <div
@@ -2398,40 +2399,39 @@ const PatientDashboard = () => {
                                 <span className="fw-semibold">
                                   {rx.doctor?.department
                                     ? `${rx.doctor.department} Prescription`
-                                    : 'Prescription'}
+                                    : rx.prescriptionId || 'Prescription'}
                                 </span>
                               </h6>
-                              <p className="mb-0 fs-13 text-truncate">
-                                {rx.doctor?.fullName || 'Doctor'} · {dayjs(rx.createdAt).format('DD MMM YYYY')}
+                              <p className="mb-0 fs-13 text-muted">
+                                {rx.doctor?.fullName || 'Doctor'} · {dayjs(rx.prescribedOn || rx.createdAt).format('DD MMM YYYY')}
                               </p>
                             </div>
                           </div>
                           <div className="d-flex align-items-center gap-1">
+                            {/* View — prescription detail page */}
                             <Link
                               to={`/patient/prescriptions/${rx._id}`}
-                              className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"
+                              className="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-1 p-1"
                               title="View"
                             >
                               <i className="ti ti-eye" />
                             </Link>
-                            {rx.fileUrl ? (
-                              <a
-                                href={getImageSrc(rx.fileUrl)}
-                                download
-                                className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
-                                title="Download"
-                              >
-                                <i className="ti ti-download" />
-                              </a>
-                            ) : (
-                              <button
-                                className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
-                                title="No file available"
-                                disabled
-                              >
-                                <i className="ti ti-download" />
-                              </button>
-                            )}
+                            {/* Download — fileUrl नाही तर disabled */}
+                            <button
+                              className="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"
+                              title={rx.fileUrl ? "Download" : "Download not available"}
+                              disabled={!rx.fileUrl}
+                              onClick={() => {
+                                if (rx.fileUrl) {
+                                  const url = rx.fileUrl.startsWith('http')
+                                    ? rx.fileUrl
+                                    : `${import.meta.env.VITE_BACKEND_URL}${rx.fileUrl}`;
+                                  window.open(url, '_blank');
+                                }
+                              }}
+                            >
+                              <i className="ti ti-download" />
+                            </button>
                           </div>
                         </div>
                       ))
