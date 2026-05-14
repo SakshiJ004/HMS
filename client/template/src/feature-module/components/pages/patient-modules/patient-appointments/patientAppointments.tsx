@@ -722,12 +722,12 @@ const PatientAppointments = () => {
                   <li>
                     <button className="dropdown-item" onClick={() => {
                       const rows = appointments.map(a => [
-                        dayjs(a.appointmentDate).format("DD MMM YYYY"),
+                        `"${dayjs(a.appointmentDate).format("DD MMM YYYY")}"`,
                         a.appointmentTime,
                         a.doctor?.fullName || "N/A",
                         a.doctor?.department || "N/A",
                         a.appointmentType,
-                        `$${a.consultationCharge || 0}`,
+                        `$${a.consultationCharge || a.doctor?.consultationCharge || 0}`,
                         a.status,
                       ]);
                       const csv = [["Date", "Time", "Doctor", "Department", "Type", "Fees", "Status"], ...rows].map(r => r.join(",")).join("\n");
@@ -743,9 +743,10 @@ const PatientAppointments = () => {
                     <button className="dropdown-item" onClick={() => {
                       const win = window.open("", "_blank");
                       if (win) {
-                        win.document.write(`<html><head><title>Appointments</title><style>table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}th{background:#f5f5f5}</style></head><body><h2>My Appointments</h2><table><thead><tr><th>Date</th><th>Time</th><th>Doctor</th><th>Dept</th><th>Type</th><th>Fees</th><th>Status</th></tr></thead><tbody>${appointments.map(a => `<tr><td>${dayjs(a.appointmentDate).format("DD MMM YYYY")}</td><td>${a.appointmentTime}</td><td>${a.doctor?.fullName || "N/A"}</td><td>${a.doctor?.department || "N/A"}</td><td>${a.appointmentType}</td><td>$${a.consultationCharge || 0}</td><td>${a.status}</td></tr>`).join("")}</tbody></table></body></html>`);
+                        win.document.write(`<html><head><title>Appointments</title><style>table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}th{background:#f5f5f5}</style></head><body><h2>My Appointments</h2><table><thead><tr><th>Date</th><th>Time</th><th>Doctor</th><th>Dept</th><th>Type</th><th>Fees</th><th>Status</th></tr></thead><tbody>${appointments.map(a => `<tr><td>${dayjs(a.appointmentDate).format("DD MMM YYYY")}</td><td>${a.appointmentTime}</td><td>${a.doctor?.fullName || "N/A"}</td><td>${a.doctor?.department || "N/A"}</td><td>${a.appointmentType}</td><td>$${a.consultationCharge || a.doctor?.consultationCharge || 0}</td><td>${a.status}</td></tr>`).join("")}</tbody></table></body></html>`);
                         win.document.close();
-                        win.print();
+                        win.document.close();
+                        setTimeout(() => win.print(), 500)
                       }
                     }}>
                       <i className="ti ti-file-type-pdf me-2 text-danger" /> Download as PDF
