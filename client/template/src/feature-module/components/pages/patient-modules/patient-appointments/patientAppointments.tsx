@@ -709,10 +709,66 @@ const PatientAppointments = () => {
           <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
             <div className="search-set">
               <div className="search-input">
-                <SearchInput
-                  value={searchText}
-                  onChange={(v) => setSearchText(v)}
-                />
+                <SearchInput value={searchText} onChange={(v) => setSearchText(v)} />
+              </div>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              {/* Export */}
+              <div className="dropdown">
+                <Link to="#" className="btn btn-md fs-14 fw-normal border bg-white rounded text-dark d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                  Export <i className="ti ti-chevron-down ms-2" />
+                </Link>
+                <ul className="dropdown-menu p-2">
+                  <li>
+                    <button className="dropdown-item" onClick={() => {
+                      const rows = appointments.map(a => [
+                        dayjs(a.appointmentDate).format("DD MMM YYYY"),
+                        a.appointmentTime,
+                        a.doctor?.fullName || "N/A",
+                        a.doctor?.department || "N/A",
+                        a.appointmentType,
+                        `$${a.consultationCharge || 0}`,
+                        a.status,
+                      ]);
+                      const csv = [["Date", "Time", "Doctor", "Department", "Type", "Fees", "Status"], ...rows].map(r => r.join(",")).join("\n");
+                      const a2 = document.createElement("a");
+                      a2.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                      a2.download = `appointments_${dayjs().format("DDMMYYYY")}.csv`;
+                      a2.click();
+                    }}>
+                      <i className="ti ti-file-type-csv me-2 text-success" /> Download as Excel/CSV
+                    </button>
+                  </li>
+                  <li>
+                    <button className="dropdown-item" onClick={() => {
+                      const win = window.open("", "_blank");
+                      if (win) {
+                        win.document.write(`<html><head><title>Appointments</title><style>table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}th{background:#f5f5f5}</style></head><body><h2>My Appointments</h2><table><thead><tr><th>Date</th><th>Time</th><th>Doctor</th><th>Dept</th><th>Type</th><th>Fees</th><th>Status</th></tr></thead><tbody>${appointments.map(a => `<tr><td>${dayjs(a.appointmentDate).format("DD MMM YYYY")}</td><td>${a.appointmentTime}</td><td>${a.doctor?.fullName || "N/A"}</td><td>${a.doctor?.department || "N/A"}</td><td>${a.appointmentType}</td><td>$${a.consultationCharge || 0}</td><td>${a.status}</td></tr>`).join("")}</tbody></table></body></html>`);
+                        win.document.close();
+                        win.print();
+                      }
+                    }}>
+                      <i className="ti ti-file-type-pdf me-2 text-danger" /> Download as PDF
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              {/* Filter */}
+              <div className="dropdown">
+                <Link to="#" className="bg-white border rounded btn btn-md text-dark fs-14 py-1 align-items-center d-flex fw-normal" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                  <i className="ti ti-filter text-gray-5 me-1" /> Filters
+                </Link>
+                <div className="dropdown-menu dropdown-lg dropdown-menu-end p-3">
+                  <h6 className="fw-bold mb-3">Filter by Status</h6>
+                  {["All", "Scheduled", "Confirmed", "Checked In", "Checked Out", "Cancelled"].map((s) => (
+                    <div key={s} className="form-check mb-2">
+                      <input className="form-check-input" type="radio" name="statusFilter" id={`filter_${s}`}
+                        onChange={() => setSearchText(s === "All" ? "" : s)}
+                        defaultChecked={s === "All"} />
+                      <label className="form-check-label" htmlFor={`filter_${s}`}>{s}</label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

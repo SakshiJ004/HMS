@@ -1364,12 +1364,21 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
       await deleteAppointment(selectedAppointment._id);
       message.success("Appointment deleted successfully!");
 
-      // Bootstrap modal बंद करा
       const modalEl = document.getElementById("delete_modal");
       if (modalEl) {
         const bsModal = (window as any).bootstrap?.Modal?.getInstance(modalEl);
-        bsModal?.hide();
+        if (bsModal) {
+          bsModal.hide();
+        } else {
+          new (window as any).bootstrap.Modal(modalEl).hide();
+        }
       }
+      setTimeout(() => {
+        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        document.body.classList.remove("modal-open");
+        document.body.style.overflow = "";
+        document.body.style.paddingRight = "";
+      }, 300);
 
       onAppointmentUpdated?.();
     } catch (error: any) {
@@ -1728,14 +1737,14 @@ const Modals = ({ selectedAppointment, onAppointmentUpdated }: ModalsProps) => {
               Status
               <span
                 className={`badge fw-medium ${selectedAppointment?.status === "Checked Out"
-                    ? "bg-success"
-                    : selectedAppointment?.status === "Cancelled"
-                      ? "bg-danger"
-                      : selectedAppointment?.status === "Checked In"
-                        ? "bg-warning"
-                        : selectedAppointment?.status === "Confirmed"
-                          ? "bg-primary"
-                          : "bg-info"
+                  ? "bg-success"
+                  : selectedAppointment?.status === "Cancelled"
+                    ? "bg-danger"
+                    : selectedAppointment?.status === "Checked In"
+                      ? "bg-warning"
+                      : selectedAppointment?.status === "Confirmed"
+                        ? "bg-primary"
+                        : "bg-info"
                   }`}
               >
                 {selectedAppointment?.status || "N/A"}
