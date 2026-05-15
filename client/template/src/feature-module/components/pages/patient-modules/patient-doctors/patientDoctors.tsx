@@ -436,6 +436,8 @@ const PatientDoctors = () => {
   const [doctors, setDoctors] = useState<MyDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
+  const [deptFilter, setDeptFilter] = useState("");
+  const [sortOrder, setSortOrder] = useState("bookingCount");
 
   useEffect(() => {
     fetchDoctors();
@@ -632,6 +634,91 @@ const PatientDoctors = () => {
             </div>
           </div>
 
+          // Search div च्या खाली हे add करा:
+          <div className="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">
+            <div className="dropdown me-2">
+              <Link
+                to="#"
+                className="bg-white border rounded btn btn-md text-dark fs-14 py-1 align-items-center d-flex fw-normal"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
+              >
+                <i className="ti ti-filter text-gray-5 me-1" />
+                Filters
+              </Link>
+              <div
+                className="dropdown-menu dropdown-lg dropdown-menu-end filter-dropdown p-0"
+                id="filter-dropdown"
+              >
+                <div className="d-flex align-items-center justify-content-between border-bottom filter-header">
+                  <h4 className="mb-0 fw-bold">Filter</h4>
+                  <div className="d-flex align-items-center">
+                    <Link
+                      to="#"
+                      className="link-danger text-decoration-underline"
+                      onClick={() => setDeptFilter("")}
+                    >
+                      Clear All
+                    </Link>
+                  </div>
+                </div>
+                <div className="filter-body pb-0 p-3">
+                  <div className="mb-3">
+                    <label className="form-label mb-1">Department</label>
+                    <select
+                      className="form-control"
+                      value={deptFilter}
+                      onChange={(e) => setDeptFilter(e.target.value)}
+                    >
+                      <option value="">All Departments</option>
+                      {[...new Set(doctors.map((d) => d.department).filter(Boolean))].map(
+                        (dept) => (
+                          <option key={dept} value={dept}>
+                            {dept}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+                </div>
+                <div className="filter-footer d-flex align-items-center justify-content-end border-top p-3">
+                  <button
+                    className="btn btn-light btn-md me-2 fw-medium"
+                    onClick={() => setDeptFilter("")}
+                  >
+                    Close
+                  </button>
+                  <button className="btn btn-primary btn-md fw-medium">
+                    Filter
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="dropdown">
+              <Link
+                to="#"
+                className="dropdown-toggle btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14"
+                data-bs-toggle="dropdown"
+              >
+                <span className="me-1"> Sort By : </span> Recent
+              </Link>
+              <ul className="dropdown-menu dropdown-menu-end p-2">
+                <li>
+                  <Link to="#" className="dropdown-item rounded-1"
+                    onClick={() => setSortOrder("bookingCount")}>
+                    Most Bookings
+                  </Link>
+                </li>
+                <li>
+                  <Link to="#" className="dropdown-item rounded-1"
+                    onClick={() => setSortOrder("lastVisit")}>
+                    Last Visit
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+
           {/* Table */}
           {loading ? (
             <div className="text-center py-5">
@@ -655,7 +742,14 @@ const PatientDoctors = () => {
             <div className="table-responsive">
               <Datatable
                 columns={columns}
-                dataSource={doctors}
+                dataSource={doctors
+                  .filter((d) => !deptFilter || d.department === deptFilter)
+                  .sort((a, b) =>
+                    sortOrder === "lastVisit"
+                      ? dayjs(b.lastVisit || 0).unix() - dayjs(a.lastVisit || 0).unix()
+                      : (b.bookingCount || 0) - (a.bookingCount || 0)
+                  )
+                }
                 Selection={false}
                 searchText={searchText}
               />

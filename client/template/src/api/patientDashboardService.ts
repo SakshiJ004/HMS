@@ -116,6 +116,41 @@ export interface Transaction {
     appointmentType: string;
 }
 
+export interface PrescriptionDetail {
+    _id: string;
+    prescriptionId: string;
+    doctor?: {
+        _id: string;
+        fullName: string;
+        department?: string;
+        designation?: string;
+        profileImage?: string;
+    };
+    patient?: {
+        fullName: string;
+        dob?: string;
+        gender?: string;
+        bloodGroup?: string;
+    };
+    medications?: Array<{
+        medicineName: string;
+        dosage: string;
+        frequency: string;
+        duration: string;
+        instructions?: string;
+    }>;
+    advice?: Array<{ advice: string } | string>;
+    followUp?: {
+        nextConsultation?: string;
+        notes?: string;
+    };
+    department?: string;
+    status?: string;
+    prescribedOn?: string;
+    createdAt: string;
+    fileUrl?: string;
+}
+
 // ─── API Functions ──────────────────────────────────────────────────────────────
 
 export const getPatientStats = async () => {
@@ -185,6 +220,30 @@ export const getRecentTransactions = async (filter: 'weekly' | 'monthly' | 'year
 export const getAllPatientAppointments = async () => {
     const res = await axios.get<{ success: boolean; data: PatientAppointment[] }>(
         `${API_URL}/api/patient/dashboard/all-appointments`,
+        getAuthConfig()
+    );
+    return res.data;
+};
+
+export const getPatientPrescriptions = async () => {
+    const res = await axios.get<{ success: boolean; data: PrescriptionDetail[] }>(
+        `${API_URL}/api/prescriptions/patient/my-prescriptions`,
+        getAuthConfig()
+    );
+    return res.data;
+};
+
+export const getPrescriptionById = async (id: string) => {
+    const res = await axios.get<{ success: boolean; data: PrescriptionDetail }>(
+        `${API_URL}/api/prescriptions/patient/${id}`,
+        getAuthConfig()
+    );
+    return res.data;
+};
+
+export const deletePrescription = async (id: string) => {
+    const res = await axios.delete<{ success: boolean; message: string }>(
+        `${API_URL}/api/prescriptions/patient/${id}`,
         getAuthConfig()
     );
     return res.data;

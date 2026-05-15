@@ -1,7 +1,11 @@
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../../core/imageWithBasePath";
 
-const Modals = () => {
+interface ModalsProps {
+  onDelete?: () => void;
+}
+
+const Modals = ({ onDelete }: ModalsProps) => {
   return (
     <>
       {/* Start Delete Modal  */}
@@ -38,13 +42,9 @@ const Modals = () => {
                 >
                   Cancel
                 </Link>
-                <Link
-                  to=""
-                  className="btn btn-danger position-relative z-1"
-                  data-bs-dismiss="modal"
-                >
+                <button type="button" className="btn btn-danger position-relative z-1" onClick={onDelete}>
                   Yes, Delete
-                </Link>
+                </button>
               </div>
             </div>
           </div>

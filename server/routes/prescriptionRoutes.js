@@ -59,13 +59,78 @@
 
 
 
+// const express = require('express');
+// const router = express.Router();
+// const controller = require('../controllers/prescriptionController');
+// const { protect, authorize } = require('../middleware/authMiddleware');
+// const Prescription = require('../models/Prescription'); // ✅ Top वर require
+
+// router.get('/', protect, authorize('doctor'), controller.getDoctorPrescriptions);
+// router.get('/:id', protect, authorize('doctor'), controller.getPrescriptionById);
+
+// module.exports = router;
+
+
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/prescriptionController');
 const { protect, authorize } = require('../middleware/authMiddleware');
-const Prescription = require('../models/Prescription'); // ✅ Top वर require
+const Prescription = require('../models/Prescription');
 
+// ─── Doctor Routes ─────────────────────────────────────────────────────────────
 router.get('/', protect, authorize('doctor'), controller.getDoctorPrescriptions);
 router.get('/:id', protect, authorize('doctor'), controller.getPrescriptionById);
+
+// ─── Patient Routes ────────────────────────────────────────────────────────────
+
+// Patient च्या सगळ्या prescriptions
+router.get('/patient/my-prescriptions', protect, authorize('patient'), async (req, res) => {
+    try {
+        const prescriptions = await Prescription.find({ patient: req.user._id })
+            .populate('doctor', 'fullName department designation profileImage')
+            .sort({ createdAt: -1 })
+            .lean();
+        res.json({ success: true, data: prescriptions });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// Single prescription by ID (patient)
+router.get('/patient/:id', protect, authorize('patient'), async (req, res) => {
+    try {
+        const prescription = await Prescription.findOne({
+            _id: req.params.id,
+            patient: req.user._id,   // ← security: फक्त त्या patient चीच prescription
+        })
+            .populate('doctor', 'fullName department designation profileImage')
+            .populate('patient', 'fullName dob gender bloodGroup patientId')
+            .lean();
+
+        if (!prescription) {
+            return res.status(404).json({ success: false, message: 'Prescription not found' });
+        }
+        res.json({ success: true, data: prescription });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// Delete prescription (patient)
+router.delete('/patient/:id', protect, authorize('patient'), async (req, res) => {
+    try {
+        const prescription = await Prescription.findOne({
+            _id: req.params.id,
+            patient: req.user._id,
+        });
+        if (!prescription) {
+            return res.status(404).json({ success: false, message: 'Prescription not found' });
+        }
+        await Prescription.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Prescription deleted successfully' });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
 
 module.exports = router;

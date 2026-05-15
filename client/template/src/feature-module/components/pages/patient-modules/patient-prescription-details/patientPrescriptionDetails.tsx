@@ -1,36 +1,363 @@
+// import { Link } from "react-router";
+// import ImageWithBasePath from "../../../../../core/imageWithBasePath";
+// import { all_routes } from "../../../../routes/all_routes";
+// import { useState, useEffect } from "react";
+// import { useSearchParams } from "react-router";
+// import dayjs from "dayjs";
+// import {
+//   getPrescriptionById,
+//   type PrescriptionDetail,
+// } from "../../../../../api/patientDashboardService";
+
+// const PatientPrescriptionDetails = () => {
+//   const [searchParams] = useSearchParams();
+//   const prescriptionId = searchParams.get("id");
+//   const [prescription, setPrescription] = useState<PrescriptionDetail | null>(null);
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     if (prescriptionId) fetchPrescription();
+//   }, [prescriptionId]);
+
+//   const fetchPrescription = async () => {
+//     try {
+//       setLoading(true);
+//       const res = await getPrescriptionById(prescriptionId!);
+//       if (res.success) setPrescription(res.data);
+//     } catch (e) {
+//       console.error(e);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+//   if (loading) return (
+//     <>
+//       {/* ========================
+// 			Start Page Content
+// 		========================= */}
+//       <div className="page-wrapper">
+//         {/* Start Content */}
+//         <div className="content">
+//           {/* start row*/}
+//           <div className="row">
+//             <div className="col-lg-10 mx-auto">
+//               {/* start page header */}
+//               <div className="d-flex align-items-sm-center flex-sm-row flex-column mb-4">
+//                 <div className="flex-grow-1">
+//                   <h6 className="fs-14 fw-semibold mb-0 d-flex align-items-center ">
+
+//                     <Link to={all_routes.patientPrescriptions} className="me-1">
+//                       <i className="ti ti-chevron-left" /> Prescriptions
+//                     </Link>
+//                   </h6>
+//                 </div>
+//               </div>
+//               {/* end page header */}
+//               <div className="card">
+//                 <div className="card-body">
+//                   {/* Items */}
+//                   <div className="d-flex align-items-center justify-content-between border-1 border-bottom pb-3 mb-3">
+//                     <div className="invoice-logo">
+//                       <ImageWithBasePath
+//                         src="assets/img/logo.svg"
+//                         className="logo-white"
+//                         alt="logo"
+//                       />
+//                       <ImageWithBasePath
+//                         src="assets/img/logo-white.svg"
+//                         className="logo-dark"
+//                         alt="logo"
+//                       />
+//                     </div>
+//                     <span className="badge bg-info-subtle text-info-emphasis fs-13 fw-medium border border-primary py-1 px-2">
+
+//                       #PRE0025
+//                     </span>
+//                   </div>
+//                   {/* Items */}
+//                   <div className="d-flex align-items-center justify-content-between border-1 border-bottom pb-3 mb-3 flex-wrap gap-2">
+//                     <div className="d-flex align-items-center gap-2">
+//                       <div className="avatar avatar-xxl rounded bg-light border p-2">
+//                         <ImageWithBasePath
+//                           src="./assets/img/icons/trust-care.svg"
+//                           alt="favicon.png"
+//                           className="img-fluid img1 "
+//                         />
+//                       </div>
+//                       <div>
+//                         <h6 className="text-dark fw-semibold mb-1">
+//                           Trustcare Clinic
+//                         </h6>
+//                         <p className="mb-1"> Dr. Mick Thompson </p>
+//                         <p className="mb-0"> MD Cardiologist. MBBS,MS</p>
+//                       </div>
+//                     </div>
+//                     <div className="text-lg-end">
+//                       <p className="text-dark mb-1">
+
+//                         Department :
+//                         <span className="text-body"> Cardiology OP</span>
+//                       </p>
+//                       <p className="text-dark mb-1">
+
+//                         Prescribed on :
+//                         <span className="text-body">
+
+//                           25 Jan 2025, 09:00 AM
+//                         </span>
+//                       </p>
+//                       <p className="text-dark mb-0">
+
+//                         Consultation :
+//                         <span className="text-body"> Video </span>
+//                       </p>
+//                     </div>
+//                   </div>
+//                   {/* Items */}
+//                   <div className="mb-3">
+//                     <h6 className=" mb-2 fs-14 fw-medium"> Patient Details </h6>
+//                     <div className="px-3 py-2 bg-light rounded d-flex align-items-center justify-content-between">
+//                       <h6 className="m-0 fw-semibold fs-16"> M.Reyan Verol </h6>
+//                       <div className="d-flex align-items-center  gap-3">
+//                         <p className="mb-0 text-dark"> 28Y / Male </p>
+//                         <p className="mb-0 text-dark">
+
+//                           <span className="text-body"> Blood</span> : O+ve
+//                         </p>
+//                         <p className="mb-0 text-dark">
+
+//                           Patient ID <span className="text-body"> PT0025</span>
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                   {/* Items */}
+//                   <div className="mb-4">
+//                     <h6 className="mb-3 fs-16 fw-bold text-center">
+//                       Cardiology Prescription
+//                     </h6>
+//                     <div className="">
+//                       {/* Table List */}
+//                       <div className="table-responsive border bg-white">
+//                         <table className="table table-nowrap">
+//                           <thead>
+//                             <tr>
+//                               <th>SNO</th>
+//                               <th>Medecine Name</th>
+//                               <th>Dosage</th>
+//                               <th> Frequency</th>
+//                               <th> Duration </th>
+//                               <th> Timings</th>
+//                             </tr>
+//                           </thead>
+//                           <tbody>
+//                             <tr>
+//                               <td>01</td>
+//                               <td>General Medicine</td>
+//                               <td>Ecosprin 75MG </td>
+//                               <td> 1-0-1 </td>
+//                               <td> 1 month </td>
+//                               <td> Before meal </td>
+//                             </tr>
+//                             <tr>
+//                               <td>02</td>
+//                               <td>Axer 90MG Tab </td>
+//                               <td>90 mg </td>
+//                               <td> 1-1-1 </td>
+//                               <td> 1 month </td>
+//                               <td> After meal </td>
+//                             </tr>
+//                             <tr>
+//                               <td>03</td>
+//                               <td>Ramistar XL 2.5</td>
+//                               <td>75 ml</td>
+//                               <td> 1-0-1 </td>
+//                               <td> 1 month </td>
+//                               <td> After meal </td>
+//                             </tr>
+//                             <tr>
+//                               <td>04</td>
+//                               <td>General Medicine</td>
+//                               <td>Ecosprin 75MG </td>
+//                               <td> 1-0-1 </td>
+//                               <td> 1 month </td>
+//                               <td> Before meal </td>
+//                             </tr>
+//                           </tbody>
+//                         </table>
+//                       </div>
+//                       {/* /Table List */}
+//                     </div>
+//                   </div>
+//                   {/* Items */}
+//                   <div className="pb-3 mb-3 border-1 border-bottom">
+//                     <h6 className="mb-1 fs-16 fw-semibold">Advice</h6>
+//                     <p>
+
+//                       An account of the present illness, which includes the
+//                       circumstances surrounding the onset of recent health
+//                       changes and the chronology of subsequent events that have
+//                       led the patient to seek medical care, is essential to
+//                       understanding the course of the disease process.
+//                       Medications are listed in the medical history because they
+//                       may play a role in the current illness.
+//                     </p>
+//                   </div>
+//                   {/* Items */}
+//                   <div className="pb-3 mb-3 border-1 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+//                     <div className="">
+//                       <h6 className="mb-1 fs-16 fw-semibold"> Follow Up </h6>
+//                       <p>
+
+//                         Follow u p after 3 months, Have to come on empty stomach
+//                       </p>
+//                     </div>
+//                     <div className="">
+//                       <ImageWithBasePath
+//                         src="assets/img/icons/signature-img.svg"
+//                         alt=""
+//                         className="img-fluid "
+//                       />
+//                       <h6 className="fs-14 fw-semibold"> Dr. Mick Thompson </h6>
+//                       <p className="fs-13 fw-normal"> MD Cardiologist </p>
+//                     </div>
+//                   </div>
+//                   <div className="text-center d-flex align-items-center justify-content-center">
+//                     <Link
+//                       to="#"
+//                       className="btn btn-md btn-dark me-2 d-flex align-items-center"
+//                     >
+
+//                       <i className="ti ti-printer me-1" /> Print
+//                     </Link>
+//                     <Link
+//                       to="#"
+//                       className="btn btn-md btn-primary d-flex align-items-center"
+//                     >
+
+//                       <i className="ti ti-download me-1" /> Download
+//                     </Link>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//           {/* end row*/}
+//         </div>
+//         {/* End Content */}
+//         {/* Footer Start */}
+//         <div className="footer text-center bg-white p-2 border-top">
+//           <p className="text-dark mb-0">
+//             2025 ©
+//             <Link to="#" className="link-primary">
+//               Preclinic
+//             </Link>
+//             , All Rights Reserved
+//           </p>
+//         </div>
+//         {/* Footer End */}
+//       </div>
+//       {/* ========================
+// 			End Page Content
+// 		========================= */}
+//     </>
+//   );
+// };
+
+// export default PatientPrescriptionDetails;
+
+
+
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import { all_routes } from "../../../../routes/all_routes";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router";
+import dayjs from "dayjs";
+import {
+  getPrescriptionById,
+  type PrescriptionDetail,
+} from "../../../../../api/patientDashboardService";
 
 const PatientPrescriptionDetails = () => {
+  const [searchParams] = useSearchParams();
+  const prescriptionId = searchParams.get("id");
+  const [prescription, setPrescription] = useState<PrescriptionDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (prescriptionId) fetchPrescription();
+  }, [prescriptionId]);
+
+  const fetchPrescription = async () => {
+    try {
+      setLoading(true);
+      const res = await getPrescriptionById(prescriptionId!);
+      if (res.success) setPrescription(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Loading ────────────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="page-wrapper">
+        <div className="content text-center py-5">
+          <div className="spinner-border text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Not Found ──────────────────────────────────────────────────────────────
+  if (!prescription) {
+    return (
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="col-lg-10 mx-auto text-center py-5">
+            <i className="ti ti-file-off fs-1 text-muted d-block mb-3" />
+            <p className="text-muted mb-3">Prescription not found</p>
+            <Link to={all_routes.patientPrescriptions} className="btn btn-primary btn-sm">
+              <i className="ti ti-arrow-left me-1" /> Back to Prescriptions
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
+  const patientAge = prescription.patient?.dob
+    ? `${dayjs().diff(dayjs(prescription.patient.dob), "year")}Y`
+    : "N/A";
+
   return (
     <>
-      {/* ========================
-			Start Page Content
-		========================= */}
       <div className="page-wrapper">
-        {/* Start Content */}
         <div className="content">
-          {/* start row*/}
           <div className="row">
             <div className="col-lg-10 mx-auto">
-              {/* start page header */}
+
+              {/* Page Header */}
               <div className="d-flex align-items-sm-center flex-sm-row flex-column mb-4">
                 <div className="flex-grow-1">
-                  <h6 className="fs-14 fw-semibold mb-0 d-flex align-items-center ">
-                    
+                  <h6 className="fs-14 fw-semibold mb-0 d-flex align-items-center">
                     <Link to={all_routes.patientPrescriptions} className="me-1">
                       <i className="ti ti-chevron-left" /> Prescriptions
                     </Link>
                   </h6>
                 </div>
               </div>
-              {/* end page header */}
+
               <div className="card">
                 <div className="card-body">
-                  {/* Items */}
+
+                  {/* ── Logo + Prescription ID ─────────────────────────── */}
                   <div className="d-flex align-items-center justify-content-between border-1 border-bottom pb-3 mb-3">
-                  <div className="invoice-logo">
+                    <div className="invoice-logo">
                       <ImageWithBasePath
                         src="assets/img/logo.svg"
                         className="logo-white"
@@ -43,196 +370,221 @@ const PatientPrescriptionDetails = () => {
                       />
                     </div>
                     <span className="badge bg-info-subtle text-info-emphasis fs-13 fw-medium border border-primary py-1 px-2">
-                      
-                      #PRE0025
+                      #{prescription.prescriptionId || "N/A"}
                     </span>
                   </div>
-                  {/* Items */}
+
+                  {/* ── Doctor Info ────────────────────────────────────── */}
                   <div className="d-flex align-items-center justify-content-between border-1 border-bottom pb-3 mb-3 flex-wrap gap-2">
                     <div className="d-flex align-items-center gap-2">
                       <div className="avatar avatar-xxl rounded bg-light border p-2">
-                        <ImageWithBasePath
-                          src="./assets/img/icons/trust-care.svg"
-                          alt="favicon.png"
-                          className="img-fluid img1 "
-                        />
+                        {prescription.doctor?.profileImage ? (
+                          <img
+                            src={
+                              prescription.doctor.profileImage.startsWith("http")
+                                ? prescription.doctor.profileImage
+                                : `${import.meta.env.VITE_BACKEND_URL}${prescription.doctor.profileImage}`
+                            }
+                            alt={prescription.doctor.fullName}
+                            className="img-fluid rounded"
+                            style={{ width: 60, height: 60, objectFit: "cover" }}
+                          />
+                        ) : (
+                          <ImageWithBasePath
+                            src="./assets/img/icons/trust-care.svg"
+                            alt="clinic"
+                            className="img-fluid img1"
+                          />
+                        )}
                       </div>
                       <div>
                         <h6 className="text-dark fw-semibold mb-1">
-                          Trustcare Clinic
+                          Preclinic
                         </h6>
-                        <p className="mb-1"> Dr. Mick Thompson </p>
-                        <p className="mb-0"> MD Cardiologist. MBBS,MS</p>
+                        <p className="mb-1">
+                          {prescription.doctor?.fullName || "N/A"}
+                        </p>
+                        <p className="mb-0">
+                          {prescription.doctor?.designation || "N/A"}
+                        </p>
                       </div>
                     </div>
                     <div className="text-lg-end">
                       <p className="text-dark mb-1">
-                        
                         Department :
-                        <span className="text-body"> Cardiology OP</span>
+                        <span className="text-body">
+                          {" "}{prescription.doctor?.department || prescription.department || "N/A"}
+                        </span>
                       </p>
                       <p className="text-dark mb-1">
-                        
                         Prescribed on :
                         <span className="text-body">
-                          
-                          25 Jan 2025, 09:00 AM
+                          {" "}{dayjs(prescription.prescribedOn || prescription.createdAt).format("DD MMM YYYY, hh:mm A")}
                         </span>
                       </p>
                       <p className="text-dark mb-0">
-                        
-                        Consultation :
-                        <span className="text-body"> Video </span>
+                        Status :
+                        <span className={`badge ms-1 ${prescription.status === "Active" ? "bg-success" : "bg-secondary"}`}>
+                          {prescription.status || "Active"}
+                        </span>
                       </p>
                     </div>
                   </div>
-                  {/* Items */}
+
+                  {/* ── Patient Details ────────────────────────────────── */}
                   <div className="mb-3">
-                    <h6 className=" mb-2 fs-14 fw-medium"> Patient Details </h6>
-                    <div className="px-3 py-2 bg-light rounded d-flex align-items-center justify-content-between">
-                      <h6 className="m-0 fw-semibold fs-16"> M.Reyan Verol </h6>
-                      <div className="d-flex align-items-center  gap-3">
-                        <p className="mb-0 text-dark"> 28Y / Male </p>
+                    <h6 className="mb-2 fs-14 fw-medium">Patient Details</h6>
+                    <div className="px-3 py-2 bg-light rounded d-flex align-items-center justify-content-between flex-wrap gap-2">
+                      <h6 className="m-0 fw-semibold fs-16">
+                        {prescription.patient?.fullName || "N/A"}
+                      </h6>
+                      <div className="d-flex align-items-center gap-3 flex-wrap">
                         <p className="mb-0 text-dark">
-                          
-                          <span className="text-body"> Blood</span> : O+ve
+                          {patientAge} / {prescription.patient?.gender || "N/A"}
                         </p>
                         <p className="mb-0 text-dark">
-                          
-                          Patient ID <span className="text-body"> PT0025</span>
+                          <span className="text-body">Blood</span> :{" "}
+                          {prescription.patient?.bloodGroup || "N/A"}
                         </p>
                       </div>
                     </div>
                   </div>
-                  {/* Items */}
+
+                  {/* ── Medications Table ──────────────────────────────── */}
                   <div className="mb-4">
                     <h6 className="mb-3 fs-16 fw-bold text-center">
-                      Cardiology Prescription
+                      {prescription.doctor?.department || "Prescription"}
                     </h6>
-                    <div className="">
-                      {/* Table List */}
-                      <div className="table-responsive border bg-white">
-                        <table className="table table-nowrap">
-                          <thead>
+                    <div className="table-responsive border bg-white">
+                      <table className="table table-nowrap">
+                        <thead>
+                          <tr>
+                            <th>SNO</th>
+                            <th>Medicine Name</th>
+                            <th>Dosage</th>
+                            <th>Frequency</th>
+                            <th>Duration</th>
+                            <th>Timings</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {prescription.medications && prescription.medications.length > 0 ? (
+                            prescription.medications.map((med, i) => (
+                              <tr key={i}>
+                                <td>{String(i + 1).padStart(2, "0")}</td>
+                                <td>{med.medicineName || "-"}</td>
+                                <td>{med.dosage || "-"}</td>
+                                <td>{med.frequency || "-"}</td>
+                                <td>{med.duration || "-"}</td>
+                                <td>{med.instructions || "-"}</td>
+                              </tr>
+                            ))
+                          ) : (
                             <tr>
-                              <th>SNO</th>
-                              <th>Medecine Name</th>
-                              <th>Dosage</th>
-                              <th> Frequency</th>
-                              <th> Duration </th>
-                              <th> Timings</th>
+                              <td colSpan={6} className="text-center py-3 text-muted">
+                                No medications found
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td>01</td>
-                              <td>General Medicine</td>
-                              <td>Ecosprin 75MG </td>
-                              <td> 1-0-1 </td>
-                              <td> 1 month </td>
-                              <td> Before meal </td>
-                            </tr>
-                            <tr>
-                              <td>02</td>
-                              <td>Axer 90MG Tab </td>
-                              <td>90 mg </td>
-                              <td> 1-1-1 </td>
-                              <td> 1 month </td>
-                              <td> After meal </td>
-                            </tr>
-                            <tr>
-                              <td>03</td>
-                              <td>Ramistar XL 2.5</td>
-                              <td>75 ml</td>
-                              <td> 1-0-1 </td>
-                              <td> 1 month </td>
-                              <td> After meal </td>
-                            </tr>
-                            <tr>
-                              <td>04</td>
-                              <td>General Medicine</td>
-                              <td>Ecosprin 75MG </td>
-                              <td> 1-0-1 </td>
-                              <td> 1 month </td>
-                              <td> Before meal </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                      {/* /Table List */}
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                  {/* Items */}
+
+                  {/* ── Advice ────────────────────────────────────────── */}
                   <div className="pb-3 mb-3 border-1 border-bottom">
                     <h6 className="mb-1 fs-16 fw-semibold">Advice</h6>
-                    <p>
-                      
-                      An account of the present illness, which includes the
-                      circumstances surrounding the onset of recent health
-                      changes and the chronology of subsequent events that have
-                      led the patient to seek medical care, is essential to
-                      understanding the course of the disease process.
-                      Medications are listed in the medical history because they
-                      may play a role in the current illness.
-                    </p>
+                    {prescription.advice && prescription.advice.length > 0 ? (
+                      <ul className="mb-0 ps-3">
+                        {prescription.advice.map((a: any, i: number) => (
+                          <li key={i} className="mb-1">
+                            {typeof a === "string" ? a : a.advice || "-"}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted mb-0">No advice provided</p>
+                    )}
                   </div>
-                  {/* Items */}
+
+                  {/* ── Follow Up + Signature ─────────────────────────── */}
                   <div className="pb-3 mb-3 border-1 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
-                    <div className="">
-                      <h6 className="mb-1 fs-16 fw-semibold"> Follow Up </h6>
-                      <p>
-                        
-                        Follow u p after 3 months, Have to come on empty stomach
+                    <div>
+                      <h6 className="mb-1 fs-16 fw-semibold">Follow Up</h6>
+                      <p className="mb-0">
+                        {prescription.followUp?.notes || "No follow up notes"}
                       </p>
+                      {prescription.followUp?.nextConsultation && (
+                        <p className="mb-0 text-primary fw-semibold mt-1">
+                          Next Consultation:{" "}
+                          {dayjs(prescription.followUp.nextConsultation).format("DD MMM YYYY")}
+                        </p>
+                      )}
                     </div>
-                    <div className="">
+                    <div className="text-end">
                       <ImageWithBasePath
                         src="assets/img/icons/signature-img.svg"
                         alt=""
-                        className="img-fluid "
+                        className="img-fluid"
                       />
-                      <h6 className="fs-14 fw-semibold"> Dr. Mick Thompson </h6>
-                      <p className="fs-13 fw-normal"> MD Cardiologist </p>
+                      <h6 className="fs-14 fw-semibold mt-1">
+                        {prescription.doctor?.fullName || "N/A"}
+                      </h6>
+                      <p className="fs-13 fw-normal mb-0">
+                        {prescription.doctor?.designation ||
+                          prescription.doctor?.department ||
+                          "N/A"}
+                      </p>
                     </div>
                   </div>
+
+                  {/* ── Print + Download ──────────────────────────────── */}
                   <div className="text-center d-flex align-items-center justify-content-center">
-                    <Link
-                      to="#"
+                    <button
                       className="btn btn-md btn-dark me-2 d-flex align-items-center"
+                      onClick={() => window.print()}
                     >
-                      
                       <i className="ti ti-printer me-1" /> Print
-                    </Link>
-                    <Link
-                      to="#"
-                      className="btn btn-md btn-primary d-flex align-items-center"
-                    >
-                      
-                      <i className="ti ti-download me-1" /> Download
-                    </Link>
+                    </button>
+                    {prescription.fileUrl ? (
+                      <a
+                        href={
+                          prescription.fileUrl.startsWith("http")
+                            ? prescription.fileUrl
+                            : `${import.meta.env.VITE_BACKEND_URL}${prescription.fileUrl}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-md btn-primary d-flex align-items-center"
+                      >
+                        <i className="ti ti-download me-1" /> Download
+                      </a>
+                    ) : (
+                      <button
+                        className="btn btn-md btn-primary d-flex align-items-center"
+                        onClick={() => window.print()}
+                      >
+                        <i className="ti ti-download me-1" /> Download
+                      </button>
+                    )}
                   </div>
+
                 </div>
               </div>
             </div>
           </div>
-          {/* end row*/}
         </div>
-        {/* End Content */}
-        {/* Footer Start */}
+
         <div className="footer text-center bg-white p-2 border-top">
           <p className="text-dark mb-0">
-            2025 ©
+            2025 ©{" "}
             <Link to="#" className="link-primary">
               Preclinic
             </Link>
             , All Rights Reserved
           </p>
         </div>
-        {/* Footer End */}
-      </div>
-      {/* ========================
-			End Page Content
-		========================= */}
+      </div >
     </>
   );
 };
