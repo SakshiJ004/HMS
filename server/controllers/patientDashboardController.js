@@ -79,7 +79,7 @@ const getMyDoctors = async (req, res) => {
                 }
             },
             { $sort: { bookingCount: -1 } },
-            { $limit: 5 },
+            { $limit: 50 },
             {
                 $lookup: {
                     from: 'users',
@@ -97,6 +97,7 @@ const getMyDoctors = async (req, res) => {
                     profileImage: '$doctorInfo.profileImage',
                     department: '$doctorInfo.department',
                     designation: '$doctorInfo.designation',
+                    phone: '$doctorInfo.phone',
                     bookingCount: 1,
                     lastVisit: 1,
                 }

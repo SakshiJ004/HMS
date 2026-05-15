@@ -31,6 +31,7 @@ export interface MyDoctor {
     profileImage?: string;
     department?: string;
     designation?: string;
+    phone?: string;
     bookingCount: number;
     lastVisit?: string;
 }

@@ -285,7 +285,7 @@ const PatientDashboard = () => {
                 </div>
                 <div className="card-body">
                   {myDoctors.length > 0 ? (
-                    myDoctors.map((doctor, index) => (
+                    myDoctors.slice(0, 5).map((doctor, index) => (
                       <div
                         key={doctor._id}
                         className={`d-flex align-items-center justify-content-between ${index < myDoctors.length - 1 ? 'mb-3' : 'mb-0'}`}
