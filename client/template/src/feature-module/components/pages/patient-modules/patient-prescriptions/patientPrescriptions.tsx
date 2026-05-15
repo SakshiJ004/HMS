@@ -29,6 +29,12 @@ const PatientPrescriptions = () => {
     return modalElement ? modalElement : document.body; // Fallback to document.body if modalElement is null
   };
 
+  const getImageUrl = (path?: string) => {
+    if (!path) return "";
+    if (path.startsWith("http") || path.startsWith("data:")) return path;
+    return `${import.meta.env.VITE_BACKEND_URL}${path}`;
+  };
+
   const columns = [
     {
       title: "Prescription ID",
@@ -43,11 +49,7 @@ const PatientPrescriptions = () => {
       title: "Doctor Name",
       dataIndex: "doctor",
       render: (_: any, record: PrescriptionDetail) => {
-        const src = record.doctor?.profileImage
-          ? record.doctor.profileImage.startsWith("http")
-            ? record.doctor.profileImage
-            : `${import.meta.env.VITE_BACKEND_URL}${record.doctor.profileImage}`
-          : "";
+        const src = getImageUrl(record.doctor?.profileImage);
         return (
           <div className="d-flex align-items-center">
             <Link
