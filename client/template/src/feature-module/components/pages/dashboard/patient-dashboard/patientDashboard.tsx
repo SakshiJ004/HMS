@@ -374,12 +374,103 @@ const PatientDashboard = () => {
                               title={rx.fileUrl ? "Download" : "Download not available"}
                               disabled={!rx.fileUrl}
                               onClick={() => {
-                                if (rx.fileUrl) {
-                                  const url = rx.fileUrl.startsWith('http')
-                                    ? rx.fileUrl
-                                    : `${import.meta.env.VITE_BACKEND_URL}${rx.fileUrl}`;
-                                  window.open(url, '_blank');
-                                }
+                                if (!selectedPrescription) return;
+
+                                // Modal बंद झाल्यावर content मिळत नाही म्हणून directly build करा:
+                                const rx = selectedPrescription;
+                                const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Prescription-${rx.prescriptionId || "N/A"}</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+      <style>
+        @page { size: A4; margin: 20mm; }
+        body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 8px; border: 1px solid #dee2e6; text-align: left; }
+        table thead { background-color: #f8f9fa; font-weight: bold; }
+        .header { display: flex; justify-content: space-between; border-bottom: 1px solid #dee2e6; padding-bottom: 12px; margin-bottom: 12px; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; background: #cfe2ff; color: #084298; border: 1px solid #084298; }
+        h5, h6 { margin-bottom: 8px; }
+        p { margin-bottom: 4px; }
+        .bg-light { background-color: #f8f9fa; padding: 10px; border-radius: 4px; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 4px; }
+      </style>
+    </head>
+    <body onload="window.print();">
+      <div class="header">
+        <h5 style="color: #4f46e5; margin:0;">Preclinic HMS</h5>
+        <span class="badge">#${rx.prescriptionId || "N/A"}</span>
+      </div>
+
+      <table style="margin-bottom:12px; border:none;">
+        <tr style="border:none;">
+          <td style="border:none; padding:0; width:50%;">
+            <strong>Doctor:</strong> ${rx.doctor?.fullName || "N/A"}<br/>
+            <strong>Designation:</strong> ${(rx.doctor as any)?.designation || "N/A"}
+          </td>
+          <td style="border:none; padding:0; text-align:right;">
+            <strong>Department:</strong> ${rx.doctor?.department || "N/A"}<br/>
+            <strong>Prescribed On:</strong> ${new Date(rx.prescribedOn || rx.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}<br/>
+            <strong>Status:</strong> ${rx.status || "Active"}
+          </td>
+        </tr>
+      </table>
+
+      ${rx.medications && rx.medications.length > 0 ? `
+        <h6 style="border-bottom:1px solid #dee2e6; padding-bottom:6px;">Medications</h6>
+        <table>
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Dosage</th>
+              <th>Frequency</th>
+              <th>Duration</th>
+              <th>Instructions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rx.medications.map((med: any) => `
+              <tr>
+                <td>${med.medicineName || "-"}</td>
+                <td>${med.dosage || "-"}</td>
+                <td>${med.frequency || "-"}</td>
+                <td>${med.duration || "-"}</td>
+                <td>${med.instructions || "-"}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      ` : ""}
+
+      ${rx.advice && rx.advice.length > 0 ? `
+        <h6 style="margin-top:12px; border-bottom:1px solid #dee2e6; padding-bottom:6px;">Advice</h6>
+        <ul>
+          ${rx.advice.map((a: any) => `<li>${typeof a === "string" ? a : a.advice || "-"}</li>`).join("")}
+        </ul>
+      ` : ""}
+
+      ${rx.followUp?.nextConsultation ? `
+        <h6 style="margin-top:12px; border-bottom:1px solid #dee2e6; padding-bottom:6px;">Follow Up</h6>
+        <p><strong>Next Consultation:</strong> ${new Date(rx.followUp.nextConsultation).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+        ${rx.followUp.notes ? `<p>${rx.followUp.notes}</p>` : ""}
+      ` : ""}
+
+      <div style="margin-top:24px; text-align:right; border-top:1px solid #dee2e6; padding-top:12px;">
+        <div style="width:150px; height:40px; border-bottom:1px solid #000; margin-left:auto; margin-bottom:8px;"></div>
+        <strong>${rx.doctor?.fullName || "N/A"}</strong><br/>
+        <span>${(rx.doctor as any)?.designation || rx.doctor?.department || "N/A"}</span>
+      </div>
+    </body>
+    </html>
+  `;
+
+                                const printWindow = window.open("", "_blank");
+                                if (!printWindow) return;
+                                printWindow.document.write(htmlContent);
+                                printWindow.document.close();
                               }}
                             >
                               <i className="ti ti-download" />
