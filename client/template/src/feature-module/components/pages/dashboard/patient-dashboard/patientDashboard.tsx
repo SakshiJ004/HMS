@@ -844,15 +844,50 @@ const PatientDashboard = () => {
             <div className="modal-footer">
               <button
                 type="button"
-                className="btn btn-light me-2"
+                className="btn btn-light"
                 data-bs-dismiss="modal"
               >
                 Close
               </button>
               <button
                 type="button"
-                className="btn btn-dark me-2"
-                onClick={() => window.print()}
+                className="btn btn-dark"
+                onClick={() => {
+                  const modalBody = document.querySelector(
+                    "#prescription_modal .modal-body"
+                  ) as HTMLElement;
+                  if (!modalBody) return;
+
+                  const printWindow = window.open("", "_blank");
+                  if (!printWindow) return;
+
+                  printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Prescription-${selectedPrescription?.prescriptionId || "N/A"}</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+          <style>
+            @page { size: A4; margin: 20mm; }
+            body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
+            table { width: 100%; border-collapse: collapse; }
+            table th, table td { padding: 8px; border: 1px solid #dee2e6; text-align: left; }
+            table thead { background-color: #f8f9fa; }
+            .bg-light { background-color: #f8f9fa !important; }
+            .table { margin-bottom: 0; }
+            img { max-width: 100%; }
+            h5, h6 { margin-bottom: 8px; }
+            p { margin-bottom: 4px; }
+            .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+          ${modalBody.innerHTML}
+        </body>
+        </html>
+      `);
+                  printWindow.document.close();
+                }}
               >
                 <i className="ti ti-printer me-1" /> Print
               </button>
@@ -860,42 +895,44 @@ const PatientDashboard = () => {
                 type="button"
                 className="btn btn-primary"
                 onClick={() => {
-                  if (!selectedPrescription) return;
-                  const modalBody = document.querySelector('#prescription_modal .modal-body');
+                  const modalBody = document.querySelector(
+                    "#prescription_modal .modal-body"
+                  ) as HTMLElement;
                   if (!modalBody) return;
 
                   const printWindow = window.open("", "_blank");
                   if (!printWindow) return;
 
                   printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Prescription-${selectedPrescription.prescriptionId}</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <style>
-          @page { size: A4; margin: 20mm; }
-          body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
-          table { width: 100%; border-collapse: collapse; }
-          table th, table td { padding: 8px; border: 1px solid #dee2e6; text-align: left; }
-          table thead { background-color: #f8f9fa; }
-          .bg-light { background-color: #f8f9fa !important; }
-          img { max-width: 100%; }
-          h5, h6 { margin-bottom: 8px; }
-          p { margin-bottom: 4px; }
-        </style>
-      </head>
-      <body onload="window.print(); window.close();">
-        ${modalBody.innerHTML}
-      </body>
-      </html>
-    `);
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Prescription-${selectedPrescription?.prescriptionId || "N/A"}</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+          <style>
+            @page { size: A4; margin: 20mm; }
+            body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
+            table { width: 100%; border-collapse: collapse; }
+            table th, table td { padding: 8px; border: 1px solid #dee2e6; text-align: left; }
+            table thead { background-color: #f8f9fa; }
+            .bg-light { background-color: #f8f9fa !important; }
+            .table { margin-bottom: 0; }
+            img { max-width: 100%; }
+            h5, h6 { margin-bottom: 8px; }
+            p { margin-bottom: 4px; }
+            .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+          ${modalBody.innerHTML}
+        </body>
+        </html>
+      `);
                   printWindow.document.close();
                 }}
               >
                 <i className="ti ti-download me-1" /> Download PDF
               </button>
-
             </div>
           </div>
         </div>
