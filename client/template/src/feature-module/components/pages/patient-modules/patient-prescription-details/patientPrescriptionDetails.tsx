@@ -360,34 +360,37 @@ const PatientPrescriptionDetails = () => {
     const content = printRef.current?.innerHTML;
     if (!content) return;
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Prescription-${prescription?.prescriptionId}</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <style>
-          @page { size: A4; margin: 20mm; }
-          body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
-          table { width: 100%; border-collapse: collapse; }
-          table th, table td { padding: 8px; border: 1px solid #dee2e6; text-align: left; }
-          table thead { background-color: #f8f9fa; }
-          .bg-light { background-color: #f8f9fa !important; }
-          .text-primary { color: #4f46e5 !important; }
-          img { max-width: 100%; }
-        </style>
-      </head>
-      <body>${content}</body>
-      </html>
-    `;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
 
-    const blob = new Blob([htmlContent], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Prescription-${prescription?.prescriptionId || "details"}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+    printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Prescription-${prescription?.prescriptionId}</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+      <style>
+        @page { size: A4; margin: 20mm; }
+        body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 8px; border: 1px solid #dee2e6; text-align: left; }
+        table thead { background-color: #f8f9fa; }
+        .bg-light { background-color: #f8f9fa !important; }
+        .text-primary { color: #4f46e5 !important; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .bg-info-subtle { background-color: #cfe2ff; }
+        .text-info-emphasis { color: #084298; }
+        img { max-width: 100%; }
+        h5, h6 { margin-bottom: 8px; }
+        p { margin-bottom: 4px; }
+      </style>
+    </head>
+    <body onload="window.print(); window.close();">
+      ${content}
+    </body>
+    </html>
+  `);
+    printWindow.document.close();
   };
 
   // ─── Loading ──────────────────────────────────────────────────────────────

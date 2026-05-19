@@ -633,8 +633,7 @@ const PatientDoctors = () => {
               </div>
             </div>
           </div>
-
-          // Search div च्या खाली हे add करा:
+          
           <div className="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">
             <div className="dropdown me-2">
               <Link
