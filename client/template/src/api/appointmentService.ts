@@ -23,6 +23,24 @@ export interface Patient {
     fullName: string;
     email: string;
     profileImage?: string;
+    phone?: string;
+    status?: string;
+    gender?: string;
+    dob?: string;
+    bloodGroup?: string;
+    address?: {
+        address1?: string;
+        address2?: string;
+        city?: string;
+        state?: string;
+        pincode?: string;
+    };
+    primaryDoctor?: {
+        _id: string;
+        fullName: string;
+        department?: string;
+    };
+    createdAt?: string;
 }
 
 export interface AppointmentData {

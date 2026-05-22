@@ -28,5 +28,19 @@ router.get('/:id', protect, getAppointment);
 router.put('/:id', protect, updateAppointment);
 router.delete('/:id', protect, deleteAppointment);
 
+// Patient delete route add करा:
+router.delete('/patients/:id', protect, async (req, res) => {
+    try {
+        const User = require('../models/User');
+        const patient = await User.findById(req.params.id);
+        if (!patient || patient.role !== 'patient') {
+            return res.status(404).json({ success: false, message: 'Patient not found' });
+        }
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Patient deleted successfully' });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
 
 module.exports = router;

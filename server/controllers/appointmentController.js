@@ -52,9 +52,10 @@ const getDoctors = async (req, res) => {
  */
 const getPatients = async (req, res) => {
     try {
-        const patients = await Patient.find({ role: 'patient' })
-            .select('fullName email profileImage')
-            .sort({ fullName: 1 });
+        const patients = await User.find({ role: 'patient' })
+            .select('fullName email profileImage phone address status primaryDoctor dob gender bloodGroup createdAt')
+            .populate('primaryDoctor', 'fullName department')
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,

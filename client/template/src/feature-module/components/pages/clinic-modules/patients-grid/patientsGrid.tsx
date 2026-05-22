@@ -2,11 +2,60 @@ import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import { DatePicker } from "antd";
 import { all_routes } from "../../../../routes/all_routes";
+import { useState, useEffect } from "react";
+import dayjs from "dayjs";
+import { getPatients, type Patient } from "../../../../../api/appointmentService";
+import { message } from "antd";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_BACKEND_URL || "";
 
 const PatientsGrid = () => {
   const getModalContainer = () => {
     const modalElement = document.getElementById("modal-datepicker");
     return modalElement ? modalElement : document.body; // Fallback to document.body if modalElement is null
+  };
+
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState("");
+
+  useEffect(() => { fetchPatients(); }, []);
+
+  const fetchPatients = async () => {
+    try {
+      setLoading(true);
+      const res = await getPatients();
+      if (res.success) setPatients(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API_URL}/api/appointments/patients/${deleteId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      message.success("Patient deleted successfully!");
+      fetchPatients();
+      const modalEl = document.getElementById("delete_modal");
+      if (modalEl) {
+        const bsModal = (window as any).bootstrap?.Modal?.getInstance(modalEl);
+        if (bsModal) bsModal.hide();
+      }
+      setTimeout(() => {
+        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        document.body.classList.remove("modal-open");
+        document.body.style.overflow = "";
+      }, 300);
+    } catch (e: any) {
+      message.error("Failed to delete patient");
+    }
   };
   return (
     <>
@@ -22,7 +71,7 @@ const PatientsGrid = () => {
               <h4 className="fw-bold mb-0">
                 Patient Grid
                 <span className="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">
-                  Total Patients : 565
+                  Total Patients : {patients.length}
                 </span>
               </h4>
             </div>
@@ -560,1087 +609,85 @@ const PatientsGrid = () => {
           </div>
           {/* End Page Header */}
           {/* row start */}
+          {/* row start — dummy cards काढा, हे ठेवा */}
           <div className="row">
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-08.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Alberto Ripley
-                        <span className="text-body fs-13 fw-normal d-block">
-                          26, Male
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Mon, 30 Apr 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Green Square, New York, USA
-                  </p>
-                </div>
+            {loading ? (
+              <div className="col-12 text-center py-5">
+                <div className="spinner-border text-primary" />
               </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-16.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Susan Babin
-                        <span className="text-body fs-13 fw-normal d-block">
-                          21, Female
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Wed, 15 Apr 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Lakeview Drive, Chicago, USA
-                  </p>
-                </div>
+            ) : patients.length === 0 ? (
+              <div className="col-12 text-center py-5">
+                <i className="ti ti-users-off fs-1 text-muted d-block mb-2" />
+                <p className="text-muted">No patients found</p>
+                <Link to={all_routes.createPatient} className="btn btn-primary btn-sm">
+                  <i className="ti ti-plus me-1" />New Patient
+                </Link>
               </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-06.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Carol Lam
-                        <span className="text-body fs-13 fw-normal d-block">
-                          28, Female
-                        </span>
-                      </Link>
+            ) : (
+              patients.map((patient) => {
+                const src = patient.profileImage
+                  ? patient.profileImage.startsWith("http")
+                    ? patient.profileImage
+                    : `${API_URL}${patient.profileImage}`
+                  : "";
+                return (
+                  <div key={patient._id} className="col-xl-4 col-md-6">
+                    <div className="card">
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-start mb-3">
+                          <div className="d-flex align-items-center">
+                            <Link to={all_routes.patientDetails} className="avatar avatar-lg me-2">
+                              {src ? (
+                                <img src={src} alt={patient.fullName} className="rounded-circle"
+                                  style={{ width: 48, height: 48, objectFit: "cover" }} />
+                              ) : (
+                                <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                                  style={{ width: 48, height: 48, fontSize: 18 }}>
+                                  {patient.fullName?.charAt(0)?.toUpperCase() || "P"}
+                                </div>
+                              )}
+                            </Link>
+                            <Link to={all_routes.patientDetails} className="text-dark fw-semibold">
+                              {patient.fullName}
+                              <span className="text-body fs-13 fw-normal d-block">
+                                {patient.gender || "N/A"}
+                              </span>
+                            </Link>
+                          </div>
+                          <Link to="#" className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
+                            data-bs-toggle="dropdown">
+                            <i className="ti ti-dots-vertical" />
+                          </Link>
+                          <ul className="dropdown-menu p-2">
+                            <li>
+                              <Link to={`${all_routes.editPatient}?id=${patient._id}`}
+                                className="dropdown-item d-flex align-items-center">Edit</Link>
+                            </li>
+                            <li>
+                              <Link to="#" className="dropdown-item d-flex align-items-center text-danger"
+                                data-bs-toggle="modal" data-bs-target="#delete_modal"
+                                onClick={() => setDeleteId(patient._id)}>Delete</Link>
+                            </li>
+                            <li>
+                              <Link to={all_routes.appointments}
+                                className="dropdown-item d-flex align-items-center">Appointment</Link>
+                            </li>
+                          </ul>
+                        </div>
+                        <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
+                          <i className="ti ti-calendar me-1 text-dark" />
+                          Joined: {patient.createdAt ? dayjs(patient.createdAt).format("ddd, DD MMM YYYY") : "N/A"}
+                        </p>
+                        <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
+                          <i className="ti ti-location-pin me-1 text-dark" />
+                          {patient.address?.address1 || "Address not provided"}
+                        </p>
+                      </div>
                     </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
                   </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Tue, 02 Apr 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Ocean Avenue, Miami, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-25.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Marsha Noland
-                        <span className="text-body fs-13 fw-normal d-block">
-                          25, Female
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Thu, 27 Mar 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Elm Road, Austin, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-39.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Irma Armstrong
-                        <span className="text-body fs-13 fw-normal d-block">
-                          32, Female
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Thu, 12 Mar 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Elm Road, Austin, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-14.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Jesus Adams
-                        <span className="text-body fs-13 fw-normal d-block">
-                          27, Male
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Fri, 05 Mar 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Maple Street, San Francisco, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-27.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Ezra Belcher
-                        <span className="text-body fs-13 fw-normal d-block">
-                          28, Male
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Sat, 24 Feb 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Pine Valley, Seattle, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-05.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Glen Lentz
-                        <span className="text-body fs-13 fw-normal d-block">
-                          22, Male
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Sat, 16 Feb 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Pine Valley, Seattle, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-07.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Bernard Griffith
-                        <span className="text-body fs-13 fw-normal d-block">
-                          34, Male
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Tue, 01 Feb 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    River Walk, Houston, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-17.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        John Elsass
-                        <span className="text-body fs-13 fw-normal d-block">
-                          23, Male
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Mon, 25 Jan 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Forest Hill, Denver, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-38.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Martin Lisa
-                        <span className="text-body fs-13 fw-normal d-block">
-                          26, Female
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Thu, 22 Jan 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Garden Circle, Orlando, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-37.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Ava Mitchell
-                        <span className="text-body fs-13 fw-normal d-block">
-                          25, Female
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Sat, 18 Jan 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Crystal Court, Atlanta, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-10.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Noah Davis
-                        <span className="text-body fs-13 fw-normal d-block">
-                          32, Male
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Wed, 15 Jan 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Oakwood Street, Phoenix, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-34.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Emily Ross
-                        <span className="text-body fs-13 fw-normal d-block">
-                          29, Female
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Fri, 10 Jan 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Hilltop Lane, Dallas, USA
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-4 col-md-6">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="d-flex align-items-center">
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="avatar avatar-lg me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/users/user-31.jpg"
-                          alt="product"
-                          className="rounded-circle"
-                        />
-                      </Link>
-                      <Link
-                        to={all_routes.patientDetails}
-                        className="text-dark fw-semibold"
-                      >
-                        Ryan Anderson
-                        <span className="text-body fs-13 fw-normal d-block">
-                          30, Male
-                        </span>
-                      </Link>
-                    </div>
-                    <Link
-                      to="#"
-                      className="shadow-sm fs-14 d-inline-flex border rounded-2 p-1"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-dots-vertical" />
-                    </Link>
-                    <ul className="dropdown-menu p-2">
-                      <li>
-                        <Link
-                          to={all_routes.editPatient}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Edit
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item d-flex align-items-center"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                        >
-                          Delete
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to={all_routes.appointments}
-                          className="dropdown-item d-flex align-items-center"
-                        >
-                          Appointment
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <p className="mb-2 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-calendar me-1 text-dark" />
-                    Last Appointment : Tue, 04 Jan 2025
-                  </p>
-                  <p className="mb-0 text-truncate fs-13 d-flex align-items-center">
-                    <i className="ti ti-location-pin me-1 text-dark" />
-                    Hilltop Lane, Dallas, USA
-                  </p>
-                </div>
-              </div>
-            </div>
+                );
+              })
+            )}
           </div>
           {/* row end */}
           <div className="text-center">
@@ -1666,6 +713,29 @@ const PatientsGrid = () => {
       {/* ========================
 			End Page Content
 		========================= */}
+
+      {/* Delete Modal — </> च्या आधी */}
+      <div className="modal fade" id="delete_modal">
+        <div className="modal-dialog modal-dialog-centered modal-sm">
+          <div className="modal-content">
+            <div className="modal-body text-center position-relative">
+              <div className="mb-3">
+                <span className="avatar avatar-lg bg-danger text-white">
+                  <i className="ti ti-trash fs-24" />
+                </span>
+              </div>
+              <h5 className="fw-bold mb-1">Delete Confirmation</h5>
+              <p className="mb-3">Are you sure want to delete?</p>
+              <div className="d-flex justify-content-center">
+                <Link to="#" className="btn btn-light me-3" data-bs-dismiss="modal">Cancel</Link>
+                <button type="button" className="btn btn-danger" onClick={handleDelete}>
+                  Yes, Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 };

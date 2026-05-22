@@ -30,6 +30,8 @@ router.put('/profile', protect, authorize('patient'), async (req, res) => {
         }
         if (phoneNumber) updateData.phone = phoneNumber;
         if (profileImage) updateData.profileImage = profileImage;
+
+        
         if (addressLine1 !== undefined) {
             updateData['address.address1'] = addressLine1;
         }

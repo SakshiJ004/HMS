@@ -2,18 +2,19 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { all_routes } from "../../../../routes/all_routes";
 import {
-  Blood_Group,
   City,
   Country,
-  Gender,
-  Primary_Doctor,
   State,
-  Status,
 } from "../../../../../core/common/selectOption";
 import CommonSelect from "../../../../../core/common/common-select/commonSelect";
 import { DatePicker } from "antd";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
+import { message } from "antd";
+import { useNavigate } from "react-router";
+import axios from "axios";
+import { getDoctors, type Doctor } from "../../../../../api/appointmentService";
+import { useEffect } from "react";
 
 const CreatePatient = () => {
   const [phone, setPhone] = useState<string | undefined>()
@@ -21,6 +22,82 @@ const CreatePatient = () => {
     const modalElement = document.getElementById("modal-datepicker");
     return modalElement ? modalElement : document.body; // Fallback to document.body if modalElement is null
   };
+
+  const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_BACKEND_URL || "";
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    primaryDoctor: "",
+    dob: null as any,
+    gender: "",
+    bloodGroup: "",
+    status: "Available",
+    address1: "",
+    address2: "",
+    country: "",
+    state: "",
+    city: "",
+    pincode: "",
+  });
+
+  useEffect(() => { fetchDoctors(); }, []);
+
+  const fetchDoctors = async () => {
+    try {
+      const res = await getDoctors();
+      if (res.success) setDoctors(res.data);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.firstName || !formData.lastName || !formData.email ||
+      !formData.phone || !formData.primaryDoctor || !formData.dob ||
+      !formData.gender || !formData.bloodGroup || !formData.address1 ||
+      !formData.state || !formData.city || !formData.pincode) {
+      message.error("Please fill all required fields");
+      return;
+    }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `${API_URL}/api/appointments/patients`,
+        {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          primaryDoctor: formData.primaryDoctor,
+          dob: formData.dob?.format("YYYY-MM-DD"),
+          gender: formData.gender,
+          bloodGroup: formData.bloodGroup,
+          status: formData.status,
+          address: {
+            address1: formData.address1,
+            address2: formData.address2,
+            state: formData.state,
+            city: formData.city,
+            pincode: formData.pincode,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.success) {
+        message.success("Patient created successfully!");
+        navigate(all_routes.patients);
+      }
+    } catch (e: any) {
+      message.error(e.response?.data?.message || "Failed to create patient");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <>
       {/* ========================
@@ -77,7 +154,9 @@ const CreatePatient = () => {
                             First Name
                             <span className="text-danger ms-1">*</span>
                           </label>
-                          <input type="text" className="form-control" />
+                          <input type="text" className="form-control"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
                         </div>
                       </div>
                       <div className="col-md-6">
@@ -85,7 +164,9 @@ const CreatePatient = () => {
                           <label className="form-label mb-1 fw-medium">
                             Last Name<span className="text-danger ms-1">*</span>
                           </label>
-                          <input type="text" className="form-control" />
+                          <input type="text" className="form-control"
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
                         </div>
                       </div>
                       <div className="col-md-6">
@@ -107,7 +188,9 @@ const CreatePatient = () => {
                             Email Address
                             <span className="text-danger ms-1">*</span>
                           </label>
-                          <input type="email" className="form-control" />
+                          <input type="text" className="form-control"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                         </div>
                       </div>
                       <div className="col-md-6">
@@ -116,11 +199,19 @@ const CreatePatient = () => {
                             Primary Doctor
                             <span className="text-danger ms-1">*</span>
                           </label>
-                          <CommonSelect
-                            options={Primary_Doctor}
-                            className="select"
-                            defaultValue={Primary_Doctor[0]}
-                          />
+                          // Primary Doctor CommonSelect replace करा:
+                          <select
+                            className="form-control select"
+                            value={formData.primaryDoctor}
+                            onChange={(e) => setFormData({ ...formData, primaryDoctor: e.target.value })}
+                          >
+                            <option value="">Select Doctor</option>
+                            {doctors.map((d) => (
+                              <option key={d._id} value={d._id}>
+                                {d.fullName} {d.department ? `(${d.department})` : ""}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       </div>
                       <div className="col-md-6">
@@ -150,11 +241,13 @@ const CreatePatient = () => {
                           <label className="form-label mb-1 fw-medium">
                             Gender<span className="text-danger ms-1">*</span>
                           </label>
-                          <CommonSelect
-                            options={Gender}
-                            className="select"
-                            defaultValue={Gender[0]}
-                          />
+                          <select className="form-control select" value={formData.gender}
+                            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                          </select>
                         </div>
                       </div>
                       <div className="col-md-6">
@@ -163,11 +256,13 @@ const CreatePatient = () => {
                             Blood Group
                             <span className="text-danger ms-1">*</span>
                           </label>
-                          <CommonSelect
-                            options={Blood_Group}
-                            className="select"
-                            defaultValue={Blood_Group[0]}
-                          />
+                          <select className="form-control select" value={formData.bloodGroup}
+                            onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}>
+                            <option value="">Select Blood Group</option>
+                            {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
+                              <option key={bg} value={bg}>{bg}</option>
+                            ))}
+                          </select>
                         </div>
                       </div>
                       <div className="col-md-6">
@@ -175,11 +270,11 @@ const CreatePatient = () => {
                           <label className="form-label mb-1 fw-medium">
                             Status<span className="text-danger ms-1">*</span>
                           </label>
-                          <CommonSelect
-                            options={Status}
-                            className="select"
-                            defaultValue={Status[0]}
-                          />
+                          <select className="form-control select" value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
+                            <option value="Available">Available</option>
+                            <option value="Unavailable">Unavailable</option>
+                          </select>
                         </div>
                       </div>
                     </div>
@@ -192,7 +287,9 @@ const CreatePatient = () => {
                           <label className="form-label mb-1 fw-medium">
                             Address 1<span className="text-danger ms-1">*</span>
                           </label>
-                          <input type="text" className="form-control" />
+                          <input type="text" className="form-control"
+                            value={formData.address1}
+                            onChange={(e) => setFormData({ ...formData, address1: e.target.value })} />
                         </div>
                       </div>
                       <div className="col-md-6">
@@ -200,7 +297,9 @@ const CreatePatient = () => {
                           <label className="form-label mb-1 fw-medium">
                             Address 2<span className="text-danger ms-1">*</span>
                           </label>
-                          <input type="text" className="form-control" />
+                          <input type="text" className="form-control"
+                            value={formData.address2}
+                            onChange={(e) => setFormData({ ...formData, address2: e.target.value })} />
                         </div>
                       </div>
                       <div className="col-lg-6">
@@ -244,7 +343,9 @@ const CreatePatient = () => {
                           <label className="form-label mb-1">
                             Pincode<span className="text-danger ms-1">*</span>
                           </label>
-                          <input type="text" className="form-control" />
+                          <input type="text" className="form-control"
+                            value={formData.pincode}
+                            onChange={(e) => setFormData({ ...formData, pincode: e.target.value })} />
                         </div>
                       </div>
                     </div>
@@ -256,9 +357,9 @@ const CreatePatient = () => {
                 <Link to="#" className="btn btn-light me-2">
                   Cancel
                 </Link>
-                <Link to="#" className="btn btn-primary">
-                  Add New Patient
-                </Link>
+                <button type="button" className="btn btn-primary" onClick={handleSubmit} disabled={saving}>
+                  {saving ? <><span className="spinner-border spinner-border-sm me-2" />Creating...</> : "Add New Patient"}
+                </button>
               </div>
             </div>
           </div>
