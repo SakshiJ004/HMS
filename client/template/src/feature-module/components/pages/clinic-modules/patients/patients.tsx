@@ -1044,6 +1044,8 @@ const Patients = () => {
     },
   ];
 
+  
+
   return (
     <>
       <div className="page-wrapper">
