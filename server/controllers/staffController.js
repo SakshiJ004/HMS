@@ -3,7 +3,11 @@ const Staff = require('../models/Staff');
 // Get all staffs
 exports.getAllStaffs = async (req, res) => {
     try {
-        const staffs = await Staff.find().sort({ createdAt: -1 });
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const staffs = await Staff.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -103,7 +107,7 @@ exports.createStaff = async (req, res) => {
         }
 
         // Create new staff
-        const newStaff = new Staff({
+        const staffData = {
             name: name.trim(),
             designation,
             role,
@@ -122,7 +126,11 @@ exports.createStaff = async (req, res) => {
             image: image || '',
             staffType: staffType || 'Permanent',
             status: 'Available'
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            staffData.hospitalId = req.user.hospitalId;
+        }
+        const newStaff = new Staff(staffData);
 
         await newStaff.save();
 

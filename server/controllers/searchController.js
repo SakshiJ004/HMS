@@ -260,8 +260,7 @@ exports.globalSearch = async (req, res) => {
         // Get user role from request (assuming auth middleware sets req.user)
         const userRole = req.user?.role || 'patient';
 
-        // Search Doctors (from User model where role = 'doctor')
-        const doctors = await User.find({
+        const doctorQuery = {
             role: 'doctor',
             $or: [
                 { fullName: { $regex: searchQuery, $options: 'i' } },
@@ -270,7 +269,12 @@ exports.globalSearch = async (req, res) => {
                 { department: { $regex: searchQuery, $options: 'i' } },
                 { designation: { $regex: searchQuery, $options: 'i' } }
             ]
-        }).limit(5).select('fullName firstName lastName department designation profileImage status');
+        };
+        if (req.user && req.user.hospitalId) {
+            doctorQuery.hospitalId = req.user.hospitalId;
+        }
+        // Search Doctors (from User model where role = 'doctor')
+        const doctors = await User.find(doctorQuery).limit(5).select('fullName firstName lastName department designation profileImage status');
 
         doctors.forEach(doctor => {
             const doctorName = doctor.fullName || `${doctor.firstName} ${doctor.lastName}`.trim() || 'Unknown Doctor';
@@ -297,7 +301,7 @@ exports.globalSearch = async (req, res) => {
         // Search Patients (from User model where role = 'patient')
         // Only if user is admin or doctor
         if (userRole === 'admin' || userRole === 'doctor') {
-            const patients = await User.find({
+            const patientQuery = {
                 role: 'patient',
                 $or: [
                     { fullName: { $regex: searchQuery, $options: 'i' } },
@@ -306,7 +310,11 @@ exports.globalSearch = async (req, res) => {
                     { phone: { $regex: searchQuery, $options: 'i' } },
                     { email: { $regex: searchQuery, $options: 'i' } }
                 ]
-            }).limit(5).select('fullName firstName lastName phone email profileImage');
+            };
+            if (req.user && req.user.hospitalId) {
+                patientQuery.hospitalId = req.user.hospitalId;
+            }
+            const patients = await User.find(patientQuery).limit(5).select('fullName firstName lastName phone email profileImage');
 
             patients.forEach(patient => {
                 const patientName = patient.fullName || `${patient.firstName} ${patient.lastName}`.trim() || 'Unknown Patient';
@@ -325,13 +333,17 @@ exports.globalSearch = async (req, res) => {
             });
         }
 
-        // Search Appointments
-        const appointments = await Appointment.find({
+        const appointmentQuery = {
             $or: [
                 { appointmentId: { $regex: searchQuery, $options: 'i' } },
                 { status: { $regex: searchQuery, $options: 'i' } }
             ]
-        })
+        };
+        if (req.user && req.user.hospitalId) {
+            appointmentQuery.hospitalId = req.user.hospitalId;
+        }
+        // Search Appointments
+        const appointments = await Appointment.find(appointmentQuery)
             .limit(5)
             .populate('doctor', 'fullName firstName lastName designation')
             .populate('patient', 'fullName firstName lastName')
@@ -439,7 +451,7 @@ exports.searchDoctors = async (req, res) => {
 
         const userRole = req.user?.role || 'patient';
 
-        const doctors = await User.find({
+        const queryObj = {
             role: 'doctor',
             $or: [
                 { fullName: { $regex: q, $options: 'i' } },
@@ -448,7 +460,11 @@ exports.searchDoctors = async (req, res) => {
                 { department: { $regex: q, $options: 'i' } },
                 { designation: { $regex: q, $options: 'i' } }
             ]
-        }).limit(10);
+        };
+        if (req.user && req.user.hospitalId) {
+            queryObj.hospitalId = req.user.hospitalId;
+        }
+        const doctors = await User.find(queryObj).limit(10);
 
         res.status(200).json({
             success: true,
@@ -488,7 +504,7 @@ exports.searchPatients = async (req, res) => {
             });
         }
 
-        const patients = await User.find({
+        const queryObj = {
             role: 'patient',
             $or: [
                 { fullName: { $regex: q, $options: 'i' } },
@@ -496,7 +512,11 @@ exports.searchPatients = async (req, res) => {
                 { lastName: { $regex: q, $options: 'i' } },
                 { phone: { $regex: q, $options: 'i' } }
             ]
-        }).limit(10);
+        };
+        if (req.user && req.user.hospitalId) {
+            queryObj.hospitalId = req.user.hospitalId;
+        }
+        const patients = await User.find(queryObj).limit(10);
 
         res.status(200).json({
             success: true,

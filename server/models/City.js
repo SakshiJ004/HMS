@@ -11,6 +11,10 @@ const citySchema = new mongoose.Schema({
         ref: 'State',
         required: [true, 'State is required'],
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     name: {
         type: String,
         required: [true, 'City name is required'],

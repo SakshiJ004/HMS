@@ -4,6 +4,11 @@ const Location = require('../models/Location');
 exports.getAllLocations = async (req, res) => {
     try {
         const locations = await Location.find().sort({ createdAt: -1 });
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        // const locations = await Location.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -68,7 +73,8 @@ exports.createLocation = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Address is required' });
         }
 
-        const newLocation = new Location({
+        // const newLocation = new Location({
+        const locationData = {
             name: name.trim(),
             locationType: locationType.trim(),
             email: email.trim().toLowerCase(),
@@ -81,7 +87,14 @@ exports.createLocation = async (req, res) => {
             pincode: pincode || '',
             image: image || '',
             status: status || 'Active'
-        });
+        // });
+        };
+
+        if (req.user && req.user.hospitalId) {
+            locationData.hospitalId = req.user.hospitalId;
+        }
+
+        const newLocation = new Location(locationData);
 
         await newLocation.save();
 

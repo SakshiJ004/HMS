@@ -17,10 +17,18 @@ const getDashboardStats = async (req, res) => {
         // const appointmentCount = await Appointment.countDocuments();
 
         // Use Promise.all to fetch all counts in parallel (INSTANT!)
+        const doctorQuery = { role: 'doctor' };
+        const patientQuery = { role: 'patient' };
+        const appointmentQuery = {};
+        if (req.user && req.user.hospitalId) {
+            doctorQuery.hospitalId = req.user.hospitalId;
+            patientQuery.hospitalId = req.user.hospitalId;
+            appointmentQuery.hospitalId = req.user.hospitalId;
+        }
         const [doctorCount, patientCount, appointmentCount] = await Promise.all([
-            User.countDocuments({ role: 'doctor' }),
-            User.countDocuments({ role: 'patient' }),
-            Appointment.countDocuments()
+            User.countDocuments(doctorQuery),
+            User.countDocuments(patientQuery),
+            Appointment.countDocuments(appointmentQuery)
         ]);
 
         res.status(200).json({
@@ -173,7 +181,11 @@ const getAppointmentStats = async (req, res) => {
         const today = new Date();
 
         // Fetch ALL appointments at once with only needed fields (FAST!)
-        const allAppointments = await Appointment.find({}, 'status appointmentDate').lean();
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const allAppointments = await Appointment.find(query, 'status appointmentDate').lean();
 
         // Calculate summary counts in memory (INSTANT!)
         const summary = {
@@ -295,6 +307,15 @@ const getTopDoctors = async (req, res) => {
         console.log('Top Doctors - Period:', period);
         console.log('Top Doctors - Date Range:', startDate, 'to', today);
 
+        const matchStage = {
+            appointmentDateConverted: {
+                $gte: startDate,
+                $lte: today
+            }
+        };
+        if (req.user && req.user.hospitalId) {
+            matchStage.hospitalId = req.user.hospitalId;
+        }
         // Get appointments grouped by doctor
         const topDoctors = await Appointment.aggregate([
             {
@@ -309,12 +330,7 @@ const getTopDoctors = async (req, res) => {
                 }
             },
             {
-                $match: {
-                    appointmentDateConverted: {
-                        $gte: startDate,
-                        $lte: today
-                    }
-                }
+                $match: matchStage
             },
             {
                 $group: {
@@ -398,6 +414,15 @@ const getDepartmentStats = async (req, res) => {
         console.log('Department Stats - Period:', period);
         console.log('Department Stats - Date Range:', startDate, 'to', today);
 
+        const matchStage = {
+            appointmentDateConverted: {
+                $gte: startDate,
+                $lte: today
+            }
+        };
+        if (req.user && req.user.hospitalId) {
+            matchStage.hospitalId = req.user.hospitalId;
+        }
         // Get appointments grouped by department with proper counting
         const departmentStats = await Appointment.aggregate([
             {
@@ -412,12 +437,7 @@ const getDepartmentStats = async (req, res) => {
                 }
             },
             {
-                $match: {
-                    appointmentDateConverted: {
-                        $gte: startDate,
-                        $lte: today
-                    }
-                }
+                $match: matchStage
             },
             {
                 $lookup: {
@@ -479,18 +499,28 @@ const getDepartmentStats = async (req, res) => {
  */
 const getDoctorsSchedule = async (req, res) => {
     try {
+        const doctorQuery = { role: 'doctor' };
+        const availableQuery = { role: 'doctor', status: 'Available' };
+        const unavailableQuery = { role: 'doctor', status: 'Unavailable' };
+        const onLeaveQuery = { role: 'doctor', status: 'On Leave' };
+        if (req.user && req.user.hospitalId) {
+            doctorQuery.hospitalId = req.user.hospitalId;
+            availableQuery.hospitalId = req.user.hospitalId;
+            unavailableQuery.hospitalId = req.user.hospitalId;
+            onLeaveQuery.hospitalId = req.user.hospitalId;
+        }
         // Get all doctors with their basic info
         const doctors = await User.find(
-            { role: 'doctor' },
+            doctorQuery,
             'fullName specialization profileImage status'
         )
             .limit(4)
             .lean();
 
         // Count availability statuses
-        const available = await User.countDocuments({ role: 'doctor', status: 'Available' });
-        const unavailable = await User.countDocuments({ role: 'doctor', status: 'Unavailable' });
-        const onLeave = await User.countDocuments({ role: 'doctor', status: 'On Leave' });
+        const available = await User.countDocuments(availableQuery);
+        const unavailable = await User.countDocuments(unavailableQuery);
+        const onLeave = await User.countDocuments(onLeaveQuery);
 
         res.status(200).json({
             success: true,
@@ -521,6 +551,7 @@ const getTopPatients = async (req, res) => {
     try {
         // Get top 5 patients with most appointments
         const topPatients = await Appointment.aggregate([
+            ...(req.user && req.user.hospitalId ? [{ $match: { hospitalId: req.user.hospitalId } }] : []),
             {
                 $group: {
                     _id: '$patient',

@@ -53,6 +53,10 @@ const payrollSchema = new mongoose.Schema({
         type: String,
         enum: ['Paid', 'Pending', 'Processing'],
         default: 'Pending'
+    },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup'
     }
 }, { timestamps: true });
 

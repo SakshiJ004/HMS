@@ -11,6 +11,10 @@ const stateSchema = new mongoose.Schema({
         required: [true, 'State name is required'],
         trim: true,
     },
+    hospitalId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'HospitalSetup',
+        },
     status: {
         type: String,
         enum: ['Active', 'Inactive'],

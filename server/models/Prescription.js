@@ -56,6 +56,10 @@ const prescriptionSchema = new mongoose.Schema({
         type: String,
         enum: ['Active', 'Expired'],
         default: 'Active'
+    },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup'
     }
 }, { timestamps: true });
 

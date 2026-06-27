@@ -10,8 +10,8 @@ const {
 } = require('../controllers/faqController');
 
 // Add auth middleware if needed:
-// const { protect } = require('../middleware/authMiddleware');
-// router.use(protect);
+const { protect } = require('../middleware/authMiddleware');
+router.use(protect);
 
 router.get('/', getAllFaqs);       // GET all (with optional ?search= ?category= ?status=)
 router.get('/categories', getCategories);   // GET unique categories list

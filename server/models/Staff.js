@@ -10,6 +10,10 @@ const staffSchema = new mongoose.Schema({
         required: [true, 'Staff name is required'],
         trim: true
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     designation: {
         type: String,
         required: [true, 'Designation is required']

@@ -6,6 +6,9 @@ exports.getAllAssets = async (req, res) => {
         const { sortBy = 'recent', status } = req.query;
         const filter = {};
         if (status) filter.status = status;
+        if (req.user && req.user.hospitalId) {
+            filter.hospitalId = req.user.hospitalId;
+        }
         const sortOrder = sortBy === 'oldest' ? 1 : -1;
 
         const assets = await Asset.find(filter).sort({ createdAt: sortOrder });
@@ -48,13 +51,17 @@ exports.createAsset = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Required fields missing' });
         }
 
+        const checkQuery = { serialNumber: serialNumber.trim() };
+        if (req.user && req.user.hospitalId) {
+            checkQuery.hospitalId = req.user.hospitalId;
+        }
         // Duplicate serial number check
-        const existing = await Asset.findOne({ serialNumber: serialNumber.trim() });
+        const existing = await Asset.findOne(checkQuery);
         if (existing) {
             return res.status(400).json({ success: false, message: `Serial number "${serialNumber}" already exists` });
         }
 
-        const newAsset = new Asset({
+        const assetData = {
             assetName: assetName.trim(),
             assetUser: assetUser.trim(),
             purchaseDate,
@@ -69,7 +76,11 @@ exports.createAsset = async (req, res) => {
             value: parseFloat(value),
             description: description?.trim() || '',
             status: status || 'Pending'
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            assetData.hospitalId = req.user.hospitalId;
+        }
+        const newAsset = new Asset(assetData);
 
         await newAsset.save();
         res.status(201).json({ success: true, message: 'Asset created successfully', data: newAsset });
@@ -98,7 +109,11 @@ exports.updateAsset = async (req, res) => {
 
         // Duplicate serial check (exclude current)
         if (serialNumber && serialNumber !== asset.serialNumber) {
-            const existing = await Asset.findOne({ serialNumber: serialNumber.trim(), _id: { $ne: req.params.id } });
+            const checkQuery = { serialNumber: serialNumber.trim(), _id: { $ne: req.params.id } };
+            if (req.user && req.user.hospitalId) {
+                checkQuery.hospitalId = req.user.hospitalId;
+            }
+            const existing = await Asset.findOne(checkQuery);
             if (existing) {
                 return res.status(400).json({ success: false, message: 'Serial number already exists' });
             }

@@ -3,7 +3,11 @@ const Payroll = require('../models/Payroll');
 // Get all payrolls
 exports.getAllPayrolls = async (req, res) => {
     try {
-        const payrolls = await Payroll.find().sort({ createdAt: -1 });
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const payrolls = await Payroll.find(query).sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: payrolls, count: payrolls.length });
     } catch (error) {
         console.error('Get payrolls error:', error);
@@ -43,8 +47,12 @@ exports.createPayroll = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Salary month and year are required' });
         }
 
+        const checkQuery = { staffId, salaryMonth, salaryYear };
+        if (req.user && req.user.hospitalId) {
+            checkQuery.hospitalId = req.user.hospitalId;
+        }
         // Check duplicate: same staff + same month + year
-        const existing = await Payroll.findOne({ staffId, salaryMonth, salaryYear });
+        const existing = await Payroll.findOne(checkQuery);
         if (existing) {
             return res.status(400).json({
                 success: false,
@@ -52,7 +60,7 @@ exports.createPayroll = async (req, res) => {
             });
         }
 
-        const newPayroll = new Payroll({
+        const payrollData = {
             staffId, staffName, email: email || '', role: role || '',
             joiningDate: joiningDate || '', image: image || '',
             salaryMonth, salaryYear: parseInt(salaryYear),
@@ -69,7 +77,11 @@ exports.createPayroll = async (req, res) => {
             labourWelfare: parseFloat(labourWelfare) || 0,
             otherDeductions: parseFloat(otherDeductions) || 0,
             status: status || 'Pending'
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            payrollData.hospitalId = req.user.hospitalId;
+        }
+        const newPayroll = new Payroll(payrollData);
 
         await newPayroll.save();
 

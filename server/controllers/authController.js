@@ -99,7 +99,8 @@ const registerUser = async (req, res) => {
             fullName,
             email: email.toLowerCase(),
             password,
-            role: 'patient', // ✅ Explicitly set role
+            role: 'patient',
+            hospitalId: req.body.hospitalId || undefined,
         });
 
         console.log('✅ Patient created successfully:', user._id);
@@ -119,6 +120,7 @@ const registerUser = async (req, res) => {
                 lastName: lastName,
                 email: user.email,
                 role: user.role,
+                hospitalId: user.hospitalId,
                 token,
             },
         });
@@ -197,6 +199,7 @@ const loginUser = async (req, res) => {
                 lastName: lastName,
                 email: user.email,
                 role: user.role,
+                hospitalId: user.hospitalId,
                 profileImage: user.profileImage || null,
                 token,
                 rememberMe, // Send back rememberMe status

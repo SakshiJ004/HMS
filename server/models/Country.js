@@ -18,6 +18,10 @@ const countrySchema = new mongoose.Schema({
         type: String,   // flag image filename e.g. "us.png"
         default: '',
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     status: {
         type: String,
         enum: ['Active', 'Inactive'],

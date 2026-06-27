@@ -1,16 +1,15 @@
 const mongoose = require('mongoose');
-const User = require('../models/User');
-const Doctor = require('../models/Doctor');
-// ✅ PATIENT-SPECIFIC SCHEMA
+const User = require('./User');
+
 const patientSchema = new mongoose.Schema({
     primaryDoctor: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'doctor',
+        ref: 'User',
+        required: [true, 'Primary doctor is required'],
     },
-    languageSpoken: [String],
 });
 
-// ✅ Create Patient discriminator
+// ✅ Patient Discriminator - shares 'users' collection with User/Doctor/Admin
 const Patient = User.discriminator('patient', patientSchema);
 
 module.exports = Patient;

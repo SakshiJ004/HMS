@@ -3,7 +3,11 @@ const Department = require('../models/Department');
 // Get all departments
 exports.getAllDepartments = async (req, res) => {
     try {
-        const departments = await Department.find().sort({ createdAt: -1 });
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const departments = await Department.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -59,10 +63,14 @@ exports.createDepartment = async (req, res) => {
             });
         }
 
-        // Check if department already exists
-        const existingDept = await Department.findOne({
+        const checkQuery = {
             name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            checkQuery.hospitalId = req.user.hospitalId;
+        }
+        // Check if department already exists
+        const existingDept = await Department.findOne(checkQuery);
 
         if (existingDept) {
             return res.status(400).json({
@@ -72,12 +80,16 @@ exports.createDepartment = async (req, res) => {
         }
 
         // Create new department
-        const newDepartment = new Department({
+        const deptData = {
             name: name.trim(),
             description: description ? description.trim() : '',
             numberOfDoctors: 0,
             status: 'Inactive'
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            deptData.hospitalId = req.user.hospitalId;
+        }
+        const newDepartment = new Department(deptData);
 
         await newDepartment.save();
 
@@ -119,11 +131,15 @@ exports.updateDepartment = async (req, res) => {
             });
         }
 
-        // Check if new name already exists (excluding current department)
-        const existingDept = await Department.findOne({
+        const checkQuery = {
             name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
             _id: { $ne: req.params.id }
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            checkQuery.hospitalId = req.user.hospitalId;
+        }
+        // Check if new name already exists (excluding current department)
+        const existingDept = await Department.findOne(checkQuery);
 
         if (existingDept) {
             return res.status(400).json({

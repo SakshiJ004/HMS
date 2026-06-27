@@ -5,7 +5,11 @@ const Holiday = require('../models/Holidays');
 // Get all holidays
 exports.getAllHolidays = async (req, res) => {
     try {
-        const holidays = await Holiday.find().sort({ createdAt: -1 });
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const holidays = await Holiday.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -62,12 +66,16 @@ exports.addHoliday = async (req, res) => {
             });
         }
 
-        const newHoliday = new Holiday({
+        const holidayData = {
             name,
             description: description || '',
             date,
             day
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            holidayData.hospitalId = req.user.hospitalId;
+        }
+        const newHoliday = new Holiday(holidayData);
 
         await newHoliday.save();
 

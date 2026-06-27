@@ -7,6 +7,10 @@ const blogCategorySchema = new mongoose.Schema({
         unique: true,
         trim: true
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     slug: {
         type: String,
         unique: true,

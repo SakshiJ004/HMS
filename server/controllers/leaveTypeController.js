@@ -2,10 +2,13 @@
 const LeaveType = require('../models/LeaveType');
 
 
-// Get all leave types
 exports.getLeaveTypes = async (req, res) => {
     try {
-        const leaveTypes = await LeaveType.find().sort({ createdAt: -1 });
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const leaveTypes = await LeaveType.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -34,7 +37,11 @@ exports.createLeaveType = async (req, res) => {
             });
         }
 
-        const existingType = await LeaveType.findOne({ leaveType });
+        const checkQuery = { leaveType };
+        if (req.user && req.user.hospitalId) {
+            checkQuery.hospitalId = req.user.hospitalId;
+        }
+        const existingType = await LeaveType.findOne(checkQuery);
         if (existingType) {
             return res.status(400).json({
                 success: false,
@@ -42,10 +49,14 @@ exports.createLeaveType = async (req, res) => {
             });
         }
 
-        const newLeaveType = new LeaveType({
+        const leaveTypeData = {
             leaveType,
             leaveQuota
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            leaveTypeData.hospitalId = req.user.hospitalId;
+        }
+        const newLeaveType = new LeaveType(leaveTypeData);
 
         await newLeaveType.save();
 

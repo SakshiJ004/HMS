@@ -14,6 +14,10 @@ const doctorSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     appointmentType: String,
     acceptBookingsDays: {
         type: Number,

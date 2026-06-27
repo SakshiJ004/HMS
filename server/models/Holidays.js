@@ -22,6 +22,10 @@ const holidaySchema = new mongoose.Schema({
         type: String,
         required: [true, 'Day is required'],
         trim: true
+    },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup'
     }
 }, {
     timestamps: true

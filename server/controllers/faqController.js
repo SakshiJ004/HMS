@@ -5,6 +5,9 @@ exports.getAllFaqs = async (req, res) => {
     try {
         const { search, category, status } = req.query;
         const filter = {};
+        if (req.user && req.user.hospitalId) {
+            filter.hospitalId = req.user.hospitalId;
+        }
         if (status) filter.status = status;
         if (category) filter.category = { $regex: category, $options: 'i' };
         if (search) {
@@ -42,6 +45,11 @@ exports.getFaqById = async (req, res) => {
 exports.getCategories = async (req, res) => {
     try {
         const categories = await Faq.distinct('category');
+        const filter = {};
+        if (req.user && req.user.hospitalId) {
+            filter.hospitalId = req.user.hospitalId;
+        }
+        // const categories = await Faq.distinct('category', filter);
         res.status(200).json({ success: true, data: categories.sort() });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Failed to fetch categories' });
@@ -60,12 +68,20 @@ exports.createFaq = async (req, res) => {
         if (!answer || !answer.trim())
             return res.status(400).json({ success: false, message: 'Answer is required' });
 
-        const faq = await Faq.create({
+        // const faq = await Faq.create({
+        const faqData = {
             category: category.trim(),
             question: question.trim(),
             answer: answer.trim(),
             status: status || 'Active',
-        });
+        // });
+        };
+
+        if (req.user && req.user.hospitalId) {
+            faqData.hospitalId = req.user.hospitalId;
+        }
+
+        const faq = await Faq.create(faqData);
 
         res.status(201).json({ success: true, message: 'FAQ created successfully', data: faq });
     } catch (err) {

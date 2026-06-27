@@ -6,6 +6,10 @@ const locationSchema = new mongoose.Schema({
         required: [true, 'Location name is required'],
         trim: true
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     locationType: {
         type: String,
         required: [true, 'Location type is required'],

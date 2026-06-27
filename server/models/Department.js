@@ -16,6 +16,10 @@ const departmentSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     status: {
         type: String,
         enum: ['Active', 'Inactive'],

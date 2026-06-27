@@ -7,6 +7,10 @@ const blogSchema = new mongoose.Schema({
         trim: true,
         maxlength: [200, 'Title cannot exceed 200 characters']
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     slug: {
         type: String,
         unique: true,

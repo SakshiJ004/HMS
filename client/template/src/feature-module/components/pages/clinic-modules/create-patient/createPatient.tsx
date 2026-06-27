@@ -199,7 +199,6 @@ const CreatePatient = () => {
                             Primary Doctor
                             <span className="text-danger ms-1">*</span>
                           </label>
-                          // Primary Doctor CommonSelect replace करा:
                           <select
                             className="form-control select"
                             value={formData.primaryDoctor}

@@ -6,6 +6,10 @@ const faqSchema = new mongoose.Schema({
         required: [true, 'Category is required'],
         trim: true,
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     question: {
         type: String,
         required: [true, 'Question is required'],

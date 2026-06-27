@@ -6,6 +6,10 @@ const assetSchema = new mongoose.Schema({
         required: [true, 'Asset name is required'],
         trim: true
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     assetUser: {
         type: String,
         required: [true, 'Asset user is required'],

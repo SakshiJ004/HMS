@@ -5,10 +5,17 @@ exports.getByDepartment = async (req, res) => {
     try {
         const { department } = req.params;
 
-        const diagnoses = await Diagnosis.find({
+        const query = {
             department,
             isActive: true
-        }).sort({ description: 1 });
+        };
+        if (req.user && req.user.hospitalId) {
+            query.$or = [
+                { hospitalId: { $exists: false } },
+                { hospitalId: req.user.hospitalId }
+            ];
+        }
+        const diagnoses = await Diagnosis.find(query).sort({ description: 1 });
 
         res.json({ success: true, data: diagnoses });
     } catch (error) {
@@ -29,6 +36,17 @@ exports.search = async (req, res) => {
                 { searchTerms: { $in: [new RegExp(query, 'i')] } }
             ]
         };
+
+        if (req.user && req.user.hospitalId) {
+            searchCriteria.$and = [
+                {
+                    $or: [
+                        { hospitalId: { $exists: false } },
+                        { hospitalId: req.user.hospitalId }
+                    ]
+                }
+            ];
+        }
 
         if (department) {
             searchCriteria.department = department;

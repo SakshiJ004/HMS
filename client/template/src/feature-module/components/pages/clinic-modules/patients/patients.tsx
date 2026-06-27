@@ -997,8 +997,8 @@ const Patients = () => {
       dataIndex: "status",
       render: (text: any) => (
         <span className={`badge rounded fs-13 fw-medium ${text === "Available"
-            ? "badge-soft-success text-success border-success border"
-            : "badge-soft-danger text-danger border-danger border"
+          ? "badge-soft-success text-success border-success border"
+          : "badge-soft-danger text-danger border-danger border"
           }`}>
           {text || "N/A"}
         </span>
@@ -1044,7 +1044,7 @@ const Patients = () => {
     },
   ];
 
-  
+
 
   return (
     <>

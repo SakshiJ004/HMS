@@ -8,19 +8,20 @@ const {
     deleteLocation
 } = require('../controllers/locationController');
 
-// GET all locations
-router.get('/', getAllLocations);
+const { protect } = require('../middleware/authMiddleware');
 
-// GET single location by ID
-router.get('/:id', getLocationById);
+router.get('/', protect, getAllLocations);
 
-// POST create new location
-router.post('/', createLocation);
+// GET single location by ID\
+router.get('/:id', protect, getLocationById);
+
+// POST create new 
+router.post('/', protect, createLocation);
 
 // PUT update location
-router.put('/:id', updateLocation);
+router.put('/:id', protect, updateLocation);
 
 // DELETE location
-router.delete('/:id', deleteLocation);
+router.delete('/:id', protect, deleteLocation);
 
 module.exports = router;

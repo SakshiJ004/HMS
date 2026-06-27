@@ -1,6 +1,6 @@
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
-const Patient = require('../models/Patient')
+const Patient = require('../models/Patient');
 const { notificationHandlers } = require('../utils/notificationHelper')
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -28,7 +28,11 @@ const generateAppointmentId = async () => {
  */
 const getDoctors = async (req, res) => {
     try {
-        const doctors = await User.find({ role: 'doctor' })
+        const query = { role: 'doctor' };
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const doctors = await User.find(query)
             .select('fullName email profileImage phone department designation consultationCharge status')
             .sort({ fullName: 1 });
 
@@ -52,7 +56,11 @@ const getDoctors = async (req, res) => {
  */
 const getPatients = async (req, res) => {
     try {
-        const patients = await User.find({ role: 'patient' })
+        const query = { role: 'patient' };
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const patients = await Patient.find(query)
             .select('fullName email profileImage phone address status primaryDoctor dob gender bloodGroup createdAt')
             .populate('primaryDoctor', 'fullName department')
             .sort({ createdAt: -1 });
@@ -90,20 +98,35 @@ const createPatient = async (req, res) => {
             address,
         } = req.body;
 
-        console.log('📝 Creating patient with data:', { firstName, lastName, email, phone });
+        console.log('📝 Creating patient with data:', req.body);
 
-        // Validate required fields
-        if (!firstName || !lastName || !email || !phone || !primaryDoctor ||
-            !dob || !gender || !bloodGroup || !address?.address1 ||
-            !address?.state || !address?.city || !address?.pincode) {
+        if (!req.user || !req.user.hospitalId) {
             return res.status(400).json({
                 success: false,
-                message: 'All required fields must be provided',
+                message: 'Hospital context missing. Please login again.',
+            });
+        }
+
+        // Validate required fields individually so the error tells you exactly what's missing
+        const requiredFields = { firstName, lastName, email, phone, primaryDoctor, dob, gender, bloodGroup };
+        const missingFields = Object.entries(requiredFields)
+            .filter(([, value]) => !value)
+            .map(([key]) => key);
+
+        if (!address?.address1) missingFields.push('address.address1');
+        if (!address?.state) missingFields.push('address.state');
+        if (!address?.city) missingFields.push('address.city');
+        if (!address?.pincode) missingFields.push('address.pincode');
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `Missing required fields: ${missingFields.join(', ')}`,
             });
         }
 
         // Check if email already exists
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
             return res.status(400).json({
                 success: false,
@@ -120,9 +143,13 @@ const createPatient = async (req, res) => {
             });
         }
 
-        // Check if primary doctor exists
-        const doctorExists = await User.findById(primaryDoctor);
-        if (!doctorExists || doctorExists.role !== 'doctor') {
+        // Check if primary doctor exists AND belongs to the same hospital
+        const doctorExists = await User.findOne({
+            _id: primaryDoctor,
+            role: 'doctor',
+            hospitalId: req.user.hospitalId,
+        });
+        if (!doctorExists) {
             return res.status(404).json({
                 success: false,
                 message: 'Primary doctor not found',
@@ -136,15 +163,14 @@ const createPatient = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(tempPassword, salt);
 
-        // Create patient with provider fields for local authentication
-        const patient = await User.create({
+        // ✅ Create patient using the Patient discriminator model
+        const patient = await Patient.create({
             firstName,
             lastName,
             fullName: `${firstName} ${lastName}`,
-            email,
+            email: email.toLowerCase(),
             phone,
             password: hashedPassword,
-            role: 'patient',
             primaryDoctor,
             dob,
             gender,
@@ -152,14 +178,15 @@ const createPatient = async (req, res) => {
             status: status || 'Available',
             address,
             provider: 'local',
-            providerId: email, // Use email as unique providerId for local users
+            providerId: email.toLowerCase(),
+            hospitalId: req.user.hospitalId,
         });
 
         // Remove password from response
         const patientResponse = patient.toObject();
         delete patientResponse.password;
 
-        console.log('✅ Patient created:', patient.email);
+        console.log('✅ Patient created:', patient.email, '| Hospital:', patient.hospitalId);
 
         res.status(201).json({
             success: true,
@@ -175,6 +202,15 @@ const createPatient = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`,
+            });
+        }
+
+        // Handle Mongoose validation errors with clear field names
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(e => e.message);
+            return res.status(400).json({
+                success: false,
+                message: messages.join(', '),
             });
         }
 
@@ -202,6 +238,13 @@ const createAppointment = async (req, res) => {
             status,
         } = req.body;
 
+        if (!req.user || !req.user.hospitalId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Hospital context missing. Please login again.',
+            });
+        }
+
         // Validate required fields
         if (!patient || !doctor || !department || !appointmentType ||
             !appointmentDate || !appointmentTime || !reason) {
@@ -211,18 +254,26 @@ const createAppointment = async (req, res) => {
             });
         }
 
-        // Check if patient exists
-        const patientExists = await User.findById(patient);
-        if (!patientExists || patientExists.role !== 'patient') {
+        // Check if patient exists AND belongs to the same hospital
+        const patientExists = await User.findOne({
+            _id: patient,
+            role: 'patient',
+            hospitalId: req.user.hospitalId,
+        });
+        if (!patientExists) {
             return res.status(404).json({
                 success: false,
                 message: 'Patient not found',
             });
         }
 
-        // Check if doctor exists
-        const doctorExists = await User.findById(doctor);
-        if (!doctorExists || doctorExists.role !== 'doctor') {
+        // Check if doctor exists AND belongs to the same hospital
+        const doctorExists = await User.findOne({
+            _id: doctor,
+            role: 'doctor',
+            hospitalId: req.user.hospitalId,
+        });
+        if (!doctorExists) {
             return res.status(404).json({
                 success: false,
                 message: 'Doctor not found',
@@ -233,7 +284,7 @@ const createAppointment = async (req, res) => {
         const appointmentId = await generateAppointmentId();
 
         // Create appointment
-        const appointment = await Appointment.create({
+        const appointmentData = {
             appointmentId,
             patient,
             doctor,
@@ -242,15 +293,17 @@ const createAppointment = async (req, res) => {
             appointmentDate,
             appointmentTime,
             reason,
-            status: status || 'Schedule',
-        });
+            status: status || 'Scheduled',
+            hospitalId: req.user.hospitalId,
+        };
+
+        const appointment = await Appointment.create(appointmentData);
 
         // Populate patient and doctor details
         await appointment.populate([
             { path: 'patient', select: 'fullName email profileImage' },
             { path: 'doctor', select: 'fullName email profileImage' },
         ]);
-        // ✅ ADD NOTIFICATION TRIGGER (around line 120)
         try {
             await notificationHandlers.newAppointment({
                 appointmentId: appointment._id,
@@ -268,7 +321,7 @@ const createAppointment = async (req, res) => {
             console.error('⚠️ Notification failed:', notifError);
         }
 
-        console.log('✅ Appointment created:', appointmentId);
+        console.log('✅ Appointment created:', appointmentId, '| Hospital:', appointment.hospitalId);
 
         res.status(201).json({
             success: true,
@@ -290,7 +343,11 @@ const createAppointment = async (req, res) => {
  */
 const getAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find()
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const appointments = await Appointment.find(query)
             .populate({
                 path: 'doctor',
                 select: 'fullName name specialization profileImage profilePicture department status'
@@ -302,7 +359,6 @@ const getAppointments = async (req, res) => {
             .sort({ appointmentDate: -1, appointmentTime: -1 })
             .lean();
 
-        // Transform data to ensure consistent field names
         const transformedAppointments = appointments.map(apt => ({
             ...apt,
             doctor: apt.doctor ? {
@@ -345,7 +401,12 @@ const getAppointments = async (req, res) => {
  */
 const getAppointment = async (req, res) => {
     try {
-        const appointment = await Appointment.findById(req.params.id)
+        const query = { _id: req.params.id };
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+
+        const appointment = await Appointment.findOne(query)
             .populate('patient', 'fullName email profileImage')
             .populate('doctor', 'fullName email profileImage');
 
@@ -373,47 +434,17 @@ const getAppointment = async (req, res) => {
 /**
  * Update appointment
  */
-// const updateAppointment = async (req, res) => {
-//     try {
-//         const appointment = await Appointment.findByIdAndUpdate(
-//             req.params.id,
-//             req.body,
-//             {
-//                 new: true,
-//                 runValidators: true,
-//             }
-//         )
-//             .populate('patient', 'fullName email profileImage')
-//             .populate('doctor', 'fullName email profileImage');
-
-//         if (!appointment) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: 'Appointment not found',
-//             });
-//         }
-
-//         res.status(200).json({
-//             success: true,
-//             message: 'Appointment updated successfully',
-//             data: appointment,
-//         });
-//     } catch (error) {
-//         console.error('Update appointment error:', error);
-//         res.status(500).json({
-//             success: false,
-//             message: 'Error updating appointment',
-//             error: error.message,
-//         });
-//     }
-// };
-
 const updateAppointment = async (req, res) => {
     try {
         console.log('🔍 Updating appointment:', req.params.id);
         console.log('🔍 With data:', req.body);
 
-        const appointment = await Appointment.findById(req.params.id);
+        const query = { _id: req.params.id };
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+
+        const appointment = await Appointment.findOne(query);
 
         if (!appointment) {
             return res.status(404).json({
@@ -422,7 +453,8 @@ const updateAppointment = async (req, res) => {
             });
         }
 
-        // Update only the fields that are provided
+        delete req.body.hospitalId;
+
         Object.keys(req.body).forEach(key => {
             if (req.body[key] !== undefined) {
                 appointment[key] = req.body[key];
@@ -436,7 +468,6 @@ const updateAppointment = async (req, res) => {
             { path: 'doctor', select: 'fullName email profileImage' },
         ]);
 
-        // ✅ ADD THIS BEFORE res.status(200).json (around line 220)
         if (req.body.status === 'Cancelled') {
             try {
                 await notificationHandlers.appointmentCancellation({
@@ -462,7 +493,7 @@ const updateAppointment = async (req, res) => {
             success: false,
             message: 'Error updating appointment',
             error: error.message,
-            stack: error.stack, // Include for debugging
+            stack: error.stack,
         });
     }
 };
@@ -472,7 +503,12 @@ const updateAppointment = async (req, res) => {
  */
 const deleteAppointment = async (req, res) => {
     try {
-        const appointment = await Appointment.findByIdAndDelete(req.params.id);
+        const query = { _id: req.params.id };
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+
+        const appointment = await Appointment.findOneAndDelete(query);
 
         if (!appointment) {
             return res.status(404).json({
@@ -495,8 +531,6 @@ const deleteAppointment = async (req, res) => {
     }
 };
 
-// In controllers/appointmentController.js
-
 const getDoctorSchedule = async (req, res) => {
     try {
         const { doctorId } = req.params;
@@ -505,7 +539,12 @@ const getDoctorSchedule = async (req, res) => {
         const Doctor = require('../models/Doctor');
         const Appointment = require('../models/Appointment');
 
-        const doctor = await Doctor.findById(doctorId);
+        const doctorQuery = { _id: doctorId };
+        if (req.user && req.user.hospitalId) {
+            doctorQuery.hospitalId = req.user.hospitalId;
+        }
+
+        const doctor = await Doctor.findOne(doctorQuery);
 
         if (!doctor) {
             return res.status(404).json({
@@ -529,15 +568,19 @@ const getDoctorSchedule = async (req, res) => {
             });
         }
 
-        // ✅ CRITICAL: Fetch all existing appointments for this doctor
-        const existingAppointments = await Appointment.find({
+        const appointmentQuery = {
             doctor: doctorId,
-            status: { $nin: ['Cancelled', 'Checked Out'] } // Exclude cancelled and completed
-        }).select('appointmentDate appointmentTime');
+            status: { $nin: ['Cancelled', 'Checked Out'] }
+        };
+        if (req.user && req.user.hospitalId) {
+            appointmentQuery.hospitalId = req.user.hospitalId;
+        }
+
+        const existingAppointments = await Appointment.find(appointmentQuery)
+            .select('appointmentDate appointmentTime');
 
         console.log('📅 Existing appointments:', existingAppointments.length);
 
-        // ✅ Create a Set of booked slots for fast lookup
         const bookedSlots = new Set();
         existingAppointments.forEach(apt => {
             const dateStr = new Date(apt.appointmentDate).toISOString().split('T')[0];
@@ -579,7 +622,6 @@ const getDoctorSchedule = async (req, res) => {
             const dateStr = date.toISOString().split('T')[0];
             const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
 
-            // Skip past dates
             if (date < today) {
                 continue;
             }
@@ -599,7 +641,6 @@ const getDoctorSchedule = async (req, res) => {
                 continue;
             }
 
-            // Generate time slots
             const allTimeSlots = [];
             const duration = doctor.appointmentDuration || 30;
 
@@ -627,11 +668,9 @@ const getDoctorSchedule = async (req, res) => {
                     const slotStart = `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`;
                     const slotEnd = `${String(endSlotHour).padStart(2, '0')}:${String(endSlotMin).padStart(2, '0')}`;
 
-                    // ✅ CRITICAL: Check if this slot is already booked
                     const slotKey = `${dateStr}_${slotStart}`;
 
                     if (!bookedSlots.has(slotKey)) {
-                        // ✅ Slot is available
                         allTimeSlots.push({
                             startTime: slotStart,
                             endTime: slotEnd,
@@ -643,7 +682,6 @@ const getDoctorSchedule = async (req, res) => {
                 }
             }
 
-            // ✅ Only add date if it has at least one available slot
             if (allTimeSlots.length > 0) {
                 availableDates.push({
                     date: dateStr,
@@ -676,7 +714,6 @@ const getDoctorSchedule = async (req, res) => {
         });
     }
 };
-
 
 module.exports = {
     getDoctors,

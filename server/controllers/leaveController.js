@@ -8,7 +8,11 @@ exports.getDoctorLeaves = async (req, res) => {
     try {
         const doctorId = req.user._id; // From auth middleware
 
-        const leaves = await Leave.find({ doctor: doctorId })
+        const query = { doctor: doctorId };
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const leaves = await Leave.find(query)
             .populate('doctor', 'fullName specialization profileImage')
             .populate('approvedBy', 'fullName')
             .sort({ createdAt: -1 });
@@ -31,7 +35,11 @@ exports.getDoctorLeaves = async (req, res) => {
 // Get all leaves (Admin only)
 exports.getAllLeaves = async (req, res) => {
     try {
-        const leaves = await Leave.find()
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const leaves = await Leave.find(query)
             .populate('doctor', 'fullName specialization profileImage department')
             .populate('approvedBy', 'fullName email')
             .sort({ appliedOn: -1 });
@@ -99,14 +107,18 @@ exports.createLeave = async (req, res) => {
         }
 
         // Create leave
-        const newLeave = new Leave({
+        const leaveData = {
             doctor: doctorId,
             leaveType,
             fromDate: from,
             toDate: to,
             reason,
             status: 'Applied'
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            leaveData.hospitalId = req.user.hospitalId;
+        }
+        const newLeave = new Leave(leaveData);
 
         await newLeave.save();
 
@@ -191,8 +203,12 @@ exports.getLeaveStatistics = async (req, res) => {
     try {
         const doctorId = req.user._id;
 
+        const matchStage = { doctor: doctorId };
+        if (req.user && req.user.hospitalId) {
+            matchStage.hospitalId = req.user.hospitalId;
+        }
         const stats = await Leave.aggregate([
-            { $match: { doctor: doctorId } },
+            { $match: matchStage },
             {
                 $group: {
                     _id: '$status',
@@ -239,19 +255,27 @@ exports.getAdminLeaveStatistics = async (req, res) => {
     try {
         const User = require('../models/User'); // Import User model
 
-        // Total active employees who can take leaves
-        const totalEmployees = await User.countDocuments({
+        const employeeQuery = {
             role: { $in: ['doctor', 'nurse', 'staff', 'receptionist'] },
             status: 'Active'
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            employeeQuery.hospitalId = req.user.hospitalId;
+        }
+        // Total active employees who can take leaves
+        const totalEmployees = await User.countDocuments(employeeQuery);
 
         // Current approved leaves (people on leave today)
         const today = new Date();
-        const currentApprovedLeaves = await Leave.countDocuments({
+        const leaveQuery = {
             status: 'Approved',
             fromDate: { $lte: today },
             toDate: { $gte: today }
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            leaveQuery.hospitalId = req.user.hospitalId;
+        }
+        const currentApprovedLeaves = await Leave.countDocuments(leaveQuery);
 
         res.status(200).json({
             success: true,

@@ -96,6 +96,9 @@ exports.getDoctorPrescriptions = async (req, res) => {
         const { sortBy, status, startDate } = req.query;
 
         let query = { doctor: doctorId };
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
 
         // Status filter
         if (status) query.status = status;

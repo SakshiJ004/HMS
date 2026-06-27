@@ -6,6 +6,10 @@ const onlineConsultationSchema = new mongoose.Schema({
         ref: 'Appointment',
         required: true
     },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup',
+    },
     patient: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

@@ -3,7 +3,11 @@ const Service = require('../models/Service');
 // Get all services
 exports.getAllServices = async (req, res) => {
     try {
-        const services = await Service.find().sort({ createdAt: -1 });
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const services = await Service.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -74,9 +78,13 @@ exports.createService = async (req, res) => {
         }
 
         // Check if service already exists
-        const existingService = await Service.findOne({
+        const checkQuery = {
             name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            checkQuery.hospitalId = req.user.hospitalId;
+        }
+        const existingService = await Service.findOne(checkQuery);
 
         if (existingService) {
             return res.status(400).json({
@@ -86,12 +94,16 @@ exports.createService = async (req, res) => {
         }
 
         // Create new service
-        const newService = new Service({
+        const serviceData = {
             name: name.trim(),
             department: department.trim(),
             price: parseFloat(price),
             status: status || 'Active'
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            serviceData.hospitalId = req.user.hospitalId;
+        }
+        const newService = new Service(serviceData);
 
         await newService.save();
 
@@ -134,10 +146,14 @@ exports.updateService = async (req, res) => {
         }
 
         // Check if new name already exists (excluding current service)
-        const existingService = await Service.findOne({
+        const checkQuery = {
             name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
             _id: { $ne: req.params.id }
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            checkQuery.hospitalId = req.user.hospitalId;
+        }
+        const existingService = await Service.findOne(checkQuery);
 
         if (existingService) {
             return res.status(400).json({

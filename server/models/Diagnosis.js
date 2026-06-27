@@ -33,6 +33,10 @@ const diagnosisSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup'
     }
 }, { timestamps: true });
 

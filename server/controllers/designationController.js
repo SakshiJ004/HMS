@@ -3,7 +3,11 @@ const Designation = require('../models/Designation');
 // Get all designations
 exports.getAllDesignations = async (req, res) => {
     try {
-        const designations = await Designation.find().sort({ createdAt: -1 });
+        const query = {};
+        if (req.user && req.user.hospitalId) {
+            query.hospitalId = req.user.hospitalId;
+        }
+        const designations = await Designation.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -73,10 +77,14 @@ exports.createDesignation = async (req, res) => {
             });
         }
 
-        // Check if designation already exists
-        const existingDesignation = await Designation.findOne({
+        const checkQuery = {
             name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            checkQuery.hospitalId = req.user.hospitalId;
+        }
+        // Check if designation already exists
+        const existingDesignation = await Designation.findOne(checkQuery);
 
         if (existingDesignation) {
             return res.status(400).json({
@@ -86,13 +94,17 @@ exports.createDesignation = async (req, res) => {
         }
 
         // Create new designation
-        const newDesignation = new Designation({
+        const designationData = {
             name: name.trim(),
             type,
             department: department.trim(),
             description: description ? description.trim() : '',
             status: status || 'Active'
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            designationData.hospitalId = req.user.hospitalId;
+        }
+        const newDesignation = new Designation(designationData);
 
         await newDesignation.save();
 
@@ -148,11 +160,15 @@ exports.updateDesignation = async (req, res) => {
             });
         }
 
-        // Check if new name already exists (excluding current designation)
-        const existingDesignation = await Designation.findOne({
+        const checkQuery = {
             name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
             _id: { $ne: req.params.id }
-        });
+        };
+        if (req.user && req.user.hospitalId) {
+            checkQuery.hospitalId = req.user.hospitalId;
+        }
+        // Check if new name already exists (excluding current designation)
+        const existingDesignation = await Designation.findOne(checkQuery);
 
         if (existingDesignation) {
             return res.status(400).json({

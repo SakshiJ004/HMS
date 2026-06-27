@@ -57,6 +57,10 @@ const leaveSchema = new mongoose.Schema({
     },
     adminRemarks: {
         type: String
+    },
+    hospitalId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalSetup'
     }
 }, {
     timestamps: true
